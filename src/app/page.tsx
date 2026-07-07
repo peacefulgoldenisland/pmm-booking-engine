@@ -6,54 +6,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, Calendar, ArrowRight, Ship, ShieldCheck, 
   CheckCircle2, Sparkles, BedDouble, Minus, Plus, Loader2, 
-  DoorOpen, Flame, ShoppingCart, Star, Anchor, Compass, Info
+  DoorOpen, Flame, ShoppingCart, Star, Anchor, Compass, Info, Bell
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 const defaultCabins = [
-  { 
-    name: "Private Cabin Sea View", 
-    desc: "A premium cabin option with stunning ocean views right from your bed. Equipped with premium amenities.", 
-    price: "4,600K", 
-    features: ["Sea view window", "Private space", "Air-conditioned"], 
-    image: "https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?q=80&w=2069&auto=format&fit=crop", 
-    popular: true 
-  },
-  { 
-    name: "Private Cabin Standard", 
-    desc: "Comfortable private room for extra privacy during the voyage. Perfectly designed for tranquility.", 
-    price: "4,200K", 
-    features: ["Extra privacy", "Comfortable bed", "Air-conditioned"], 
-    image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=2070&auto=format&fit=crop", 
-    popular: false 
-  },
-  { 
-    name: "Down Deck Cabin (2 Pax)", 
-    desc: "Cozy lower-deck cabin designed for couples or friends traveling together across the sea.", 
-    price: "3,800K", 
-    features: ["Cozy and quiet", "Comfortable space", "AC Central"], 
-    image: "https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?q=80&w=2070&auto=format&fit=crop", 
-    popular: false 
-  },
-  { 
-    name: "Down Deck Cabin (1 Pax)", 
-    desc: "Exclusive lower-deck cabin tailored for solo travelers seeking a peaceful sea voyage.", 
-    price: "3,800K", 
-    features: ["Solo Privacy", "Cozy and quiet", "AC Central"], 
-    image: "https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?q=80&w=2070&auto=format&fit=crop", 
-    popular: false 
-  },
-  { 
-    name: "Sharing Deck Upstair", 
-    desc: "Spacious shared sleeping area on the upper deck with ocean breeze. Perfect to meet new explorers.", 
-    price: "3,600K", 
-    features: ["Budget-friendly", "Clean mattress & blanket", "Open Air"], 
-    image: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?q=80&w=2073&auto=format&fit=crop", 
-    popular: false 
-  }
+  { name: "Private Cabin Sea View", desc: "A premium cabin option with stunning ocean views right from your bed.", price: "4,600K", image: "https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?q=80&w=2069&auto=format&fit=crop", popular: true, maxCapacity: 8 },
+  { name: "Private Cabin Standard", desc: "Comfortable private room for extra privacy during the voyage.", price: "4,200K", image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=2070&auto=format&fit=crop", popular: false, maxCapacity: 4 },
+  { name: "Down Deck Cabin (2 Pax)", desc: "Cozy lower-deck cabin designed for couples or friends traveling together.", price: "3,800K", image: "https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?q=80&w=2070&auto=format&fit=crop", popular: false, maxCapacity: 16 },
+  { name: "Down Deck Cabin (1 Pax)", desc: "Exclusive lower-deck cabin tailored for solo travelers.", price: "3,800K", image: "https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?q=80&w=2070&auto=format&fit=crop", popular: false, maxCapacity: 2 },
+  { name: "Sharing Deck Upstair", desc: "Spacious shared sleeping area on the upper deck with ocean breeze.", price: "3,600K", image: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?q=80&w=2073&auto=format&fit=crop", popular: false, maxCapacity: 22 }
 ];
 
 export default function Home() {
@@ -62,7 +30,7 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
-  const [cabins, setCabins] = useState<any[]>([]);
+  const [cabins, setCabins] = useState<any[]>(defaultCabins);
   const [isFetchingData, setIsFetchingData] = useState(true);
   const [verifiedReviews, setVerifiedReviews] = useState<any[]>([]);
 
@@ -70,6 +38,16 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedCabins, setSelectedCabins] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // === REAL-TIME INVENTORY STATE ===
+  const [bookedSeats, setBookedSeats] = useState<Record<string, number>>({});
+  
+  // === WAITLIST STATE ===
+  const [isWaitlistModalOpen, setIsWaitlistModalOpen] = useState(false);
+  const [waitlistCabin, setWaitlistCabin] = useState('');
+  const [waitlistForm, setWaitlistForm] = useState({ name: '', email: '', phone: '', pax: 1 });
+  const [isSubmittingWaitlist, setIsSubmittingWaitlist] = useState(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -94,21 +72,13 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    setCabins(defaultCabins);
-    setIsFetchingData(false);
-  }, []);
-
-  useEffect(() => {
     const getNextSaturdays = () => {
       const dates = [];
       let d = new Date();
       const currentDay = d.getDay();
       
-      if (currentDay === 5 || currentDay === 6) {
-         d.setDate(d.getDate() + (6 - currentDay + 7)); 
-      } else {
-         d.setDate(d.getDate() + (6 - currentDay));
-      }
+      if (currentDay === 5 || currentDay === 6) d.setDate(d.getDate() + (6 - currentDay + 7)); 
+      else d.setDate(d.getDate() + (6 - currentDay));
 
       for (let i = 0; i < 52; i++) {
         const nextSat = new Date(d);
@@ -123,10 +93,45 @@ export default function Home() {
     setSelectedDate(dates[0]); 
   }, []);
 
-  const handleAddPax = (cabinName: string, maxPax: number) => {
+  // === FETCH REAL AVAILABILITY (VIA SECURE API) ===
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      if (!selectedDate) return;
+      setIsFetchingData(true);
+      
+      // Kosongkan keranjang jika pindah tanggal
+      setSelectedCabins({});
+      
+      try {
+        // Kita panggil API buatan kita, bukan tembak langsung ke Firestore!
+        const res = await fetch(`/api/availability?date=${selectedDate}`);
+        if (res.ok) {
+          const data = await res.json();
+          setBookedSeats(data.booked || {});
+        }
+      } catch (error) {
+        console.error("Error fetching availability:", error);
+      } finally {
+        setIsFetchingData(false);
+      }
+    };
+
+    fetchAvailability();
+  }, [selectedDate]);
+
+  const getAvailabilityInfo = (cabinName: string, maxCapacity: number) => {
+    const booked = bookedSeats[cabinName] || 0;
+    const available = Math.max(0, maxCapacity - booked);
+    
+    if (available === 0) return { text: "Fully Booked", isLow: true, availablePax: 0, maxPax: maxCapacity };
+    if (available <= 4) return { text: `Only ${available} Seats Left!`, isLow: true, availablePax: available, maxPax: maxCapacity };
+    return { text: `${available} Seats Available`, isLow: false, availablePax: available, maxPax: maxCapacity };
+  };
+
+  const handleAddPax = (cabinName: string, availablePax: number) => {
     setSelectedCabins(prev => {
       const current = prev[cabinName] || 0;
-      if (current >= maxPax) return prev; 
+      if (current >= availablePax) return prev; 
       return { ...prev, [cabinName]: current + 1 };
     });
   };
@@ -159,46 +164,59 @@ export default function Home() {
   const handleProceedToCheckout = () => {
     setIsSubmitting(true);
     const cartString = encodeURIComponent(JSON.stringify(selectedCabins));
-    const queryParams = new URLSearchParams({
-      date: selectedDate,
-      cart: cartString, 
-      pax: totalPax.toString()
-    });
+    const queryParams = new URLSearchParams({ date: selectedDate, cart: cartString, pax: totalPax.toString() });
 
     setTimeout(() => {
       router.push(`/checkout?${queryParams.toString()}`);
     }, 600);
   };
 
-  const formatDateUI = (dateString: string) => {
-    if (!dateString) return "";
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' 
-    });
+  const openWaitlistModal = (cabinName: string) => {
+    setWaitlistCabin(cabinName);
+    setWaitlistSuccess(false);
+    setWaitlistForm({ name: '', email: '', phone: '', pax: 1 });
+    setIsWaitlistModalOpen(true);
   };
 
-  const getAvailabilityInfo = (cabinName: string) => {
-    const name = cabinName.toLowerCase();
-    if (name.includes("sea view")) return { text: "4 Rooms Available", isLow: false, maxPax: 8 }; 
-    if (name.includes("standard")) return { text: "Only 2 Rooms Left!", isLow: true, maxPax: 4 }; 
-    if (name.includes("down deck") && name.includes("2 pax")) return { text: "8 Rooms Available", isLow: false, maxPax: 16 }; 
-    if (name.includes("down deck") && name.includes("1 pax")) return { text: "Only 2 Rooms Left!", isLow: true, maxPax: 2 }; 
-    if (name.includes("sharing")) return { text: "22 Seats Available", isLow: false, maxPax: 22 }; 
-    return { text: "Available", isLow: false, maxPax: 8 };
+  const submitWaitlist = async () => {
+    setIsSubmittingWaitlist(true);
+    try {
+      const res = await fetch('/api/waitlist/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: waitlistForm.name,
+          email: waitlistForm.email,
+          phone: waitlistForm.phone,
+          paxCount: waitlistForm.pax,
+          cabinClass: waitlistCabin,
+          dateOfDeparture: selectedDate
+        })
+      });
+      if (res.ok) {
+        setWaitlistSuccess(true);
+      } else {
+        alert("Failed to join waitlist. Please try again.");
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmittingWaitlist(false);
+    }
+  };
+
+  const formatDateUI = (dateString: string) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   if (isAuthChecking) {
-    return (
-      <div className="min-h-screen bg-navy flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-gold animate-spin" />
-      </div>
-    );
+    return <div className="min-h-screen bg-navy flex items-center justify-center"><Loader2 className="w-8 h-8 text-gold animate-spin" /></div>;
   }
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] font-sans overflow-x-hidden selection:bg-gold selection:text-navy pt-24">
       
-      {/* HEADER INTEGRASI */}
       {isLoggedIn ? (
         <DashboardHeader />
       ) : (
@@ -206,24 +224,17 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-5 md:px-8 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <Ship className="w-6 h-6 text-gold" />
-              <span className="text-base font-bold tracking-widest text-white uppercase">
-                PMM <span className="text-gold">Reserve</span>
-              </span>
+              <span className="text-base font-bold tracking-widest text-white uppercase">PMM <span className="text-gold">Reserve</span></span>
             </div>
-            <button 
-              onClick={() => router.push('/login')}
-              className="flex items-center gap-2 bg-white/5 hover:bg-gold border border-white/10 hover:border-gold text-white hover:text-navy px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md"
-            >
+            <button onClick={() => router.push('/login')} className="flex items-center gap-2 bg-white/5 hover:bg-gold border border-white/10 hover:border-gold text-white hover:text-navy px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md">
               Member Login <ArrowRight className="w-3 h-3" />
             </button>
           </div>
         </nav>
       )}
 
-      {/* CORE SCHEDULER & BOOKING ENGINE GRID */}
       <main className="max-w-7xl mx-auto px-4 md:px-8 mt-8 pb-24">
         
-        {/* BANNER UTAMA MINIMALIS (PENGGANTI HERO JADUL) */}
         <div className="bg-navy rounded-[2rem] p-6 md:p-10 text-white relative overflow-hidden mb-8 shadow-xl border border-white/5">
           <div className="absolute top-0 right-0 w-96 h-96 bg-gold/5 rounded-full blur-[100px] pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -246,7 +257,6 @@ export default function Home() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* KOLOM KIRI: STUDIOGALLERY SELEKSI KAMAR */}
           <div className="lg:col-span-8 space-y-6">
             <div className="flex items-center justify-between">
               <div>
@@ -258,20 +268,20 @@ export default function Home() {
 
             <div className="grid grid-cols-1 gap-4">
               {cabins.map((cabin, idx) => {
-                const availability = getAvailabilityInfo(cabin.name);
+                const availability = getAvailabilityInfo(cabin.name, cabin.maxCapacity);
                 const paxInCabin = selectedCabins[cabin.name] || 0;
                 const isSelected = paxInCabin > 0;
+                const isFullyBooked = availability.availablePax === 0;
 
                 return (
                   <motion.div 
                     key={idx}
-                    className={`bg-white rounded-3xl overflow-hidden border transition-all flex flex-col md:flex-row shadow-sm hover:shadow-md ${
-                      isSelected ? 'border-gold ring-1 ring-gold/30' : 'border-gray-200/70'
-                    }`}
+                    className={`bg-white rounded-3xl overflow-hidden border transition-all flex flex-col md:flex-row shadow-sm ${
+                      isSelected ? 'border-gold ring-1 ring-gold/30 shadow-md' : 'border-gray-200/70 hover:shadow-md'
+                    } ${isFullyBooked ? 'opacity-80 grayscale-[20%]' : ''}`}
                   >
-                    {/* Gambar Kabin (Rasio Lebar Widescreen) */}
                     <div className="md:w-2/5 h-48 md:h-auto min-h-[180px] relative overflow-hidden shrink-0 bg-gray-100">
-                      <img src={cabin.image} alt={cabin.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      <img src={cabin.image} alt={cabin.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
                       {cabin.popular && (
                         <span className="absolute top-4 left-4 bg-navy text-gold text-[9px] font-extrabold px-2.5 py-1 rounded-md uppercase tracking-wider shadow-md border border-gold/20">
                           Most Popular
@@ -279,12 +289,12 @@ export default function Home() {
                       )}
                     </div>
 
-                    {/* Deskripsi & Control Panel Kabin */}
-                    <div className="p-6 flex flex-col justify-between flex-1 bg-white">
+                    <div className={`p-6 flex flex-col justify-between flex-1 transition-colors duration-300 ${isSelected ? 'bg-[#fdfbf7]' : 'bg-white'}`}>
                       <div>
                         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                           <h3 className="text-lg font-extrabold text-navy leading-tight">{cabin.name}</h3>
                           <div className={`px-2.5 py-1 rounded-md text-[9px] font-extrabold uppercase tracking-wider border ${
+                            isFullyBooked ? 'bg-gray-100 text-gray-600 border-gray-200' :
                             availability.isLow ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-700 border-green-100'
                           }`}>
                             {availability.text}
@@ -296,24 +306,34 @@ export default function Home() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-100 mt-auto">
                         <div>
                           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Rate per Passenger</p>
-                          <p className="text-gold font-extrabold text-base">IDR {cabin.price}</p>
+                          <p className={`font-extrabold text-base ${isFullyBooked ? 'text-gray-400' : 'text-gold'}`}>IDR {cabin.price}</p>
                         </div>
 
-                        {/* COUNTER GUEST */}
-                        <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 p-1.5 rounded-xl w-max self-end sm:self-auto">
-                          <button 
-                            onClick={() => handleRemovePax(cabin.name)} disabled={paxInCabin === 0}
-                            className="w-7 h-7 flex items-center justify-center bg-white rounded-lg text-navy border border-gray-200 disabled:opacity-30 transition-shadow hover:shadow-sm shadow-inner"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="text-sm font-extrabold w-6 text-center text-navy">{paxInCabin}</span>
-                          <button 
-                            onClick={() => handleAddPax(cabin.name, availability.maxPax)} disabled={paxInCabin >= availability.maxPax}
-                            className="w-7 h-7 flex items-center justify-center bg-white rounded-lg text-navy border border-gray-200 disabled:opacity-30 transition-shadow hover:shadow-sm shadow-inner"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
+                        <div className="self-end sm:self-auto w-full sm:w-auto">
+                          {isFullyBooked ? (
+                            <button 
+                              onClick={() => openWaitlistModal(cabin.name)}
+                              className="w-full sm:w-max px-5 py-2.5 bg-slate-900 text-white hover:bg-gold hover:text-navy text-[10px] font-extrabold uppercase tracking-widest rounded-xl transition-colors flex items-center justify-center gap-2"
+                            >
+                              <Bell className="w-3.5 h-3.5" /> Join Waitlist
+                            </button>
+                          ) : (
+                            <div className="flex items-center justify-between sm:justify-start gap-3 bg-gray-50 border border-gray-200 p-1.5 rounded-xl w-full sm:w-max">
+                              <button 
+                                onClick={() => handleRemovePax(cabin.name)} disabled={paxInCabin === 0}
+                                className="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-navy border border-gray-200 disabled:opacity-30 transition-shadow hover:shadow-sm"
+                              >
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="text-sm font-extrabold w-6 text-center text-navy">{paxInCabin}</span>
+                              <button 
+                                onClick={() => handleAddPax(cabin.name, availability.availablePax)} disabled={paxInCabin >= availability.availablePax}
+                                className="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-navy border border-gray-200 disabled:opacity-30 transition-shadow hover:shadow-sm"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -323,12 +343,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* KOLOM KANAN: STICKY PANEL DYNAMIC INVENTORY */}
           <div className="lg:col-span-4 relative">
             <div className="lg:sticky lg:top-28 space-y-6">
               <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-[0_20px_50px_rgb(0,0,0,0.05)] border border-gray-200/80 relative">
                 
-                {/* PILIH TANGGAL (1 TAHUN PENUH) */}
                 <h3 className="text-xs font-extrabold uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-gold" /> 1. Expedition Calendar
                 </h3>
@@ -344,7 +362,6 @@ export default function Home() {
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 font-bold text-xs">▼</div>
                 </div>
 
-                {/* RINGKASAN PEMESANAN */}
                 <div className="bg-navy rounded-2xl p-5 text-white shadow-inner">
                   <h4 className="text-xs font-bold text-gold mb-4 flex items-center gap-2 border-b border-white/5 pb-3">
                     <ShoppingCart className="w-3.5 h-3.5" /> Live Manifest Manifest
@@ -409,60 +426,40 @@ export default function Home() {
         </div>
       </main>
 
-      {/* VERIFIED GUEST REVIEWS SECTION */}
-      {verifiedReviews.length > 0 && (
-        <div className="relative py-24 bg-navy overflow-hidden">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[100px] pointer-events-none" />
-          
-          <div className="max-w-7xl mx-auto px-4 md:px-8 mb-12 text-center relative z-10">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gold/30 bg-gold/10 text-gold font-bold tracking-[0.2em] text-[10px] uppercase mb-4">
-              <ShieldCheck className="w-4 h-4" /> Verified Explorers
+      {/* WAITLIST MODAL */}
+      <Modal isOpen={isWaitlistModalOpen} onClose={() => setIsWaitlistModalOpen(false)} title="Join Waitlist">
+        {waitlistSuccess ? (
+          <div className="text-center py-6">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 text-green-500" />
             </div>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">Journeys Beyond Words</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto text-sm md:text-base">Real logs and memories shared by our members during their liveaboard expeditions.</p>
+            <h3 className="text-xl font-extrabold text-navy mb-2">You're on the list!</h3>
+            <p className="text-gray-500 text-sm mb-6">We've sent a confirmation email. If a spot opens up in the <strong className="text-navy">{waitlistCabin}</strong>, we will notify you immediately.</p>
+            <Button onClick={() => setIsWaitlistModalOpen(false)} className="w-full">Done</Button>
           </div>
-
-          <div className="flex gap-6 overflow-x-auto pb-8 pt-4 px-4 md:px-8 snap-x snap-mandatory no-scrollbar relative z-10">
-            {verifiedReviews.map((review) => (
-              <div 
-                key={review.id} 
-                className="snap-center shrink-0 w-[300px] md:w-[380px] bg-white/5 border border-white/10 p-6 rounded-[2rem] backdrop-blur-md shadow-2xl flex flex-col hover:bg-white/10 transition-colors"
-              >
-                <div className="flex justify-between items-start mb-6">
-                  <div className="flex gap-0.5">
-                    {[...Array(review.rating)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 text-gold fill-gold" />
-                    ))}
-                  </div>
-                  <div className="bg-green-500/10 border border-green-500/20 text-green-400 px-2.5 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-widest flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Verified Explorer
-                  </div>
-                </div>
-
-                <p className="text-gray-200 leading-relaxed mb-6 flex-grow text-xs md:text-sm italic">
-                  "{review.comment}"
-                </p>
-
-                {review.imageUrls && review.imageUrls.length > 0 && (
-                   <div className="h-32 w-full rounded-xl overflow-hidden mb-6 border border-white/10 shadow-inner bg-gray-800">
-                     <img src={review.imageUrls[0]} alt="Trip memory" className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" />
-                   </div>
-                )}
-
-                <div className="flex items-center gap-3 mt-auto pt-4 border-t border-white/10">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gold to-[#b8972e] flex items-center justify-center font-bold text-navy text-xs shadow-sm uppercase">
-                    {review.userName.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-bold text-white text-xs">{review.userName}</p>
-                    <p className="text-[10px] text-gold font-medium">Logged on Day {review.tripDay}</p>
-                  </div>
-                </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500 mb-4">The <strong className="text-navy">{waitlistCabin}</strong> is currently full for {formatDateUI(selectedDate)}. Drop your details below, and we'll email you if anyone cancels.</p>
+            <Input label="Full Name *" value={waitlistForm.name} onChange={e => setWaitlistForm({...waitlistForm, name: e.target.value})} placeholder="John Doe" />
+            <Input label="Email Address *" type="email" value={waitlistForm.email} onChange={e => setWaitlistForm({...waitlistForm, email: e.target.value})} placeholder="john@example.com" />
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="WhatsApp (Optional)" type="tel" value={waitlistForm.phone} onChange={e => setWaitlistForm({...waitlistForm, phone: e.target.value})} placeholder="+62..." />
+              <div className="flex flex-col">
+                <label className="text-sm font-semibold text-gray-500 mb-2">Total Guests</label>
+                <input type="number" min="1" max="10" value={waitlistForm.pax} onChange={e => setWaitlistForm({...waitlistForm, pax: parseInt(e.target.value)})} className="w-full p-4 bg-white rounded-xl border border-gray-200 outline-none focus:border-gold" />
               </div>
-            ))}
+            </div>
+            <Button 
+              onClick={submitWaitlist} 
+              isLoading={isSubmittingWaitlist} 
+              disabled={!waitlistForm.name || !waitlistForm.email}
+              className="w-full mt-4"
+            >
+              <Bell className="w-4 h-4 mr-2" /> Notify Me
+            </Button>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
     </div>
   );

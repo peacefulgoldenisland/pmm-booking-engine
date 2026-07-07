@@ -8,7 +8,8 @@ import {
   ArrowRight, ShieldAlert, CheckCircle2, AlertTriangle
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore'; 
+// PERBAIKAN: Import collection, query, where, getDocs dihapus karena sudah via API Backend
 
 export default function ReschedulePage() {
   const params = useParams();
@@ -111,7 +112,7 @@ export default function ReschedulePage() {
     return 8; // Default fallback
   };
 
-  // 3. Cek Ketersediaan Kuota Secara Real-time
+  // 3. Cek Ketersediaan Kuota Secara Real-time (VIA SECURE API)
   useEffect(() => {
     const checkAvailability = async () => {
       if (!selectedDate || !booking) return;
@@ -120,29 +121,24 @@ export default function ReschedulePage() {
       setIsAvailable(null);
 
       try {
-        const bookingsRef = collection(db, 'bookings');
-        // Cari semua tiket di tanggal baru dengan tipe kabin yang sama dan status PAID
-        const q = query(
-            bookingsRef, 
-            where('dateOfDeparture', '==', selectedDate),
-            where('cabinClass', '==', booking.cabinClass),
-            where('status', '==', 'PAID')
-        );
+        // PERBAIKAN: Hit API Backend untuk menghindari pemblokiran Firestore Rules
+        const res = await fetch(`/api/availability?date=${selectedDate}`);
         
-        const querySnapshot = await getDocs(q);
-        
-        let currentPaxCount = 0;
-        querySnapshot.forEach((doc) => {
-            currentPaxCount += doc.data().paxCount || 0;
-        });
-
-        const maxCapacity = getCabinCapacity(booking.cabinClass);
-        
-        // Cek apakah kuota yang ada ditambah jumlah tamu kita masih muat
-        if (currentPaxCount + booking.paxCount <= maxCapacity) {
-            setIsAvailable(true);
+        if (res.ok) {
+          const data = await res.json();
+          
+          // Ambil jumlah tamu yang sudah ada di kabin ini, default 0 jika kosong
+          const currentPaxCount = data.booked?.[booking.cabinClass] || 0;
+          const maxCapacity = getCabinCapacity(booking.cabinClass);
+          
+          // Cek apakah kuota yang ada ditambah jumlah tamu kita masih muat
+          if (currentPaxCount + booking.paxCount <= maxCapacity) {
+              setIsAvailable(true);
+          } else {
+              setIsAvailable(false);
+          }
         } else {
-            setIsAvailable(false);
+          setIsAvailable(false);
         }
 
       } catch (error) {
@@ -234,7 +230,6 @@ export default function ReschedulePage() {
                     <ShieldAlert className="w-8 h-8 text-red-500 shrink-0" />
                     <div>
                         <h3 className="text-lg font-extrabold text-red-700 mb-1">Modification Locked</h3>
-                        {/* PERBAIKAN: Menambahkan ': null' di akhir ternary bersarang */}
                         {isLockedLimit ? (
                             <p className="text-sm text-red-600 font-medium">This booking has already been rescheduled once. Our policy allows a maximum of one (1) free modification per booking.</p>
                         ) : isLockedH3 ? (
@@ -360,7 +355,7 @@ export default function ReschedulePage() {
   );
 }
 
-// Komponen ikon kecil yang terlewat di import atas
+// Komponen ikon kecil
 function ChevronDown(props: any) {
   return (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
