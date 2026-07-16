@@ -5,10 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, User, Mail, Phone, Calendar as CalendarIcon, 
-  ShieldCheck, MapPin, CheckCircle2, UploadCloud, Check, 
-  BedDouble, FileText, Loader2, ChevronRight, ShoppingCart, Lock,
-  Ticket, XCircle,
-  Info
+  ShieldCheck, MapPin, CheckCircle2, UploadCloud, 
+  BedDouble, FileText, Loader2, ChevronRight, Lock,
+  Ticket, XCircle, Info, Landmark, QrCode, CreditCard, CircleDollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -30,6 +29,14 @@ interface PassengerDetail {
   dietaryRequirements: string;
   passportFileUrl: string;
 }
+
+// Data Metode Pembayaran
+const PAYMENT_METHODS = [
+  { id: 'MANUAL_BANK', title: 'Bank Transfer', desc: 'BCA, Mandiri, BNI, BRI', icon: Landmark, disabled: false },
+  { id: 'MANUAL_QRIS', title: 'QRIS', desc: 'GoPay, OVO, Dana, ShopeePay', icon: QrCode, disabled: false },
+  { id: 'PAYPAL', title: 'PayPal', desc: 'USD / International Credit Card', icon: CircleDollarSign, disabled: false },
+  { id: 'MIDTRANS', title: 'Credit Card', desc: 'Visa, Mastercard, JCB', icon: CreditCard, disabled: true, tag: 'Maintenance' },
+];
 
 function CheckoutContent() {
   const router = useRouter();
@@ -61,9 +68,10 @@ function CheckoutContent() {
   const [pickupArea, setPickupArea] = useState('');
   const [pickupLocation, setPickupLocation] = useState('');
   
-  // State Passengers
+  // State Passengers & Payment
   const [passengers, setPassengers] = useState<PassengerDetail[]>([]);
   const [uploadingState, setUploadingState] = useState<{ [key: number]: boolean }>({});
+  const [paymentMethod, setPaymentMethod] = useState('MANUAL_BANK'); // Default Payment
   
   // State Voucher System
   const [voucherCode, setVoucherCode] = useState('');
@@ -82,7 +90,6 @@ function CheckoutContent() {
       if (user) {
         setCurrentUser(user);
         setEmail(user.email || '');
-        // Ambil nomor telp dari profil
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists() && userDoc.data().phone) {
           setPhone(userDoc.data().phone);
@@ -183,7 +190,6 @@ function CheckoutContent() {
     setVoucherError('');
 
     try {
-      // Format Code: "NEW-123456789". Kita cari berdasarkan ID document di koleksi user_rewards
       const q = query(
         collection(db, 'user_rewards'), 
         where('userId', '==', currentUser.uid),
@@ -194,16 +200,13 @@ function CheckoutContent() {
       let foundVoucher = null;
 
       querySnapshot.forEach((doc) => {
-        // Cek apakah 6 huruf terakhir ID cocok dengan input user
         const shortCode = doc.id.split('-').pop()?.toUpperCase();
         if (shortCode === voucherCode.trim().toUpperCase() || doc.id === voucherCode.trim()) {
           foundVoucher = { id: doc.id, ...doc.data() };
         }
       });
 
-      if (!foundVoucher) {
-        throw new Error("Invalid or expired voucher code.");
-      }
+      if (!foundVoucher) throw new Error("Invalid or expired voucher code.");
 
       setAppliedVoucher(foundVoucher);
       setVoucherCode('');
@@ -214,9 +217,7 @@ function CheckoutContent() {
     }
   };
 
-  const removeVoucher = () => {
-    setAppliedVoucher(null);
-  };
+  const removeVoucher = () => setAppliedVoucher(null);
 
   // Kalkulasi Umur
   const calculateAge = (dob: string) => {
@@ -308,11 +309,12 @@ function CheckoutContent() {
           cart: initialCart, 
           cabin: Object.keys(initialCart).join(', '), 
           pax: paxCount, 
-          total: finalPrice, // Menggunakan harga yang sudah didiskon
+          total: finalPrice, 
           basePrice: basePrice,
           discountAmount: discountAmount,
           voucherId: appliedVoucher?.id || null,
-          bookingSource: currentUser ? "B2C_MEMBER" : "B2C_GUEST"
+          bookingSource: currentUser ? "B2C_MEMBER" : "B2C_GUEST",
+          paymentMethod: paymentMethod // DISUNTIKKAN KE API
         },
         contact: { email, phone, pickupArea, pickupLocation },
         passengers 
@@ -327,7 +329,6 @@ function CheckoutContent() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Failed to initiate booking');
 
-      // Jika pakai voucher, tandai voucher tersebut sebagai 'USED'
       if (appliedVoucher?.id) {
         await updateDoc(doc(db, 'user_rewards', appliedVoucher.id), {
           status: 'USED',
@@ -336,6 +337,7 @@ function CheckoutContent() {
         });
       }
 
+      // Selalu redirect ke /payment (nanti logika gateway dihandle di sana/API)
       router.push(`/payment?order_id=${result.orderId}`);
     } catch (error: any) {
       console.error(error);
@@ -568,6 +570,53 @@ function CheckoutContent() {
                 </div>
               </div>
 
+              {/* ===================== PAYMENT METHOD SELECTION (NEW) ===================== */}
+              <div className="border-t border-dashed border-white/20 pt-6 mb-6">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-gray-400" /> Payment Method
+                </h4>
+                <div className="space-y-3">
+                  {PAYMENT_METHODS.map((method) => {
+                    const Icon = method.icon;
+                    const isSelected = paymentMethod === method.id;
+                    return (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => !method.disabled && setPaymentMethod(method.id)}
+                        disabled={method.disabled}
+                        className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all text-left ${
+                          method.disabled 
+                            ? 'bg-white/5 border-white/5 opacity-50 cursor-not-allowed' 
+                            : isSelected 
+                              ? 'bg-gold/10 border-gold shadow-[0_0_15px_rgba(212,175,55,0.15)] ring-1 ring-gold' 
+                              : 'bg-white/5 border-white/10 hover:border-gold/50 cursor-pointer'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${isSelected ? 'bg-gold text-navy' : 'bg-white/10 text-white'}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className={`text-sm font-extrabold ${isSelected ? 'text-gold' : 'text-white'}`}>{method.title}</p>
+                            <p className="text-[10px] text-gray-400 mt-0.5">{method.desc}</p>
+                          </div>
+                        </div>
+                        {method.disabled && method.tag ? (
+                          <span className="text-[8px] uppercase tracking-widest font-bold bg-red-500/20 text-red-300 px-2 py-1 rounded">
+                            {method.tag}
+                          </span>
+                        ) : (
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-gold' : 'border-white/30'}`}>
+                            {isSelected && <div className="w-2 h-2 rounded-full bg-gold" />}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* ===================== VOUCHER SYSTEM ===================== */}
               <div className="border-t border-dashed border-white/20 pt-6 mb-6">
                 <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-2">
@@ -622,7 +671,9 @@ function CheckoutContent() {
               <div className="border-t-2 border-dashed border-white/20 pt-6 mb-8 relative">
                 <div className="flex justify-between items-end mb-2">
                   <div className="text-gray-400 text-sm font-bold uppercase tracking-widest">Total Payment</div>
-                  <div className="text-xs font-bold text-navy bg-gold px-2 py-0.5 rounded-md">IDR</div>
+                  <div className="text-xs font-bold text-navy bg-gold px-2 py-0.5 rounded-md">
+                    {paymentMethod === 'PAYPAL' ? 'USD/IDR' : 'IDR'}
+                  </div>
                 </div>
                 
                 {isFetchingPrice ? (
@@ -651,7 +702,7 @@ function CheckoutContent() {
               </Button>
 
               <div className="mt-6 flex items-center justify-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                <ShieldCheck className="w-4 h-4 text-green-400" /> Secure Midtrans Checkout
+                <ShieldCheck className="w-4 h-4 text-green-400" /> Secure Encrypted Checkout
               </div>
             </motion.div>
           </div>

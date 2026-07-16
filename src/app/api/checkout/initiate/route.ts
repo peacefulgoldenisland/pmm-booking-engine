@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { v4 as uuidv4 } from 'uuid';
-// Kita pakai require untuk midtrans-client karena mereka belum punya official TypeScript types
-const midtransClient = require('midtrans-client'); 
+
+// Midtrans kita matikan/komen sementara agar performa API lebih cepat
+// const midtransClient = require('midtrans-client'); 
 
 const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY 
   ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY) 
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
     const { booking, contact, passengers } = body;
 
     if (!booking || !contact || !passengers || passengers.length === 0) {
-      return NextResponse.json({ error: 'Data pesanan tidak lengkap' }, { status: 400 });
+      return NextResponse.json({ error: 'Incomplete booking data' }, { status: 400 });
     }
 
     if (!serviceAccount) {
@@ -55,41 +56,28 @@ export async function POST(request: Request) {
       userId = querySnapshot.docs[0].id;
     }
 
-    // 2. Generate Order ID Unik
-    const orderId = `PMM-${Date.now()}-${uuidv4().substring(0, 4)}`;
+    // 2. Generate Order ID Unik (Misal: PMM-1704209123-ABCD)
+    const orderId = `PMM-${Date.now()}-${uuidv4().substring(0, 4).toUpperCase()}`;
     
-    // 3. Panggil API Midtrans untuk mendapatkan Snap Token
-    // Midtrans membutuhkan Gross Amount (Total) dalam format integer
-    let snap = new midtransClient.Snap({
-        isProduction: false, // Set ke false karena kita masih di Sandbox
-        serverKey: process.env.MIDTRANS_SERVER_KEY,
-        clientKey: process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
-    });
+    // 3. Validasi Metode Pembayaran (Blokir paksa jika ada yang iseng injek Midtrans dari console)
+    const paymentMethod = booking.paymentMethod || 'MANUAL_BANK';
+    
+    if (paymentMethod === 'MIDTRANS') {
+        return NextResponse.json({ error: 'Midtrans is currently under maintenance.' }, { status: 400 });
+    }
 
-    let parameter = {
-        "transaction_details": {
-            "order_id": orderId,
-            "gross_amount": booking.total
-        },
-        "customer_details": {
-            "first_name": passengers[0]?.fullName || "Guest",
-            "email": contact.email,
-            "phone": contact.phone
-        }
-    };
-
-    const transaction = await snap.createTransaction(parameter);
-    const snapToken = transaction.token;
-
-    // 4. Simpan Data Booking ke Firestore (Sekarang kita simpan juga snapToken-nya)
+    // 4. Simpan Data Booking ke Firestore (Tanpa Midtrans Snap Token)
     const bookingsRef = db.collection('bookings');
     const newBooking = {
       bookingId: orderId,
       userId: userId,
       status: 'PENDING',
-      paymentProvider: 'MIDTRANS',
+      paymentMethod: paymentMethod, // MANUAL_BANK, MANUAL_QRIS, atau PAYPAL
       totalAmount: booking.total,
-      currency: 'USD', 
+      basePrice: booking.basePrice || booking.total,
+      discountAmount: booking.discountAmount || 0,
+      voucherId: booking.voucherId || null,
+      currency: 'IDR', 
       dateOfDeparture: booking.date,
       cabinClass: booking.cabin,
       paxCount: booking.pax,
@@ -98,7 +86,6 @@ export async function POST(request: Request) {
       passengersManifest: passengers,
       contactEmail: contact.email,
       contactPhone: contact.phone,
-      snapToken: snapToken, // Simpan token agar bisa dipanggil ulang jika turis belum bayar
       bookingSource: booking.bookingSource || "B2C_WEB",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -106,17 +93,19 @@ export async function POST(request: Request) {
 
     await bookingsRef.doc(orderId).set(newBooking);
 
+    // 5. Kembalikan Response ke Frontend
+    // Kita lempar orderId dan paymentMethod agar halaman /payment tahu instruksi apa yang harus dimunculkan
     return NextResponse.json({ 
       success: true, 
       orderId: orderId,
-      snapToken: snapToken, // Kembalikan token ke Frontend
+      paymentMethod: paymentMethod,
       message: isNewUser ? 'Shadow Account and Booking created' : 'Booking created for existing user',
     });
 
   } catch (error: any) {
     console.error('Error in initiate checkout API:', error);
     return NextResponse.json(
-      { error: 'Terjadi kesalahan pada server', details: error.message },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     );
   }

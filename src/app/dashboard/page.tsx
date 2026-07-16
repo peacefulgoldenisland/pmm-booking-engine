@@ -8,7 +8,7 @@ import {
   ChevronRight, Loader2, ChevronDown, User,
   Compass, Shield, Plus, Anchor, PlaneTakeoff, 
   Wine, ShoppingBag, ConciergeBell, History, 
-  ArrowRight, ExternalLink
+  ArrowRight, ExternalLink, CreditCard, Clock
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -87,6 +87,7 @@ export default function DashboardPage() {
   }, [router]);
 
   // Pemisah Tiket Masa Depan & Masa Lalu
+  // Tiket yang belum PAID akan selalu masuk 'upcoming' agar tamu bisa segera membayarnya
   const upcomingBookings = bookings.filter(b => new Date(b.dateOfDeparture) >= new Date() || b.status !== 'PAID');
   const pastBookings = bookings.filter(b => new Date(b.dateOfDeparture) < new Date() && b.status === 'PAID');
 
@@ -102,6 +103,20 @@ export default function DashboardPage() {
 
   const toggleExpand = (id: string) => {
     setExpandedBookingId(expandedBookingId === id ? null : id);
+  };
+
+  // Helper UI Status Badge
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'PAID':
+        return <span className="px-3 py-1.5 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-green-50 text-green-600 border border-green-100">CONFIRMED</span>;
+      case 'WAITING_VERIFICATION':
+        return <span className="px-3 py-1.5 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-yellow-50 text-yellow-600 border border-yellow-100">VERIFYING</span>;
+      case 'PENDING':
+        return <span className="px-3 py-1.5 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-red-50 text-red-600 border border-red-100">UNPAID</span>;
+      default:
+        return <span className="px-3 py-1.5 rounded-md text-[10px] font-extrabold uppercase tracking-widest bg-gray-50 text-gray-600 border border-gray-100">{status}</span>;
+    }
   };
 
   if (isLoading) {
@@ -250,11 +265,7 @@ export default function DashboardPage() {
 
                       {/* Status & Tombol Expand */}
                       <div className="flex items-center justify-between md:justify-end gap-4 md:w-1/3">
-                        <span className={`px-3 py-1.5 rounded-md text-[10px] font-extrabold uppercase tracking-widest ${
-                          booking.status === 'PAID' ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-yellow-50 text-yellow-600 border border-yellow-100'
-                        }`}>
-                          {booking.status}
-                        </span>
+                        {getStatusBadge(booking.status)}
                         <button className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isExpanded ? 'bg-navy text-white' : 'bg-gray-50 text-navy hover:bg-gold/20 hover:text-gold'}`}>
                           <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
                         </button>
@@ -271,20 +282,45 @@ export default function DashboardPage() {
                         >
                           <div className="p-6 md:p-8">
                             
-                            {/* Baris Tindakan Cepat */}
+                            {/* --- CONDITIONAL ACTION BAR BERDASARKAN STATUS --- */}
                             <div className="flex flex-wrap gap-3 mb-8">
-                              {/* --- TOMBOL DOWNLOAD E-TICKET YANG SUDAH DIPERBARUI --- */}
-                              <button 
-                                onClick={() => window.open(`/ticket/${booking.id}`, '_blank')}
-                                className="bg-white border border-gray-200 hover:border-gold text-navy text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-colors"
-                              >
-                                <Ticket className="w-4 h-4 text-gold" /> Download E-Ticket
-                              </button>
                               
-                              {activeTab === 'upcoming' && (
-                                <button onClick={() => router.push(`/dashboard/reschedule/${booking.id}`)} className="bg-white border border-gray-200 hover:border-gold text-navy text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm transition-colors">
-                                  <Calendar className="w-4 h-4 text-gold" /> Request Reschedule
+                              {/* Jika PENDING: Minta user upload bukti atau bayar */}
+                              {booking.status === 'PENDING' && (
+                                <button 
+                                  onClick={() => router.push(`/payment?order_id=${booking.id}`)}
+                                  className="bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-5 py-2.5 rounded-lg flex items-center gap-2 shadow-sm transition-colors"
+                                >
+                                  <CreditCard className="w-4 h-4" /> Pay Now / Upload Proof
                                 </button>
+                              )}
+
+                              {/* Jika WAITING_VERIFICATION: Tampilkan info sedang diverifikasi */}
+                              {booking.status === 'WAITING_VERIFICATION' && (
+                                <div className="bg-yellow-100 text-yellow-800 text-xs font-bold px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-sm border border-yellow-200">
+                                  <Clock className="w-4 h-4" /> Payment is being verified by Admin
+                                </div>
+                              )}
+
+                              {/* Jika PAID: Baru bisa Download Tiket & Reschedule */}
+                              {booking.status === 'PAID' && (
+                                <>
+                                  <button 
+                                    onClick={() => window.open(`/ticket/${booking.id}`, '_blank')}
+                                    className="bg-white border border-gray-200 hover:border-gold text-navy text-xs font-bold px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-sm transition-colors"
+                                  >
+                                    <Ticket className="w-4 h-4 text-gold" /> Download E-Ticket
+                                  </button>
+                                  
+                                  {activeTab === 'upcoming' && (
+                                    <button 
+                                      onClick={() => router.push(`/dashboard/reschedule/${booking.id}`)} 
+                                      className="bg-white border border-gray-200 hover:border-gold text-navy text-xs font-bold px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-sm transition-colors"
+                                    >
+                                      <Calendar className="w-4 h-4 text-gold" /> Request Reschedule
+                                    </button>
+                                  )}
+                                </>
                               )}
                             </div>
 
@@ -312,7 +348,7 @@ export default function DashboardPage() {
                                 </div>
                               </div>
 
-                              {/* Kolom 2: Voyage Journal / Review Manager */}
+                              {/* Kolom 2: Voyage Journal / Review Manager (Hanya jika tiket sudah PAID) */}
                               {booking.status === 'PAID' && (
                                 <div>
                                   <ReviewManager booking={booking} userProfile={userProfile} />
