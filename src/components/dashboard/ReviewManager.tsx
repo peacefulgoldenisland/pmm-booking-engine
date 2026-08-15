@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, UploadCloud, CheckCircle2, MessageSquareQuote, Lock, Calendar, Edit3, Loader2 } from 'lucide-react';
+import { Star, UploadCloud, CheckCircle2, MessageSquareQuote, Lock, Calendar, Edit3, Loader2, Camera, Sparkles } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Modal } from '@/components/ui/Modal';
@@ -27,12 +27,13 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
   const [comment, setComment] = useState('');
   const [reviewImage, setReviewImage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Hitung hari berjalan (Day 1 - 4)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const depDate = new Date(booking.date); // Asumsi field tanggal keberangkatan adalah 'date'
+  const depDate = new Date(booking.dateOfDeparture || booking.date); 
   depDate.setHours(0, 0, 0, 0);
 
   const diffTime = today.getTime() - depDate.getTime();
@@ -47,7 +48,7 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
     } catch (error) {
       console.error("Error fetching reviews:", error);
     } finally {
-      setIsLoading(false);
+      setTimeout(() => setIsLoading(false), 500);
     }
   };
 
@@ -55,26 +56,31 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
     fetchReviews();
   }, [booking.id]);
 
+  // UPLOAD MENGGUNAKAN API BACKEND (R2)
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsSubmitting(true);
+    setIsUploadingPhoto(true);
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
 
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
       const data = await response.json();
-      if (response.ok) setReviewImage(data.secure_url);
+      if (response.ok) {
+        setReviewImage(data.url);
+      } else {
+        alert(data.error || 'Upload failed');
+      }
     } catch (err) {
       console.error("Upload failed", err);
+      alert('Upload failed due to network error');
     } finally {
-      setIsSubmitting(false);
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -108,17 +114,17 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
           rating,
           comment,
           imageUrls: reviewImage ? [reviewImage] : [],
-          reviewId: editingReviewId // Kirim ID jika ini mode EDIT
+          reviewId: editingReviewId 
         })
       });
       const result = await response.json();
       if (response.ok) {
         if (!editingReviewId) {
-          // Hanya beri tahu soal poin jika ini ulasan baru
-          alert(`Success! You earned ${result.earnedPoints} Gold Points.`);
+          // Alert native bisa diganti toast notification nanti, untuk sekarang biarkan alert
+          alert(`Voyage log sealed. You have been awarded ${result.earnedPoints} Gold Points.`);
         }
         setIsModalOpen(false);
-        fetchReviews(); // Refresh lokal
+        fetchReviews(); 
       } else {
         alert(result.error);
       }
@@ -129,86 +135,151 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
     }
   };
 
-  if (isLoading) return <div className="animate-pulse h-20 bg-gray-100 rounded-2xl mt-4" />;
+  if (isLoading) {
+    return (
+      <div className="mt-8 border-t border-gray-200 pt-8 animate-pulse">
+         <div className="h-4 bg-gray-200 w-48 rounded mb-6" />
+         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+           <div className="h-24 bg-gray-100 rounded-sm" />
+           <div className="h-24 bg-gray-100 rounded-sm" />
+           <div className="h-24 bg-gray-100 rounded-sm" />
+           <div className="h-24 bg-gray-100 rounded-sm" />
+         </div>
+      </div>
+    );
+  }
 
   // Render 4 Hari Trip
   return (
-    <div className="mt-6 border-t border-gray-100 pt-6">
-      <h4 className="text-sm font-extrabold text-navy mb-4 flex items-center gap-2">
-        <Calendar className="w-4 h-4 text-gold" /> Voyage Daily Journal
+    <div className="mt-8 border-t border-gray-200 pt-8">
+      <h4 className="text-[10px] font-bold text-[var(--color-navy-900)] uppercase tracking-widest mb-6 flex items-center gap-2">
+        <Calendar className="w-3.5 h-3.5 text-[var(--color-gold-500)]" /> Captain's Logbook
       </h4>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((day) => {
           const isUnlocked = currentTripDay >= day;
           const existingReview = reviews.find(r => r.tripDay === day);
 
           return (
-            <div key={day} className={`p-4 rounded-2xl border ${existingReview ? 'bg-green-50 border-green-200' : isUnlocked ? 'bg-white border-gold/40 shadow-sm' : 'bg-gray-50 border-gray-100 opacity-70'}`}>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-extrabold uppercase tracking-widest text-navy">Day {day}</span>
-                {!isUnlocked && !existingReview && <Lock className="w-3 h-3 text-gray-400" />}
-                {existingReview && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+            <div 
+              key={day} 
+              className={`p-5 rounded-sm border transition-all relative overflow-hidden flex flex-col justify-between min-h-[110px] ${
+                existingReview 
+                  ? 'bg-[var(--color-surface-50)] border-[var(--color-gold-300)]' 
+                  : isUnlocked 
+                    ? 'bg-white border-gray-200 shadow-sm hover:border-[var(--color-gold-400)]' 
+                    : 'bg-gray-50 border-gray-100 opacity-60'
+              }`}
+            >
+              {existingReview && <div className="absolute top-0 left-0 w-full h-1 bg-[var(--color-gold-500)]" />}
+              
+              <div className="flex justify-between items-start mb-4">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Day {day}</span>
+                {!isUnlocked && !existingReview && <Lock className="w-3 h-3 text-gray-300" />}
+                {existingReview && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-gold-600)]" />}
               </div>
 
               {existingReview ? (
-                <div>
+                <div className="mt-auto">
                   <div className="flex gap-0.5 mb-2">
-                    {[...Array(existingReview.rating)].map((_, i) => <Star key={i} className="w-3 h-3 text-gold fill-gold" />)}
+                    {[...Array(existingReview.rating)].map((_, i) => <Star key={i} className="w-3 h-3 text-[var(--color-gold-500)] fill-[var(--color-gold-500)]" />)}
                   </div>
-                  <button onClick={() => openReviewModal(day, existingReview)} className="text-[10px] font-bold text-navy hover:text-gold flex items-center gap-1 underline underline-offset-2">
-                    <Edit3 className="w-3 h-3" /> Edit Journal
+                  <button onClick={() => openReviewModal(day, existingReview)} className="text-[9px] font-bold text-[var(--color-navy-900)] hover:text-[var(--color-gold-600)] uppercase tracking-widest flex items-center gap-1 transition-colors">
+                    <Edit3 className="w-3 h-3" /> Amend Log
                   </button>
                 </div>
               ) : isUnlocked ? (
-                <button onClick={() => openReviewModal(day)} className="w-full bg-gold/10 hover:bg-gold text-navy text-[10px] font-extrabold uppercase tracking-widest py-2 rounded-lg transition-colors flex justify-center items-center gap-1">
-                  <MessageSquareQuote className="w-3 h-3" /> Share (+50 Pts)
+                <button 
+                  onClick={() => openReviewModal(day)} 
+                  className="w-full mt-auto bg-[var(--color-navy-900)] hover:bg-[var(--color-navy-800)] text-white text-[9px] font-bold uppercase tracking-widest py-2 rounded-sm transition-colors flex justify-center items-center gap-1.5"
+                >
+                  <MessageSquareQuote className="w-3 h-3" /> Append (+50 Pts)
                 </button>
               ) : (
-                <p className="text-[10px] font-medium text-gray-400 mt-2">Unlocks on Day {day}</p>
+                <div className="mt-auto">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Classified</p>
+                </div>
               )}
             </div>
           );
         })}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Day ${selectedDay} Voyage Journal`}>
-        <div className="space-y-6">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Day ${selectedDay} Logbook Entry`}>
+        <div className="space-y-8">
+          
           {!editingReviewId && (
-            <p className="text-gray-500 text-sm text-center bg-gold/5 p-3 rounded-xl border border-gold/20">
-              Share your moments today and earn up to <strong className="text-gold">75 Gold Points</strong>!
-            </p>
+            <div className="bg-[var(--color-surface-50)] border border-[var(--color-gold-200)] p-4 rounded-sm flex items-start gap-3">
+              <Sparkles className="w-4 h-4 text-[var(--color-gold-600)] shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[var(--color-navy-900)] leading-relaxed">
+                Chronicle your maritime experiences for Day {selectedDay}. Detailed entries with imagery will be rewarded with up to <strong className="text-[var(--color-gold-600)]">75 Mileage Points</strong>.
+              </p>
+            </div>
           )}
 
-          <div className="flex justify-center gap-2">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star 
-                key={star} onClick={() => setRating(star)}
-                className={`w-10 h-10 cursor-pointer transition-transform hover:scale-110 ${rating >= star ? 'text-gold fill-gold drop-shadow-md' : 'text-gray-200'}`} 
-              />
-            ))}
+          <div>
+            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3 block text-center">Voyage Rating</label>
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star} 
+                  type="button"
+                  onClick={() => setRating(star)}
+                  className="focus:outline-none transition-transform hover:scale-110"
+                >
+                  <Star 
+                    className={`w-8 h-8 ${rating >= star ? 'text-[var(--color-gold-500)] fill-[var(--color-gold-500)] drop-shadow-sm' : 'text-gray-200'}`} 
+                  />
+                </button>
+              ))}
+            </div>
           </div>
 
-          <textarea 
-            value={comment} onChange={(e) => setComment(e.target.value)}
-            placeholder="Tell us about the cabins, the food, the mantas..."
-            className="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-navy focus:border-gold outline-none min-h-[120px] resize-none"
-          />
-
-          <div className="relative h-32 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center bg-gray-50 hover:bg-gold/5 transition-colors overflow-hidden">
-            <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-            {reviewImage ? (
-              <img src={reviewImage} alt="Review" className="w-full h-full object-cover" />
-            ) : (
-              <div className="text-center text-gray-400">
-                {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-gold" /> : <UploadCloud className="w-8 h-8 mx-auto mb-2" />}
-                <p className="text-xs font-bold uppercase tracking-widest">Add a Photo (Optional)</p>
-                {!editingReviewId && <p className="text-[10px] font-bold text-gold mt-1">+25 Extra Points</p>}
-              </div>
-            )}
+          <div>
+            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Captain's Notes</label>
+            <textarea 
+              value={comment} 
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Chronicle the ocean breeze, the manta rays, the exquisite dining..."
+              className="w-full bg-[var(--color-surface-50)] border border-gray-200 hover:border-[var(--color-gold-300)] focus:border-[var(--color-gold-500)] focus:ring-1 focus:ring-[var(--color-gold-500)] rounded-sm p-4 text-[var(--color-navy-900)] text-sm outline-none min-h-[120px] resize-none transition-all"
+            />
           </div>
 
-          <Button onClick={submitReview} isLoading={isSubmitting} className="w-full bg-navy hover:bg-[#122643] text-white py-4 rounded-xl font-bold">
-            {editingReviewId ? 'Update Journal' : 'Publish Journal'}
+          <div>
+            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center justify-between">
+              Visual Documentation
+              {!editingReviewId && <span className="text-[var(--color-gold-600)]">+25 Bonus Points</span>}
+            </label>
+            <div className="relative h-36 border border-dashed border-gray-300 rounded-sm flex items-center justify-center bg-[var(--color-surface-50)] hover:bg-white hover:border-[var(--color-gold-400)] transition-colors overflow-hidden group">
+              <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" disabled={isUploadingPhoto || isSubmitting} />
+              {reviewImage ? (
+                <>
+                  <img src={reviewImage} alt="Review Documentation" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-2"><Camera className="w-4 h-4"/> Replace Image</p>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center">
+                  {isUploadingPhoto ? (
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[var(--color-gold-500)]" />
+                  ) : (
+                    <UploadCloud className="w-6 h-6 mx-auto mb-2 text-gray-400 group-hover:text-[var(--color-navy-800)] transition-colors" />
+                  )}
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-navy-900)]">
+                    {isUploadingPhoto ? 'Encrypting File...' : 'Upload Photograph'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Button 
+            onClick={submitReview} 
+            isLoading={isSubmitting || isUploadingPhoto} 
+            className="w-full !rounded-sm !py-4 uppercase tracking-widest text-xs shadow-luxury"
+          >
+            {editingReviewId ? 'Amend Logbook' : 'Seal Logbook Entry'}
           </Button>
         </div>
       </Modal>

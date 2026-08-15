@@ -1,10 +1,8 @@
+// src/app/api/checkout/initiate/route.ts
 import { NextResponse } from 'next/server';
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { v4 as uuidv4 } from 'uuid';
-
-// Midtrans kita matikan/komen sementara agar performa API lebih cepat
-// const midtransClient = require('midtrans-client'); 
 
 const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY 
   ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY) 
@@ -72,7 +70,7 @@ export async function POST(request: Request) {
       bookingId: orderId,
       userId: userId,
       status: 'PENDING',
-      paymentMethod: paymentMethod, // MANUAL_BANK, MANUAL_QRIS, atau PAYPAL
+      paymentMethod: paymentMethod, 
       totalAmount: booking.total,
       basePrice: booking.basePrice || booking.total,
       discountAmount: booking.discountAmount || 0,
@@ -93,8 +91,6 @@ export async function POST(request: Request) {
 
     await bookingsRef.doc(orderId).set(newBooking);
 
-    // 5. Kembalikan Response ke Frontend
-    // Kita lempar orderId dan paymentMethod agar halaman /payment tahu instruksi apa yang harus dimunculkan
     return NextResponse.json({ 
       success: true, 
       orderId: orderId,

@@ -2,16 +2,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, Phone, Globe, CreditCard, Utensils, 
-  Camera, UploadCloud, CheckCircle, Loader2, ArrowLeft, FileText
+  Camera, UploadCloud, CheckCircle, Loader2, ArrowLeft, FileText, ChevronDown, CheckCircle2
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import Image from 'next/image';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -60,14 +63,13 @@ export default function EditProfilePage() {
       } catch (error) {
         console.error("Error fetching profile for edit:", error);
       } finally {
-        setIsLoading(false);
+        setTimeout(() => setIsLoading(false), 500);
       }
     });
 
     return () => unsubscribe();
   }, [router]);
 
-  // Logika Secure Upload via Next.js Backend API
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'passport') => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -77,7 +79,7 @@ export default function EditProfilePage() {
 
     try {
       const data = new FormData();
-      data.append('file', file); // Cukup kirim file, parameter keamanan diurus oleh API Backend
+      data.append('file', file);
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -90,8 +92,8 @@ export default function EditProfilePage() {
       try {
         result = JSON.parse(textResponse);
       } catch (err) {
-        console.error("Response bermasalah (bukan JSON):", textResponse);
-        throw new Error("Gagal memproses respons server. Pastikan API Route berjalan.");
+        console.error("Response bermasalah:", textResponse);
+        throw new Error("Failed to process server response.");
       }
 
       if (response.ok && result.url) {
@@ -100,11 +102,11 @@ export default function EditProfilePage() {
           [type === 'photo' ? 'photoUrl' : 'passportFileUrl']: result.url
         }));
       } else {
-        alert(`Gagal mengunggah: ${result.error || 'Terjadi kesalahan pada server'}`);
+        alert(`Upload failed: ${result.error || 'Server error'}`);
       }
     } catch (error: any) {
       console.error(`Error uploading ${type}:`, error);
-      alert(error.message || "Terjadi kesalahan koneksi saat mengunggah.");
+      alert(error.message || "Connection error during upload.");
     } finally {
       if (type === 'photo') setUploadingPhoto(false);
       if (type === 'passport') setUploadingPassport(false);
@@ -124,6 +126,7 @@ export default function EditProfilePage() {
       router.push('/dashboard/profile');
     } catch (error) {
       console.error("Error updating profile doc:", error);
+      alert("Failed to save changes. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -131,219 +134,275 @@ export default function EditProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center">
-        <Loader2 className="w-10 h-10 text-gold animate-spin mb-4" />
-        <p className="text-navy font-bold">Preparing Editorial Desk...</p>
+      <div className="min-h-screen bg-[var(--color-surface-50)] font-sans pb-24">
+        <DashboardHeader />
+        <main className="max-w-5xl mx-auto px-4 md:px-6 pt-32">
+          <Skeleton className="w-1/3 h-10 mb-12" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div className="lg:col-span-4 space-y-4">
+               <Skeleton className="w-full h-8" />
+               <Skeleton className="w-5/6 h-4" />
+            </div>
+            <div className="lg:col-span-8 space-y-6">
+              <Skeleton className="w-full h-[300px] rounded-sm" />
+              <Skeleton className="w-full h-[400px] rounded-sm" />
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] font-sans pb-20">
+    <div className="min-h-screen bg-[var(--color-surface-50)] font-sans pb-24">
       <DashboardHeader />
 
-      <main className="max-w-4xl mx-auto px-4 mt-8">
-        
-        <button 
-          type="button"
-          onClick={() => router.push('/dashboard/profile')}
-          className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-navy transition-colors mb-6 group"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Back to Identity Card
-        </button>
+      {/* HEADER MINIMALIS */}
+      <header className="bg-white pt-32 pb-8 px-4 md:px-6 border-b border-gray-200">
+        <div className="max-w-6xl mx-auto">
+            <button 
+                onClick={() => router.push('/dashboard/profile')} 
+                className="text-[var(--color-navy-900)] hover:text-[var(--color-gold-500)] text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 mb-6"
+            >
+                <ArrowLeft className="w-4 h-4" /> Return to Dossier
+            </button>
+            <h1 className="text-3xl md:text-4xl font-serif text-[var(--color-navy-900)]">Modify Identity</h1>
+            <p className="text-gray-500 font-light text-sm mt-2">Ensure your details match your travel documents exactly for harbor clearance.</p>
+        </div>
+      </header>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+      <main className="max-w-6xl mx-auto px-4 md:px-6 mt-12">
+        <form onSubmit={handleSubmit} className="space-y-16">
           
-          {/* ZONA UPLOAD FOTO PROFIL AVATAR */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100 flex flex-col items-center text-center relative overflow-hidden"
-          >
-            <div className="relative w-28 h-28 bg-navy/5 rounded-full p-1 border-2 border-dashed border-gray-200 group flex items-center justify-center overflow-hidden shadow-inner">
-              {formData.photoUrl ? (
-                <Image 
-                  src={formData.photoUrl} 
-                  alt="Avatar Preview" 
-                  width={112} 
-                  height={112} 
-                  className="w-full h-full object-cover rounded-full"
-                />
-              ) : (
-                <User className="w-10 h-10 text-gray-300" />
-              )}
-
-              <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white text-[10px] font-bold tracking-wider uppercase rounded-full">
-                <Camera className="w-5 h-5 text-gold mb-1" />
-                {uploadingPhoto ? "Uploading..." : "Change"}
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  onChange={(e) => handleFileChange(e, 'photo')} 
-                  disabled={uploadingPhoto}
-                />
-              </label>
-
-              {uploadingPhoto && (
-                <div className="absolute inset-0 bg-navy/70 flex items-center justify-center rounded-full">
-                  <Loader2 className="w-6 h-6 text-gold animate-spin" />
-                </div>
-              )}
+          {/* SECTION 1: AVATAR (SPLIT LAYOUT) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 border-b border-gray-200 pb-16">
+            <div className="lg:col-span-4">
+              <h2 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Profile Portrait</h2>
+              <p className="text-xs text-gray-500 font-light leading-relaxed">
+                Used for crew recognition during boarding and personalized concierge services on board.
+              </p>
             </div>
-            <h3 className="font-bold text-navy mt-4 text-lg">Profile Avatar</h3>
-            <p className="text-gray-400 text-xs mt-1">Recommended square image, maximum 2MB size.</p>
-          </motion.div>
+            <div className="lg:col-span-8">
+              <div className="bg-white p-8 border border-gray-200 rounded-sm shadow-sm flex items-center gap-8">
+                <div className="relative w-24 h-24 bg-[var(--color-surface-50)] rounded-full p-1 border border-gray-200 group overflow-hidden shrink-0">
+                  {formData.photoUrl ? (
+                    <Image 
+                      src={formData.photoUrl} 
+                      alt="Avatar Preview" 
+                      width={96} 
+                      height={96} 
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center">
+                      <User className="w-8 h-8 text-gray-300" />
+                    </div>
+                  )}
 
-          {/* FORM ISIAN DATA UTAMA */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="bg-white rounded-3xl p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100"
-          >
-            <h2 className="text-xl font-extrabold text-navy mb-6 pb-4 border-b border-gray-100">Personal Information</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest block">Full Name (As in Passport)</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input type="text" name="fullName" required value={formData.fullName} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-navy px-4 py-3 pl-12 rounded-xl focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all font-medium placeholder:text-gray-400 placeholder:font-normal" placeholder="John Doe" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest block">WhatsApp Number</label>
-                <div className="relative">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input type="tel" name="phone" required value={formData.phone} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-navy px-4 py-3 pl-12 rounded-xl focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all font-medium placeholder:text-gray-400 placeholder:font-normal" placeholder="+628123456789" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest block">Nationality</label>
-                <div className="relative">
-                  <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input type="text" name="nationality" required value={formData.nationality} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-navy px-4 py-3 pl-12 rounded-xl focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all font-medium placeholder:text-gray-400 placeholder:font-normal" placeholder="United Kingdom" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest block">Passport / ID Number</label>
-                <div className="relative">
-                  <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input type="text" name="passportNumber" required value={formData.passportNumber} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-navy px-4 py-3 pl-12 rounded-xl focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all font-medium placeholder:text-gray-400 placeholder:font-normal uppercase tracking-wider" placeholder="A1234567" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest block">Gender</label>
-                <select name="gender" value={formData.gender} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-navy px-4 py-3 rounded-xl focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all font-medium">
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest block">Dietary Requirements</label>
-                <div className="relative">
-                  <Utensils className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <select name="dietaryRequirements" value={formData.dietaryRequirements} onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 text-navy px-4 py-3 pl-12 rounded-xl focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all font-medium appearance-none">
-                    <option value="None">None (Eat Anything)</option>
-                    <option value="Vegetarian">Vegetarian</option>
-                    <option value="Vegan">Vegan</option>
-                    <option value="Halal">Halal</option>
-                    <option value="Gluten-Free">Gluten-Free</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* DRAG & DROP ZONA UPLOAD DOKUMEN PASPOR */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white rounded-3xl p-8 md:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-100"
-          >
-            <h2 className="text-xl font-extrabold text-navy mb-2">Travel Documentation</h2>
-            <p className="text-gray-400 text-xs mb-6">Upload a clear photo or scan of your passport main page for harbor clearance verification.</p>
-
-            {formData.passportFileUrl ? (
-              <div className="border-2 border-solid border-green-200 bg-green-50/50 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="bg-green-100 p-3 rounded-xl text-green-600 shadow-sm">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-navy text-sm">Passport Scanned Successfully</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Ready for clearance process.</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                  <a 
-                    href={formData.passportFileUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-xs font-bold text-navy hover:text-gold transition-colors underline underline-offset-4 w-1/2 md:w-auto text-center"
-                  >
-                    View Current File
-                  </a>
-                  <label className="bg-white border border-gray-200 text-navy hover:border-gold hover:text-gold px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer w-1/2 md:w-auto text-center">
-                    {uploadingPassport ? "Uploading..." : "Replace File"}
+                  <label className="absolute inset-0 bg-[var(--color-navy-900)]/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer text-white text-[9px] font-bold tracking-widest uppercase rounded-full">
+                    <Camera className="w-4 h-4 text-[var(--color-gold-500)] mb-1" />
+                    {uploadingPhoto ? "Wait" : "Change"}
                     <input 
                       type="file" 
-                      accept="image/*,application/pdf" 
+                      accept="image/*" 
                       className="hidden" 
-                      onChange={(e) => handleFileChange(e, 'passport')} 
-                      disabled={uploadingPassport}
+                      onChange={(e) => handleFileChange(e, 'photo')} 
+                      disabled={uploadingPhoto}
+                    />
+                  </label>
+
+                  {uploadingPhoto && (
+                    <div className="absolute inset-0 bg-[var(--color-navy-900)]/80 flex items-center justify-center rounded-full z-10">
+                      <Loader2 className="w-5 h-5 text-[var(--color-gold-500)] animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-[var(--color-navy-900)] mb-1">Recommended Format</h3>
+                  <p className="text-xs text-gray-500 font-light mb-4">Square image, Max 2MB (JPG, PNG)</p>
+                  <label className="bg-[var(--color-surface-50)] hover:bg-[var(--color-gold-50)] border border-gray-200 hover:border-[var(--color-gold-300)] text-[var(--color-navy-900)] px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer inline-block">
+                    {uploadingPhoto ? "Uploading..." : "Upload New Portrait"}
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={(e) => handleFileChange(e, 'photo')} 
+                      disabled={uploadingPhoto}
                     />
                   </label>
                 </div>
               </div>
-            ) : (
-              <label className="border-2 border-dashed border-gray-200 hover:border-gold bg-gray-50/50 hover:bg-gold/5 rounded-2xl p-8 flex flex-col items-center text-center cursor-pointer transition-all group relative">
-                {uploadingPassport ? (
-                  <Loader2 className="w-8 h-8 text-gold animate-spin mb-3" />
-                ) : (
-                  <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-gold group-hover:scale-110 transition-all mb-3" />
-                )}
-                <p className="text-sm font-bold text-navy">{uploadingPassport ? "Processing Secure Upload..." : "Click or drag to upload Passport image"}</p>
-                <p className="text-xs text-gray-400 mt-1">Supports JPG, PNG, or PDF up to 5MB</p>
-                <input 
-                  type="file" 
-                  accept="image/*,application/pdf" 
-                  className="hidden" 
-                  onChange={(e) => handleFileChange(e, 'passport')} 
-                  disabled={uploadingPassport}
-                />
-              </label>
-            )}
-          </motion.div>
+            </div>
+          </div>
+
+          {/* SECTION 2: PERSONAL DOSSIER (SPLIT LAYOUT) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 border-b border-gray-200 pb-16">
+            <div className="lg:col-span-4">
+              <h2 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Personal Details</h2>
+              <p className="text-xs text-gray-500 font-light leading-relaxed">
+                Please ensure this information matches your official travel documents perfectly to avoid delays during harbor clearance.
+              </p>
+            </div>
+            <div className="lg:col-span-8">
+              <div className="bg-white p-8 border border-gray-200 rounded-sm shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  
+                  <Input 
+                    label="Full Name (As in Passport)" 
+                    name="fullName"
+                    type="text" 
+                    required 
+                    value={formData.fullName} 
+                    onChange={handleChange} 
+                    placeholder="e.g. John Doe"
+                    icon={<User className="w-4 h-4" />} 
+                  />
+
+                  <Input 
+                    label="WhatsApp / Contact Number" 
+                    name="phone"
+                    type="tel" 
+                    required 
+                    value={formData.phone} 
+                    onChange={handleChange} 
+                    placeholder="+62 812..."
+                    icon={<Phone className="w-4 h-4" />} 
+                  />
+
+                  <Input 
+                    label="Nationality" 
+                    name="nationality"
+                    type="text" 
+                    required 
+                    value={formData.nationality} 
+                    onChange={handleChange} 
+                    placeholder="e.g. United Kingdom"
+                    icon={<Globe className="w-4 h-4" />} 
+                  />
+
+                  <Input 
+                    label="Passport / ID Number" 
+                    name="passportNumber"
+                    type="text" 
+                    required 
+                    value={formData.passportNumber} 
+                    onChange={handleChange} 
+                    placeholder="A1234567"
+                    className="uppercase tracking-widest font-mono text-sm"
+                    icon={<CreditCard className="w-4 h-4" />} 
+                  />
+
+                  {/* Custom Styled Selects */}
+                  <div className="flex flex-col w-full relative">
+                    <label className="text-xs font-medium text-gray-500 mb-1.5">Gender</label>
+                    <div className="relative flex items-center">
+                      <div className="absolute left-4 text-gray-400 pointer-events-none"><User className="w-4 h-4" /></div>
+                      <select name="gender" value={formData.gender} onChange={handleChange} className="w-full bg-[var(--color-surface-50)] border border-gray-200 hover:border-[var(--color-gold-400)] focus:border-[var(--color-gold-500)] focus:ring-4 focus:ring-[var(--color-gold-500)]/15 text-[var(--color-navy-900)] px-4 py-3.5 pl-11 rounded-xl appearance-none outline-none transition-all cursor-pointer">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                      </select>
+                      <div className="absolute right-4 text-gray-400 pointer-events-none"><ChevronDown className="w-4 h-4" /></div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col w-full relative">
+                    <label className="text-xs font-medium text-gray-500 mb-1.5">Dietary Restrictions</label>
+                    <div className="relative flex items-center">
+                      <div className="absolute left-4 text-gray-400 pointer-events-none"><Utensils className="w-4 h-4" /></div>
+                      <select name="dietaryRequirements" value={formData.dietaryRequirements} onChange={handleChange} className="w-full bg-[var(--color-surface-50)] border border-gray-200 hover:border-[var(--color-gold-400)] focus:border-[var(--color-gold-500)] focus:ring-4 focus:ring-[var(--color-gold-500)]/15 text-[var(--color-navy-900)] px-4 py-3.5 pl-11 rounded-xl appearance-none outline-none transition-all cursor-pointer">
+                        <option value="None">None (No Restrictions)</option>
+                        <option value="Vegetarian">Vegetarian</option>
+                        <option value="Vegan">Vegan</option>
+                        <option value="Halal">Halal</option>
+                        <option value="Gluten-Free">Gluten-Free</option>
+                      </select>
+                      <div className="absolute right-4 text-gray-400 pointer-events-none"><ChevronDown className="w-4 h-4" /></div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 3: TRAVEL DOCUMENT (SPLIT LAYOUT) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 border-b border-gray-200 pb-16">
+            <div className="lg:col-span-4">
+              <h2 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Clearance Document</h2>
+              <p className="text-xs text-gray-500 font-light leading-relaxed">
+                Upload a clear, legible scan or photo of your primary passport page. This file is encrypted and required by maritime law.
+              </p>
+            </div>
+            <div className="lg:col-span-8">
+              {formData.passportFileUrl ? (
+                <div className="bg-green-50/50 border border-green-200 p-8 rounded-sm shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex items-center gap-5">
+                    <div className="bg-green-100 p-3 rounded-full text-green-600 shrink-0">
+                      <CheckCircle2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="font-serif text-[var(--color-navy-900)] text-lg mb-0.5">Document Vaulted</p>
+                      <p className="text-xs text-gray-500 font-light">Your passport is securely stored on our servers.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 w-full md:w-auto">
+                    <a 
+                      href={formData.passportFileUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-[10px] font-bold text-[var(--color-navy-900)] hover:text-[var(--color-gold-600)] transition-colors uppercase tracking-widest underline underline-offset-4 w-1/2 md:w-auto text-center"
+                    >
+                      Inspect File
+                    </a>
+                    <label className="bg-white border border-gray-200 text-[var(--color-navy-900)] hover:border-[var(--color-gold-400)] hover:text-[var(--color-gold-600)] px-6 py-2.5 rounded-sm text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all cursor-pointer w-1/2 md:w-auto text-center">
+                      {uploadingPassport ? "Processing..." : "Update File"}
+                      <input 
+                        type="file" 
+                        accept="image/*,application/pdf" 
+                        className="hidden" 
+                        onChange={(e) => handleFileChange(e, 'passport')} 
+                        disabled={uploadingPassport}
+                      />
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <label className="block bg-[var(--color-surface-50)] hover:bg-[var(--color-gold-50)]/50 border-2 border-dashed border-gray-200 hover:border-[var(--color-gold-400)] rounded-sm p-12 flex flex-col items-center text-center cursor-pointer transition-colors group relative">
+                  {uploadingPassport ? (
+                    <Loader2 className="w-8 h-8 text-[var(--color-gold-500)] animate-spin mb-4" />
+                  ) : (
+                    <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-[var(--color-gold-500)] group-hover:scale-110 transition-all mb-4" />
+                  )}
+                  <p className="text-sm font-medium text-[var(--color-navy-900)] mb-1">
+                    {uploadingPassport ? "Encrypting and Uploading..." : "Click or drag file to upload"}
+                  </p>
+                  <p className="text-[11px] text-gray-400 font-light">Supports JPG, PNG, or PDF up to 5MB</p>
+                  <input 
+                    type="file" 
+                    accept="image/*,application/pdf" 
+                    className="hidden" 
+                    onChange={(e) => handleFileChange(e, 'passport')} 
+                    disabled={uploadingPassport}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
 
           {/* ACTION BUTTON SUBMIT */}
-          <motion.div className="flex justify-end pt-4">
-            <button 
+          <div className="flex justify-end pt-4">
+            <Button 
               type="submit"
               disabled={isSaving || uploadingPhoto || uploadingPassport}
-              className="bg-navy hover:bg-[#122643] text-white px-8 py-4 rounded-xl font-bold text-base shadow-xl shadow-navy/10 transition-colors flex items-center justify-center gap-2 min-w-[180px] disabled:opacity-60"
+              className="w-full md:w-auto !rounded-sm !py-4 !px-10 text-sm uppercase tracking-widest"
             >
               {isSaving ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin text-gold" />
-                  Saving...
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving Configuration</>
               ) : (
-                <>
-                  <CheckCircle className="w-5 h-5 text-gold" />
-                  Save Changes
-                </>
+                <>Finalize Identity Profile <CheckCircle className="w-4 h-4 ml-2" /></>
               )}
-            </button>
-          </motion.div>
+            </Button>
+          </div>
 
         </form>
       </main>

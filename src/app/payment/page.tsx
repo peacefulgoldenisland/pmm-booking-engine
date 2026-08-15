@@ -4,12 +4,16 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { 
   ShieldCheck, Ship, Loader2, Copy, CheckCircle2, 
-  UploadCloud, Clock, Landmark, QrCode, ArrowRight, AlertTriangle, CircleDollarSign
+  UploadCloud, Clock, Landmark, QrCode, ArrowRight, 
+  AlertTriangle, CircleDollarSign, ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 function PaymentContent() {
   const searchParams = useSearchParams();
@@ -17,23 +21,36 @@ function PaymentContent() {
   const orderId = searchParams.get('order_id');
   
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [bookingData, setBookingData] = useState<any>(null);
 
-  // State untuk Fitur Pembayaran Manual
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isExpired, setIsExpired] = useState(false);
   const [copiedText, setCopiedText] = useState('');
   
-  // State Upload
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
-  // 1. Fetch Data Booking dari Firebase
+  // 1. AUTH GUARD
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push('/login'); 
+        return;
+      }
+      setTimeout(() => setIsAuthChecking(false), 500); 
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  // 2. Fetch Booking Data
   useEffect(() => {
     async function fetchBooking() {
+      if (isAuthChecking) return; 
+
       if (!orderId) {
-        setErrorMessage("Order ID not found in the URL.");
+        setErrorMessage("Transaction reference missing from URL.");
         setIsLoading(false);
         return;
       }
@@ -45,20 +62,20 @@ function PaymentContent() {
         if (docSnap.exists()) {
           setBookingData({ id: docSnap.id, ...docSnap.data() });
         } else {
-          setErrorMessage("Booking invoice not found in our system.");
+          setErrorMessage("Invoice documentation could not be retrieved from our secure vault.");
         }
       } catch (error) {
         console.error("Error fetching booking:", error);
-        setErrorMessage("Secure connection failed. Please refresh.");
+        setErrorMessage("Secure connection interrupted. Please refresh the page.");
       } finally {
         setIsLoading(false);
       }
     }
 
     fetchBooking();
-  }, [orderId]);
+  }, [orderId, isAuthChecking]);
 
-  // 2. Countdown Timer Logic (1x24 Jam dari waktu createdAt)
+  // 3. Countdown Timer (1x24 Hours)
   useEffect(() => {
     if (!bookingData || !bookingData.createdAt || bookingData.status !== 'PENDING') return;
 
@@ -77,9 +94,8 @@ function PaymentContent() {
         const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
         const s = Math.floor((difference % (1000 * 60)) / 1000);
         
-        // Format dengan leading zero
         setTimeLeft(
-          `${h.toString().padStart(2, '0')}h : ${m.toString().padStart(2, '0')}m : ${s.toString().padStart(2, '0')}s`
+          `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
         );
       }
     }, 1000);
@@ -87,14 +103,13 @@ function PaymentContent() {
     return () => clearInterval(interval);
   }, [bookingData]);
 
-  // 3. Fungsi Salin (Copy to Clipboard)
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
     setCopiedText(type);
     setTimeout(() => setCopiedText(''), 2000);
   };
 
-  // 4. Fungsi Upload Bukti Pembayaran via Secure API Backend
+  // 4. Secure Upload via Backend API R2
   const handleUploadProof = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -104,10 +119,9 @@ function PaymentContent() {
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('orderId', bookingData.id); // SUNTIKKAN ORDER ID KE BACKEND
+    formData.append('orderId', bookingData.id); 
 
     try {
-      // Menembak ke API internal kita, BUKAN langsung ke Cloudinary
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
@@ -116,13 +130,10 @@ function PaymentContent() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Upload failed');
       
-      const uploadedUrl = data.url;
-
-      // Update State Lokal agar UI berubah langsung menjadi Centang Hijau
       setBookingData((prev: any) => ({
         ...prev,
         status: 'WAITING_VERIFICATION',
-        paymentProofUrl: uploadedUrl
+        paymentProofUrl: data.url
       }));
 
     } catch (err: any) {
@@ -132,128 +143,165 @@ function PaymentContent() {
     }
   };
 
-  // ==================== RENDERERS ====================
-
-  if (isLoading) {
+  if (isAuthChecking || isLoading) {
     return (
-      <div className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center">
-        <Loader2 className="w-12 h-12 text-gold animate-spin mb-4" />
-        <h2 className="text-xl font-bold text-navy">Accessing Vault...</h2>
+      <div className="min-h-screen bg-[var(--color-surface-50)] font-sans">
+        <header className="bg-white border-b border-gray-200 py-5 px-6"><Skeleton className="w-48 h-6" /></header>
+        <main className="max-w-7xl mx-auto px-4 md:px-6 pt-12">
+          <Skeleton className="w-full h-32 rounded-sm mb-8" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+             <div className="lg:col-span-7"><Skeleton className="w-full h-[500px] rounded-sm" /></div>
+             <div className="lg:col-span-5"><Skeleton className="w-full h-[400px] rounded-sm" /></div>
+          </div>
+        </main>
       </div>
     );
   }
 
   if (errorMessage) {
     return (
-      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl border border-red-100 shadow-xl text-center max-w-md w-full">
-          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-extrabold text-navy mb-2">Invoice Not Found</h2>
-          <p className="text-gray-500 text-sm mb-6">{errorMessage}</p>
-          <button onClick={() => router.push('/')} className="w-full bg-navy text-white py-3 rounded-xl font-bold">Return Home</button>
+      <div className="min-h-screen bg-[var(--color-surface-50)] flex items-center justify-center p-4">
+        <div className="bg-white p-8 md:p-12 rounded-sm border border-gray-200 shadow-luxury text-center max-w-md w-full">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">Invoice Unavailable</h2>
+          <p className="text-gray-500 text-xs font-light leading-relaxed mb-8">{errorMessage}</p>
+          <Button onClick={() => router.push('/')} variant="outline" className="w-full !rounded-sm !py-3 uppercase tracking-widest text-xs">
+            Return to Homepage
+          </Button>
         </div>
       </div>
     );
   }
 
   const { status, paymentMethod, totalAmount } = bookingData;
-
-  // Nilai statis client ID fallback jika proses environment lambat terbaca di sisi klien
   const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test";
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col selection:bg-gold selection:text-navy">
-      {/* Navbar Minimalis */}
-      <nav className="bg-navy py-5 shadow-xl sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Ship className="w-6 h-6 text-gold" />
-            <span className="text-lg font-extrabold tracking-widest text-white uppercase">
-              PMM <span className="text-gold">Reserve</span>
-            </span>
-          </div>
-          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
-            Secure Billing
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 md:p-8 mt-4 md:mt-8 pb-24">
-        
-        {/* SKENARIO 1: SUDAH BAYAR / SEDANG DIVERIFIKASI */}
-        {(status === 'WAITING_VERIFICATION' || status === 'PAID') && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-8 md:p-12 rounded-3xl shadow-xl border border-gray-100 text-center max-w-2xl mx-auto mt-10">
-            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 relative">
-              <div className="absolute inset-0 border-4 border-green-500 rounded-full animate-ping opacity-20" />
-              <CheckCircle2 className="w-10 h-10 text-green-500" />
+    <div className="min-h-screen bg-[var(--color-surface-50)] flex flex-col font-sans pb-24">
+      
+      {/* FULL WIDTH EDITORIAL HEADER */}
+      <header className="bg-white border-b border-gray-200 pt-6 pb-5 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <button onClick={() => router.back()} className="text-[var(--color-navy-900)] hover:text-[var(--color-gold-500)] text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" /> Modification Portal
+          </button>
+          
+          <div className="flex items-center gap-3 md:gap-6 self-center">
+            <div className="flex items-center gap-2 text-[var(--color-navy-900)]">
+              <div className="w-5 h-5 rounded-full bg-[var(--color-navy-900)] text-white flex items-center justify-center font-bold text-[10px]">1</div>
+              <span className="text-[10px] font-bold uppercase tracking-widest hidden md:block">Manifest</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-navy mb-3">
-              {status === 'PAID' ? 'Payment Successful!' : 'Verification in Progress'}
+            <div className="w-8 md:w-16 h-px bg-[var(--color-navy-900)]" />
+            <div className="flex items-center gap-2 text-[var(--color-gold-600)]">
+              <div className="w-5 h-5 rounded-full bg-[var(--color-gold-500)] text-white flex items-center justify-center font-bold text-[10px]">2</div>
+              <span className="text-[10px] font-bold uppercase tracking-widest hidden md:block">Remittance</span>
+            </div>
+            <div className="w-8 md:w-16 h-px bg-gray-300" />
+            <div className="flex items-center gap-2 text-gray-400">
+              <div className="w-5 h-5 rounded-full border border-gray-400 text-gray-400 flex items-center justify-center font-bold text-[10px]">3</div>
+              <span className="text-[10px] font-bold uppercase tracking-widest hidden md:block">Clearance</span>
+            </div>
+          </div>
+          <div className="hidden md:block w-40" />
+        </div>
+      </header>
+
+      {/* OPTIMIZED WIDE CONTAINER MAX-W-7XL */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 mt-10 md:mt-12">
+        
+        {/* ========================================================= */}
+        {/* SCENARIO 1: ALREADY PAID OR WAITING FOR VERIFICATION      */}
+        {/* ========================================================= */}
+        {(status === 'WAITING_VERIFICATION' || status === 'PAID') && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-12 md:p-20 rounded-sm shadow-luxury border border-gray-200/50 text-center max-w-3xl mx-auto mt-16 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-[var(--color-gold-500)]" />
+            <div className="absolute -right-20 -top-20 opacity-[0.03] pointer-events-none">
+                <ShieldCheck className="w-96 h-96 text-[var(--color-navy-900)]" />
+            </div>
+            
+            <div className="w-28 h-28 bg-green-50/50 rounded-full flex items-center justify-center mx-auto mb-10 relative border border-green-100">
+              {status === 'WAITING_VERIFICATION' && <div className="absolute inset-0 border-[3px] border-green-400 rounded-full animate-ping opacity-20" />}
+              <CheckCircle2 className="w-12 h-12 text-green-500" />
+            </div>
+            
+            <h1 className="text-4xl md:text-5xl font-serif text-[var(--color-navy-900)] mb-4">
+              {status === 'PAID' ? 'Authorization Secured' : 'Verifying Remittance'}
             </h1>
-            <p className="text-gray-500 mb-8 leading-relaxed">
+            
+            <p className="text-gray-500 text-sm font-light mb-12 leading-relaxed max-w-lg mx-auto">
               {status === 'PAID' 
-                ? "Your voyage is fully secured. We have sent your official E-Ticket to your email address." 
-                : "We have received your payment proof. Our harbor master is currently verifying the transaction. You will receive the E-Ticket shortly."}
+                ? "Your maritime expedition is fully secured. We have dispatched your official digital manifest to your registered email address. Prepare for an unforgettable journey." 
+                : "Your proof of remittance has been vaulted securely. The harbor master is executing manual verification. Your boarding documents will be issued momentarily."}
             </p>
-            <button onClick={() => router.push('/dashboard')} className="bg-navy hover:bg-[#122643] text-white px-8 py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2 mx-auto">
-              Go to My Vault <ArrowRight className="w-4 h-4" />
-            </button>
+            
+            <Button onClick={() => router.push('/dashboard')} variant="primary" className="!rounded-sm !py-4 !px-10 uppercase tracking-widest text-xs mx-auto flex items-center gap-3">
+              Return to Member Vault <ArrowRight className="w-4 h-4" />
+            </Button>
           </motion.div>
         )}
 
-        {/* SKENARIO 2: PENDING (BELUM BAYAR) */}
+        {/* ========================================================= */}
+        {/* SCENARIO 2: PENDING PAYMENT                               */}
+        {/* ========================================================= */}
         {status === 'PENDING' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             
-            {/* KOLOM KIRI: INSTRUKSI PEMBAYARAN */}
-            <div className="lg:col-span-7 space-y-6">
+            {/* LEFT COLUMN (7 Grids): INSTRUCTIONS & UPLOAD */}
+            <div className="lg:col-span-7 flex flex-col gap-8">
               
-              {/* Box Countdown */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-navy text-white p-6 rounded-3xl shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gold/10 rounded-full blur-2xl" />
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-red-500/20 p-2.5 rounded-xl border border-red-500/30">
-                    <Clock className="w-6 h-6 text-red-400" />
+              {/* WIDE Horizontal Countdown Banner */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-[var(--color-navy-900)] text-white p-8 md:p-10 rounded-sm shadow-luxury relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[500px] bg-[var(--color-gold-500)]/10 rounded-full blur-[100px] pointer-events-none" />
+                
+                <div className="relative z-10">
+                  <div className="inline-flex items-center gap-2 mb-3">
+                    <Clock className="w-4 h-4 text-[var(--color-gold-500)]" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-gold-500)]">Secure Window Active</span>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-extrabold text-white">Complete Payment In</h2>
-                    <p className="text-xs text-gray-400">Your reservation will be cancelled if unpaid.</p>
-                  </div>
+                  <h2 className="text-2xl md:text-3xl font-serif text-white mb-2 leading-tight">Complete Authorization</h2>
+                  <p className="text-xs text-gray-400 font-light max-w-xs leading-relaxed">This itinerary will expire automatically upon countdown termination.</p>
                 </div>
-                <div className="text-3xl md:text-4xl font-extrabold text-gold tracking-widest font-mono bg-black/20 p-4 rounded-2xl text-center border border-white/5 shadow-inner">
-                  {timeLeft || "--h : --m : --s"}
+                
+                <div className="relative z-10 text-4xl md:text-5xl font-serif text-white tracking-wider bg-white/5 border border-white/10 px-8 py-5 rounded-sm shadow-inner text-center shrink-0">
+                  {timeLeft || "00:00:00"}
                 </div>
               </motion.div>
 
-              {/* Box Detail Bank / QRIS / PAYPAL */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+              {/* Payment Details Box (Desktop Optimized Grid) */}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-8 md:p-12 rounded-sm shadow-sm border border-gray-200/60">
                 
                 {paymentMethod === 'MANUAL_BANK' && (
                   <>
-                    <h3 className="text-sm font-extrabold text-navy uppercase tracking-widest flex items-center gap-2 mb-6 border-b pb-4">
-                      <Landmark className="w-5 h-5 text-gold" /> Bank Transfer Details
+                    <h3 className="text-xl font-serif text-[var(--color-navy-900)] flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
+                      <Landmark className="w-5 h-5 text-[var(--color-gold-500)]" /> Wire Transfer Credentials
                     </h3>
                     
-                    <div className="space-y-6">
-                      <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Bank Name</p>
-                        <p className="text-lg font-extrabold text-navy">Bank Central Asia (BCA)</p>
+                    {/* BENTO GRID FOR BANK DETAILS */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-[var(--color-surface-50)] p-6 border border-gray-100 rounded-sm hover:border-[var(--color-gold-300)] transition-colors">
+                        <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Receiving Institution</p>
+                        <p className="text-lg font-serif text-[var(--color-navy-900)]">Bank Central Asia (BCA)</p>
                       </div>
 
-                      <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex items-center justify-between gap-4">
+                      <div className="bg-[var(--color-surface-50)] p-6 border border-gray-100 rounded-sm hover:border-[var(--color-gold-300)] transition-colors">
+                        <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Account Beneficiary</p>
+                        <p className="text-lg font-serif text-[var(--color-navy-900)] truncate">PT. PMM Voyage Indonesia</p>
+                      </div>
+
+                      <div className="md:col-span-2 bg-[var(--color-surface-50)] p-6 md:p-8 border border-gray-100 rounded-sm hover:border-[var(--color-gold-300)] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                         <div className="overflow-hidden">
-                          <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Account Number</p>
-                          <p className="text-xl md:text-2xl font-extrabold font-mono text-navy tracking-widest truncate">040 123 4567</p>
+                          <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Destination Account Number</p>
+                          <p className="text-3xl md:text-4xl font-mono font-bold text-[var(--color-navy-900)] tracking-widest truncate">040 123 4567</p>
                         </div>
-                        <button onClick={() => handleCopy('0401234567', 'account')} className="bg-white p-3 rounded-xl border border-gray-200 hover:border-gold hover:text-gold transition-colors shadow-sm shrink-0">
-                          {copiedText === 'account' ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-gray-500" />}
-                        </button>
-                      </div>
-
-                      <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                        <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Account Holder Name</p>
-                        <p className="text-lg font-extrabold text-navy">PT. PMM Voyage Indonesia</p>
+                        <Button 
+                          onClick={() => handleCopy('0401234567', 'account')} 
+                          variant="outline"
+                          className="shrink-0 !py-3 !px-6"
+                        >
+                          {copiedText === 'account' ? <><CheckCircle2 className="w-4 h-4 mr-2 text-green-500" /> Copied</> : <><Copy className="w-4 h-4 mr-2" /> Copy Number</>}
+                        </Button>
                       </div>
                     </div>
                   </>
@@ -261,24 +309,23 @@ function PaymentContent() {
 
                 {paymentMethod === 'MANUAL_QRIS' && (
                   <div className="text-center">
-                    <h3 className="text-sm font-extrabold text-navy uppercase tracking-widest flex items-center justify-center gap-2 mb-6 border-b pb-4">
-                      <QrCode className="w-5 h-5 text-gold" /> Scan to Pay (QRIS)
+                    <h3 className="text-xl font-serif text-[var(--color-navy-900)] flex items-center justify-center gap-3 mb-8 pb-4 border-b border-gray-100">
+                      <QrCode className="w-5 h-5 text-[var(--color-gold-500)]" /> Scan to Authorize
                     </h3>
-                    <div className="bg-gray-50 p-6 rounded-3xl inline-block border border-gray-200 shadow-inner mb-4">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QRIS PMM Voyage" className="w-48 h-48 md:w-56 md:h-56 object-contain" />
+                    <div className="bg-[var(--color-surface-50)] p-10 inline-block border border-gray-200 mb-6 rounded-sm shadow-inner">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QRIS PMM Voyage" className="w-56 h-56 md:w-64 md:h-64 object-contain mix-blend-multiply" />
                     </div>
-                    <p className="text-xs text-gray-500 font-medium">Scan using GoPay, OVO, Dana, ShopeePay, or Mobile Banking.</p>
+                    <p className="text-sm text-gray-500 font-light leading-relaxed max-w-md mx-auto">Utilize any integrated e-wallet application (GoPay, OVO, Dana) or Mobile Banking platform to scan this code.</p>
                   </div>
                 )}
 
                 {paymentMethod === 'PAYPAL' && (
                   <div className="text-center">
-                    <h3 className="text-sm font-extrabold text-navy uppercase tracking-widest flex items-center justify-center gap-2 mb-6 border-b pb-4">
-                      <CircleDollarSign className="w-5 h-5 text-gold" /> Pay with PayPal
+                    <h3 className="text-xl font-serif text-[var(--color-navy-900)] flex items-center justify-center gap-3 mb-8 pb-4 border-b border-gray-100">
+                      <CircleDollarSign className="w-5 h-5 text-[var(--color-gold-500)]" /> International Gateway
                     </h3>
                     
-                    {/* PAYPAL INTEGRATION BLOCK */}
-                    <div className="px-4 md:px-10 mt-6 relative z-10">
+                    <div className="max-w-md mx-auto mt-8 relative z-10">
                       <PayPalScriptProvider options={{ clientId: paypalClientId, currency: "USD", intent: "capture" }}>
                         <PayPalButtons
                           style={{ layout: "vertical", shape: "rect", color: "gold" }}
@@ -293,7 +340,6 @@ function PaymentContent() {
                             return data.id; 
                           }}
                           onApprove={async (data, actions) => {
-                            setIsLoading(true); 
                             try {
                               const res = await fetch('/api/paypal/capture-order', {
                                 method: 'POST',
@@ -305,13 +351,9 @@ function PaymentContent() {
                               });
                               const captureData = await res.json();
                               if (!res.ok) throw new Error(captureData.error || 'Failed to capture payment');
-
-                              // Transaksi Sukses! Update UI seketika
                               setBookingData((prev: any) => ({ ...prev, status: 'PAID' }));
                             } catch (err: any) {
                               setErrorMessage(`PayPal Error: ${err.message}`);
-                            } finally {
-                              setIsLoading(false);
                             }
                           }}
                           onError={(err) => {
@@ -322,116 +364,122 @@ function PaymentContent() {
                       </PayPalScriptProvider>
                     </div>
 
-                    <p className="text-xs text-gray-500 font-medium mt-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                      You will be securely redirected to PayPal. Your card details are encrypted and not stored on our servers.
+                    <p className="text-xs text-gray-500 font-light mt-10 bg-[var(--color-surface-50)] p-5 border border-gray-100 flex items-start gap-3 text-left rounded-sm">
+                      <ShieldCheck className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                      You will be securely redirected to PayPal's encrypted environment. Credit card credentials are never stored on our servers.
                     </p>
                   </div>
                 )}
               </motion.div>
 
+              {/* UPLOAD PROOF AREA (WIDE LAYOUT) */}
+              {paymentMethod !== 'PAYPAL' && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-8 md:p-12 border border-gray-200/60 shadow-sm rounded-sm">
+                  
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                    <div className="md:w-1/2">
+                        <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">
+                            Submit Documentation
+                        </h3>
+                        <p className="text-sm text-gray-500 font-light leading-relaxed mb-6">
+                            Upon completing the remittance, please upload your transaction receipt. This initiates our automated harbor clearance verification protocol.
+                        </p>
+                        <AnimatePresence>
+                            {uploadError && (
+                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-4 text-[10px] font-bold uppercase tracking-widest text-red-600 bg-red-50 p-4 border border-red-100 flex items-center gap-2">
+                                <AlertTriangle className="w-4 h-4" /> {uploadError}
+                            </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    <div className="md:w-1/2 relative h-48 md:h-56">
+                        <input 
+                            type="file" 
+                            accept="image/*,.pdf" 
+                            onChange={handleUploadProof}
+                            disabled={isUploading || isExpired}
+                            className="hidden" 
+                            id="proof-upload" 
+                        />
+                        <label 
+                            htmlFor="proof-upload" 
+                            className={`flex flex-col items-center justify-center gap-4 h-full w-full border-2 border-dashed cursor-pointer transition-all rounded-sm ${
+                            isExpired ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed' :
+                            isUploading ? 'border-[var(--color-gold-500)] bg-[var(--color-gold-50)] text-[var(--color-gold-600)]' : 
+                            'border-gray-300 hover:border-[var(--color-navy-800)] bg-[var(--color-surface-50)] hover:bg-white text-[var(--color-navy-900)] group'
+                            }`}
+                        >
+                            {isUploading ? (
+                            <>
+                                <Loader2 className="w-8 h-8 animate-spin" /> 
+                                <span className="text-[10px] uppercase font-bold tracking-widest">Encrypting Transfer...</span>
+                            </>
+                            ) : (
+                            <>
+                                <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-[var(--color-navy-800)] transition-colors" />
+                                <div>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-center mb-1.5">Select Receipt File</p>
+                                    <p className="text-[10px] text-gray-400 font-light">JPG, PNG, PDF up to 5MB</p>
+                                </div>
+                            </>
+                            )}
+                        </label>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </div>
 
-            {/* KOLOM KANAN: TOTAL TAGIHAN & FORM UPLOAD */}
+            {/* RIGHT COLUMN (5 Grids): PAYMENT SUMMARY WIDGET */}
             <div className="lg:col-span-5 space-y-6">
-              
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gold/30 relative">
-                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-                  <ShieldCheck className="w-24 h-24 text-gold" />
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white p-8 md:p-12 shadow-luxury border border-gray-200/50 relative lg:sticky lg:top-32 rounded-sm overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-[var(--color-gold-500)]" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-gold-500)]/5 pointer-events-none rounded-bl-full" />
+                
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-8">Invoice Summary</h3>
+                
+                <div className="flex justify-between items-center pb-6 border-b border-gray-100 mb-8">
+                  <span className="text-base font-serif text-[var(--color-navy-900)]">Reference No.</span>
+                  <span className="font-mono text-xs font-bold text-[var(--color-navy-900)] tracking-widest bg-[var(--color-surface-50)] px-3 py-1.5 border border-gray-200 rounded-sm">{orderId}</span>
                 </div>
                 
-                <h3 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-6">Payment Summary</h3>
-                
-                <div className="flex justify-between items-center pb-4 border-b border-gray-100 mb-4">
-                  <span className="text-sm font-bold text-gray-500">Booking ID</span>
-                  <span className="font-mono text-xs font-bold text-navy bg-gray-100 px-2 py-1 rounded">{orderId}</span>
-                </div>
-                
-                <div className="pt-2">
-                  <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Total Transfer Amount</p>
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-3xl md:text-4xl font-extrabold text-navy tracking-tighter">
-                      <span className="text-lg text-gray-400 mr-1">IDR</span>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-3">Total Amount Due</p>
+                  <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-gray-100 pb-8 mb-6">
+                    <p className="text-4xl md:text-5xl font-serif text-[var(--color-navy-900)] tracking-tight">
+                      <span className="text-lg font-sans text-gray-400 font-normal mr-2">IDR</span>
                       {totalAmount?.toLocaleString('id-ID')}
                     </p>
                     {paymentMethod !== 'PAYPAL' && (
-                      <button onClick={() => handleCopy(totalAmount.toString(), 'amount')} className="bg-gray-50 p-2.5 rounded-xl border border-gray-200 hover:border-gold hover:text-gold transition-colors">
-                        {copiedText === 'amount' ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-gray-500" />}
+                      <button 
+                        onClick={() => handleCopy(totalAmount.toString(), 'amount')} 
+                        className="bg-[var(--color-surface-50)] px-4 py-3 border border-gray-200 hover:border-[var(--color-gold-400)] hover:text-[var(--color-gold-600)] transition-colors shrink-0 outline-none flex justify-center items-center rounded-sm w-full xl:w-auto"
+                      >
+                        {copiedText === 'amount' ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-gray-400" />}
                       </button>
                     )}
                   </div>
                   
                   {paymentMethod === 'PAYPAL' ? (
-                     <div className="mt-4 bg-gray-50 border border-gray-100 p-3 rounded-xl flex items-start gap-2">
-                       <CircleDollarSign className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
-                       <p className="text-[10px] text-gray-500 font-bold leading-relaxed">
-                         Converted to USD internally via PayPal secure exchange rate during checkout.
+                     <div className="flex items-start gap-4 bg-[var(--color-surface-50)] p-5 border border-gray-100 rounded-sm">
+                       <CircleDollarSign className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
+                       <p className="text-[11px] text-gray-500 font-light leading-relaxed">
+                         Converted to USD dynamically via PayPal secure exchange rate during checkout window.
                        </p>
                      </div>
                   ) : (
-                    <div className="mt-4 bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
-                      <AlertTriangle className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                      <p className="text-[10px] text-blue-700 font-bold leading-relaxed">
-                        Please transfer <strong className="underline">exactly</strong> the amount shown above to speed up the automated verification process.
+                    <div className="flex items-start gap-4 bg-red-50/50 p-5 border border-red-100 rounded-sm">
+                      <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-red-800 font-medium leading-relaxed">
+                        Exact nominal transfer is strictly required. Any discrepancy will delay the automated harbor clearance verification.
                       </p>
                     </div>
                   )}
                 </div>
               </motion.div>
-
-              {/* FORM UPLOAD (Hanya muncul jika bukan PayPal) */}
-              {paymentMethod !== 'PAYPAL' && (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                  <h3 className="text-sm font-extrabold text-navy mb-4 flex items-center gap-2">
-                    <UploadCloud className="w-5 h-5 text-gold" /> Upload Payment Proof
-                  </h3>
-                  <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-                    Once you have completed the transfer, please upload a screenshot or photo of the receipt here.
-                  </p>
-
-                  <AnimatePresence>
-                    {uploadError && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-4 text-[10px] font-bold text-red-500 bg-red-50 p-3 rounded-xl border border-red-100">
-                        {uploadError}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <div className="relative h-32">
-                    <input 
-                      type="file" 
-                      accept="image/*,.pdf" 
-                      onChange={handleUploadProof}
-                      disabled={isUploading || isExpired}
-                      className="hidden" 
-                      id="proof-upload" 
-                    />
-                    <label 
-                      htmlFor="proof-upload" 
-                      className={`flex flex-col items-center justify-center gap-3 h-full rounded-2xl border-2 border-dashed cursor-pointer transition-all ${
-                        isExpired ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed' :
-                        isUploading ? 'border-gold bg-gold/5 text-gold' : 
-                        'border-gray-300 hover:border-gold hover:bg-gold/5 text-navy group'
-                      }`}
-                    >
-                      {isUploading ? (
-                        <>
-                          <Loader2 className="w-8 h-8 animate-spin" /> 
-                          <span className="text-xs font-bold">Uploading securely...</span>
-                        </>
-                      ) : (
-                        <>
-                          <div className="bg-gray-100 p-3 rounded-full group-hover:bg-white group-hover:shadow-sm transition-all">
-                            <UploadCloud className="w-6 h-6 text-gray-400 group-hover:text-gold" />
-                          </div>
-                          <span className="text-xs font-bold text-gray-500 group-hover:text-navy">Click to browse file</span>
-                        </>
-                      )}
-                    </label>
-                  </div>
-                </motion.div>
-              )}
-
             </div>
+
           </div>
         )}
 
@@ -442,7 +490,7 @@ function PaymentContent() {
 
 export default function PaymentPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center text-navy font-bold">Initializing Secure Connection...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--color-surface-50)] flex flex-col items-center justify-center font-serif text-2xl text-[var(--color-navy-900)]"><Loader2 className="w-10 h-10 animate-spin text-[var(--color-gold-500)] mb-4"/> Establishing Secure Gateway...</div>}>
       <PaymentContent />
     </Suspense>
   );

@@ -1,13 +1,18 @@
+// src/app/api/upload/route.ts
 import { NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { v4 as uuidv4 } from 'uuid'; // Menggunakan uuid yang sudah ada di project
 
-// 1. Konfigurasi Cloudinary
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+// 1. Konfigurasi Cloudflare R2 (S3 Compatible)
+const s3Client = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID as string,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY as string,
+  },
 });
 
 // 2. Konfigurasi Firebase Admin (Untuk By-pass Firestore Rules)
@@ -25,7 +30,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const orderId = formData.get('orderId') as string | null; // Parameter baru
+    const orderId = formData.get('orderId') as string | null;
 
     if (!file) {
       return NextResponse.json({ error: 'Tidak ada file yang dikirimkan' }, { status: 400 });
@@ -34,25 +39,25 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Jika ada orderId, masukkan ke folder payment_proofs. Jika tidak, ke profiles.
+    // Penentuan folder
     const folderName = orderId ? 'pmm_payment_proofs' : 'pmm_reserve_profiles';
+    
+    // Ekstraksi ekstensi file dan pembuatan nama unik
+    const fileExtension = file.name.split('.').pop() || 'jpg';
+    const uniqueFileName = `${folderName}/${Date.now()}-${uuidv4()}.${fileExtension}`;
 
-    // 3. Proses Unggah ke Cloudinary
-    const uploadResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        { 
-          folder: folderName,
-          upload_preset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET 
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
-      uploadStream.end(buffer);
+    // 3. Proses Unggah ke Cloudflare R2
+    const uploadCommand = new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: uniqueFileName,
+      Body: buffer,
+      ContentType: file.type,
     });
 
-    const secureUrl = (uploadResult as any).secure_url;
+    await s3Client.send(uploadCommand);
+
+    // Konstruksi URL Publik dari Cloudflare
+    const secureUrl = `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${uniqueFileName}`;
 
     // 4. JIKA ADA ORDER ID: Update Status di Firestore secara aman via Backend
     if (orderId && serviceAccount) {

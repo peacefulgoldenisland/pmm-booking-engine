@@ -1,4 +1,3 @@
-// src/app/rewards/page.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -15,38 +14,35 @@ import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firesto
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { DashboardHeader } from '@/components/layout/DashboardHeader'; 
+import { Skeleton } from '@/components/ui/Skeleton';
 
 // --- PEMETAAN IKON DINAMIS ---
 const ICON_MAP: Record<string, any> = {
   Ticket, Gift, Crown, Tag, Star, Gem
 };
 
-// --- EXPANDED FALLBACK CATALOG (MAX 500K) ---
 const FALLBACK_CATALOG = [
-  { id: 'VOUCHER-50K', name: 'IDR 50,000 Discount', desc: 'A quick treat. Applicable to any booking without restrictions.', cost: 5, value: 50000, iconName: 'Ticket' },
-  { id: 'VOUCHER-100K', name: 'IDR 100,000 Discount', desc: 'Perfect for Sharing Deck Upstair. Enjoy the ocean breeze for less.', cost: 10, value: 100000, iconName: 'Tag' },
-  { id: 'VOUCHER-150K', name: 'IDR 150,000 Discount', desc: 'Ideal for Down Deck Cabin (1 Pax). Solo travel made sweeter.', cost: 15, value: 150000, iconName: 'Gift' },
-  { id: 'VOUCHER-250K', name: 'IDR 250,000 Discount', desc: 'Best value for Down Deck Cabin (2 Pax). Upgrade your comfort.', cost: 25, value: 250000, iconName: 'Star' },
-  { id: 'VOUCHER-350K', name: 'IDR 350,000 Discount', desc: 'Premium savings. Recommended for Private Cabin Standard.', cost: 35, value: 350000, iconName: 'Gem' },
-  { id: 'VOUCHER-500K', name: 'VVIP IDR 500,000 Discount', desc: 'Maximum Limit Voucher! Highly recommended for Private Sea View.', cost: 50, value: 500000, iconName: 'Crown' },
+  { id: 'VOUCHER-50K', name: 'IDR 50,000 Privilege', desc: 'A quick treat. Applicable to any booking without restrictions.', cost: 5, value: 50000, iconName: 'Ticket' },
+  { id: 'VOUCHER-100K', name: 'IDR 100,000 Privilege', desc: 'Perfect for Sharing Deck Upstair. Enjoy the ocean breeze for less.', cost: 10, value: 100000, iconName: 'Tag' },
+  { id: 'VOUCHER-150K', name: 'IDR 150,000 Privilege', desc: 'Ideal for Down Deck Cabin (1 Pax). Solo travel made sweeter.', cost: 15, value: 150000, iconName: 'Gift' },
+  { id: 'VOUCHER-250K', name: 'IDR 250,000 Privilege', desc: 'Best value for Down Deck Cabin (2 Pax). Upgrade your comfort.', cost: 25, value: 250000, iconName: 'Star' },
+  { id: 'VOUCHER-350K', name: 'IDR 350,000 Privilege', desc: 'Premium savings. Recommended for Private Cabin Standard.', cost: 35, value: 350000, iconName: 'Gem' },
+  { id: 'VOUCHER-500K', name: 'VVIP IDR 500,000 Privilege', desc: 'Maximum Limit Voucher! Highly recommended for Private Sea View.', cost: 50, value: 500000, iconName: 'Crown' },
 ];
 
 export default function RewardsPage() {
   const router = useRouter();
   
-  // States
   const [user, setUser] = useState<any>(null);
   const [userData, setUserData] = useState<any>(null);
   const [catalog, setCatalog] = useState<any[]>([]);
   const [myVouchers, setMyVouchers] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'catalog' | 'my-vouchers'>('catalog');
   
-  // Loading States
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isRedeeming, setIsRedeeming] = useState(false);
 
-  // Modal States
   const [selectedReward, setSelectedReward] = useState<any>(null);
   const [modalState, setModalState] = useState<'confirm' | 'success' | 'error'>('confirm');
   const [errorMessage, setErrorMessage] = useState('');
@@ -60,7 +56,7 @@ export default function RewardsPage() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Fetch Data Poin, Katalog Admin, & Voucher User
+  // 2. Fetch Data
   useEffect(() => {
     const fetchRewardsData = async () => {
       if (!user) return;
@@ -94,7 +90,7 @@ export default function RewardsPage() {
         console.error("Error fetching rewards data:", error);
         if (catalog.length === 0) setCatalog(FALLBACK_CATALOG);
       } finally {
-        setIsLoadingData(false);
+        setTimeout(() => setIsLoadingData(false), 600); // Smooth skeleton transition
       }
     };
 
@@ -148,142 +144,171 @@ export default function RewardsPage() {
 
   if (isAuthChecking) {
     return (
-      <div className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center selection:bg-gold selection:text-navy">
-        <Loader2 className="w-12 h-12 text-gold animate-spin mb-4" />
+      <div className="min-h-screen bg-[var(--color-surface-50)] flex flex-col items-center justify-center font-sans">
+        <Loader2 className="w-8 h-8 text-[var(--color-gold-500)] animate-spin mb-4" />
       </div>
     );
   }
 
+  // Jika Tamu Belum Login
   if (!user) {
     return (
-      <div className="min-h-screen bg-navy flex flex-col items-center justify-center text-center px-4 relative overflow-hidden selection:bg-gold selection:text-navy">
+      <div className="min-h-screen bg-[var(--color-navy-900)] flex flex-col items-center justify-center text-center px-4 relative overflow-hidden font-sans">
         <DashboardHeader /> 
         <div className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-overlay" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?q=80&w=2000&auto=format&fit=crop")' }} />
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[var(--color-gold-500)]/10 rounded-full blur-[100px] pointer-events-none" />
         
-        <div className="relative z-10 max-w-md mt-20">
-          <div className="w-24 h-24 bg-white/10 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-8 backdrop-blur-sm shadow-xl">
-            <Crown className="w-12 h-12 text-gold" />
+        <div className="relative z-10 max-w-md mt-20 p-12 bg-white/5 backdrop-blur-md rounded-sm border border-white/10 shadow-luxury">
+          <div className="w-20 h-20 bg-[var(--color-gold-500)]/10 rounded-full border border-[var(--color-gold-500)]/20 flex items-center justify-center mx-auto mb-8 shadow-inner">
+            <Crown className="w-10 h-10 text-[var(--color-gold-500)]" />
           </div>
-          <h1 className="text-4xl font-extrabold text-white mb-4">VVIP Rewards</h1>
-          <p className="text-gray-400 mb-8 leading-relaxed">Exclusive discounts up to IDR 500,000 for our esteemed members. Please sign in to view your balance and redeem vouchers.</p>
-          <button onClick={() => router.push('/login')} className="w-full bg-gold text-navy hover:bg-[#b8972e] py-4 rounded-2xl font-bold shadow-xl transition-all hover:-translate-y-1 flex items-center justify-center gap-2">
-            Sign In to Member Portal <ArrowRight className="w-5 h-5" />
-          </button>
+          <h1 className="text-3xl font-serif text-white mb-4">VVIP Guild</h1>
+          <p className="text-gray-400 mb-10 leading-relaxed font-light text-sm">Exclusive cabin privileges up to IDR 500,000. Please authenticate your session to access the guild catalog.</p>
+          <Button onClick={() => router.push('/login')} className="w-full !rounded-sm !py-4 uppercase tracking-widest text-xs">
+            Authenticate Session <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] font-sans selection:bg-gold selection:text-navy pb-24 pt-24">
+    <div className="min-h-screen bg-[var(--color-surface-50)] font-sans pb-24 pt-24">
       <DashboardHeader />
 
-      <main className="max-w-6xl mx-auto px-4 mt-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-navy rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden mb-10 shadow-2xl">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gold/15 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-          
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-extrabold mb-3">Rewards Club</h1>
-              <p className="text-gray-400 max-w-md leading-relaxed text-sm md:text-base">Exchange your Gold Points for luxury cabin discounts. Our vouchers are dynamically updated to give you the best deals across the archipelago.</p>
+      {/* FULL WIDTH LUXURY HERO HEADER */}
+      <div className="bg-[var(--color-navy-900)] pt-12 pb-24 px-4 md:px-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[var(--color-gold-500)]/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/5 to-transparent mix-blend-overlay" />
+        
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-[var(--color-gold-500)]/10 text-[var(--color-gold-400)] font-bold text-[10px] uppercase tracking-widest mb-4 border border-[var(--color-gold-500)]/20">
+              <Crown className="w-3.5 h-3.5" /> PMM Reserve
             </div>
-            
-            <div className="bg-white/10 border border-white/20 p-6 md:p-8 rounded-[2rem] backdrop-blur-md flex items-center gap-6 min-w-[280px] justify-center shadow-inner">
-              <div className="bg-gold/20 p-4 rounded-full border border-gold/30">
-                <Sparkles className="w-8 h-8 text-gold" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Available Balance</p>
-                {isLoadingData ? (
-                  <Loader2 className="w-6 h-6 animate-spin text-gold mt-2" />
-                ) : (
-                  <p className="text-4xl font-extrabold text-gold">{userData?.pointsBalance || 0} <span className="text-lg font-bold text-white">Pts</span></p>
-                )}
-              </div>
-            </div>
+            <h1 className="text-4xl lg:text-5xl font-serif text-white leading-tight mb-3">Rewards Guild</h1>
+            <p className="text-gray-400 font-light text-sm max-w-lg leading-relaxed">
+              Exchange your accumulated voyage miles for exclusive cabin privileges. Catalog offerings are dynamically updated by the harbor master.
+            </p>
           </div>
-        </motion.div>
+          
+          <div className="bg-white/5 border border-white/10 p-6 lg:p-8 backdrop-blur-md min-w-[240px] text-center md:text-right rounded-sm shadow-inner">
+            <p className="text-[10px] font-bold text-[var(--color-gold-400)] uppercase tracking-widest mb-1.5 flex items-center justify-center md:justify-end gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> Mileage Balance
+            </p>
+            {isLoadingData ? (
+              <Skeleton variant="text" className="w-32 h-10 md:ml-auto mt-2 bg-white/20" />
+            ) : (
+              <p className="text-5xl font-serif text-white tracking-tight">
+                {userData?.pointsBalance || 0} <span className="text-lg font-sans text-gray-400 font-normal">Pts</span>
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 bg-white p-2 rounded-2xl shadow-sm border border-gray-100 w-max mx-auto sm:mx-0">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 -mt-10 relative z-20">
+        
+        {/* EDITORIAL TAB NAVIGATION */}
+        <div className="flex overflow-x-auto no-scrollbar gap-8 mb-10 border-b border-gray-200 w-full bg-white px-8 pt-8 rounded-t-sm shadow-sm">
           <button 
             onClick={() => setActiveTab('catalog')} 
-            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all w-full sm:w-auto ${activeTab === 'catalog' ? 'bg-navy text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            className={`pb-4 flex items-center gap-2 font-medium text-sm transition-all whitespace-nowrap relative ${activeTab === 'catalog' ? 'text-[var(--color-navy-900)]' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            Reward Catalog
+            <Gift className="w-4 h-4" /> Privilege Catalog
+            {activeTab === 'catalog' && <motion.div layoutId="activeTabReward" className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[var(--color-navy-900)]" />}
           </button>
           <button 
             onClick={() => setActiveTab('my-vouchers')} 
-            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all w-full sm:w-auto ${activeTab === 'my-vouchers' ? 'bg-navy text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+            className={`pb-4 flex items-center gap-2 font-medium text-sm transition-all whitespace-nowrap relative ${activeTab === 'my-vouchers' ? 'text-[var(--color-navy-900)]' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            My Active Vouchers
+            <Ticket className="w-4 h-4" /> Active Codes
+            {activeTab === 'my-vouchers' && <motion.div layoutId="activeTabReward" className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[var(--color-navy-900)]" />}
           </button>
         </div>
 
         <AnimatePresence mode="wait">
           
+          {/* TAB 1: CATALOG */}
           {activeTab === 'catalog' && (
-            <motion.div key="catalog" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {catalog.map((reward) => {
-                const Icon = ICON_MAP[reward.iconName] || Ticket;
-                const canAfford = (userData?.pointsBalance || 0) >= reward.cost;
+            <motion.div key="catalog" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {isLoadingData ? (
+                Array(6).fill(0).map((_, i) => (
+                  <Skeleton key={i} className="w-full h-[280px] rounded-sm shadow-sm" />
+                ))
+              ) : (
+                catalog.map((reward) => {
+                  const Icon = ICON_MAP[reward.iconName] || Ticket;
+                  const canAfford = (userData?.pointsBalance || 0) >= reward.cost;
 
-                return (
-                  <div key={reward.id} className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl border border-gray-100 transition-all flex flex-col group hover:-translate-y-1.5">
-                    <div className="w-14 h-14 bg-gray-50 group-hover:bg-gold/10 rounded-2xl flex items-center justify-center mb-5 transition-colors border border-gray-100 group-hover:border-gold/30 shadow-sm">
-                      <Icon className="w-6 h-6 text-navy group-hover:text-gold transition-colors" />
+                  return (
+                    <div key={reward.id} className="bg-white rounded-sm p-8 shadow-sm hover:shadow-luxury border border-gray-200/50 transition-all flex flex-col group relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-full h-1 bg-[var(--color-gold-500)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      
+                      <div className="w-12 h-12 bg-[var(--color-surface-50)] group-hover:bg-[var(--color-gold-50)] rounded-lg flex items-center justify-center mb-6 transition-colors border border-gray-100 group-hover:border-[var(--color-gold-200)]">
+                        <Icon className="w-5 h-5 text-[var(--color-navy-800)] group-hover:text-[var(--color-gold-600)] transition-colors" />
+                      </div>
+                      
+                      <h3 className="text-xl font-serif text-[var(--color-navy-900)] mb-2 pr-4">{reward.name}</h3>
+                      <p className="text-xs text-gray-500 mb-8 font-light leading-relaxed flex-grow">{reward.desc}</p>
+                      
+                      <div className="pt-6 border-t border-gray-100 mt-auto flex items-end justify-between">
+                        <div>
+                          <p className="text-[9px] uppercase font-bold tracking-widest text-gray-400 mb-1">Required Miles</p>
+                          <div className="font-serif text-[var(--color-navy-900)] text-2xl">{reward.cost}</div>
+                        </div>
+                        <Button 
+                          onClick={() => openRedeemModal(reward)}
+                          disabled={!canAfford}
+                          variant={canAfford ? 'primary' : 'outline'}
+                          className="!rounded-sm !py-2.5 !px-5 !text-xs uppercase tracking-widest"
+                        >
+                          Redeem
+                        </Button>
+                      </div>
                     </div>
-                    <h3 className="text-xl font-extrabold text-navy mb-2">{reward.name}</h3>
-                    <p className="text-xs text-gray-500 mb-6 leading-relaxed flex-grow">{reward.desc}</p>
-                    
-                    <div className="pt-5 border-t border-gray-100 mt-auto flex items-center justify-between">
-                      <div className="font-extrabold text-gold text-xl">{reward.cost} <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pts</span></div>
-                      <button 
-                        onClick={() => openRedeemModal(reward)}
-                        disabled={!canAfford || isLoadingData}
-                        className="bg-navy hover:bg-[#122643] text-white px-5 py-2.5 rounded-xl text-xs font-bold disabled:opacity-30 disabled:hover:bg-navy transition-all shadow-md"
-                      >
-                        Redeem
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </motion.div>
           )}
 
+          {/* TAB 2: MY VOUCHERS */}
           {activeTab === 'my-vouchers' && (
-            <motion.div key="vouchers" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-4 max-w-3xl">
+            <motion.div key="vouchers" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4 max-w-4xl mx-auto">
               {isLoadingData ? (
-                 <div className="text-center py-12"><Loader2 className="w-8 h-8 animate-spin text-gold mx-auto" /></div>
+                 Array(3).fill(0).map((_, i) => (
+                   <Skeleton key={i} className="w-full h-32 rounded-sm shadow-sm" />
+                 ))
               ) : myVouchers.length === 0 ? (
-                <div className="bg-white rounded-3xl p-12 text-center border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                  <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-                    <Ticket className="w-8 h-8 text-gray-300" />
+                <div className="bg-white rounded-sm p-16 text-center border border-gray-200/50 shadow-sm">
+                  <div className="w-16 h-16 bg-[var(--color-surface-50)] rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-100">
+                    <Ticket className="w-6 h-6 text-gray-300" />
                   </div>
-                  <h3 className="text-lg font-bold text-navy mb-2">No Active Vouchers</h3>
-                  <p className="text-gray-500 text-sm">Head over to the Reward Catalog to exchange your points for exclusive discounts.</p>
+                  <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-2">Vault Empty</h3>
+                  <p className="text-gray-500 font-light text-sm">You have not redeemed any privilege codes yet.</p>
                 </div>
               ) : (
                 myVouchers.map(v => (
-                  <div key={v.id} className="bg-white rounded-2xl p-6 border-l-4 border-l-gold shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center shrink-0 border border-green-100">
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <div key={v.id} className={`bg-white rounded-sm p-6 md:p-8 border-l-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-luxury transition-shadow ${v.status === 'USED' ? 'border-l-gray-300 opacity-60' : 'border-l-[var(--color-gold-500)]'}`}>
+                    <div className="flex items-start md:items-center gap-5">
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 border ${v.status === 'USED' ? 'bg-gray-50 border-gray-200 text-gray-400' : 'bg-[var(--color-surface-50)] border-[var(--color-gold-200)] text-[var(--color-gold-600)]'}`}>
+                        {v.status === 'USED' ? <Ticket className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
                       </div>
                       <div>
-                        <h4 className="font-extrabold text-navy text-lg mb-0.5">{v.rewardName}</h4>
-                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                          <span className="flex items-center gap-1 font-medium"><Clock className="w-3 h-3" /> Activated</span>
-                          <span className={`px-2 py-0.5 rounded uppercase font-bold text-[9px] tracking-widest ${v.status === 'USED' ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-700'}`}>
+                        <h4 className="font-serif text-[var(--color-navy-900)] text-xl mb-1">{v.rewardName}</h4>
+                        <div className="flex items-center gap-3 text-xs text-gray-500 font-light">
+                          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Authenticated</span>
+                          <span className={`px-2 py-0.5 rounded-sm uppercase font-bold text-[9px] tracking-widest border ${v.status === 'USED' ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
                             {v.status}
                           </span>
                         </div>
                       </div>
                     </div>
-                    <div className="bg-[#fdfbf7] px-6 py-3 rounded-xl text-center md:text-right border border-gold/20 border-dashed shrink-0">
-                      <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-1">Voucher Code</p>
-                      <p className="font-mono font-extrabold text-navy text-lg tracking-widest">{v.id.split('-').pop()?.toUpperCase()}</p>
+                    
+                    <div className="bg-[var(--color-surface-50)] px-6 py-4 rounded-sm text-left md:text-right border border-gray-200 border-dashed shrink-0 w-full md:w-auto">
+                      <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-1">Authorization Code</p>
+                      <p className="font-mono font-bold text-[var(--color-navy-900)] text-xl tracking-widest">{v.id.split('-').pop()?.toUpperCase()}</p>
                     </div>
                   </div>
                 ))
@@ -294,30 +319,37 @@ export default function RewardsPage() {
         </AnimatePresence>
       </main>
 
-      {/* MODAL REDEEM DENGAN ANIMASI YANG DIPERBAIKI */}
-      <Modal isOpen={!!selectedReward} onClose={() => { setSelectedReward(null); setModalState('confirm'); }} title="Reward Exchange">
+      {/* MODAL REDEEM */}
+      <Modal isOpen={!!selectedReward} onClose={() => { setSelectedReward(null); setModalState('confirm'); }} title="Privilege Authorization">
         <div className="overflow-hidden">
           <AnimatePresence mode="wait">
             
             {modalState === 'confirm' && (
               <motion.div 
                 key="confirm" 
-                initial={{ opacity: 0, x: -20 }} 
+                initial={{ opacity: 0, x: -10 }} 
                 animate={{ opacity: 1, x: 0 }} 
-                exit={{ opacity: 0, x: 20 }} 
-                className="space-y-6"
+                exit={{ opacity: 0, x: 10 }} 
+                className="space-y-6 pt-2"
               >
-                <div className="bg-[#fdfaf5] p-6 rounded-2xl border border-gold/20 text-center">
-                  <Gift className="w-12 h-12 text-gold mx-auto mb-3" />
-                  <h3 className="text-xl font-extrabold text-navy mb-2">{selectedReward?.name}</h3>
-                  <p className="text-sm text-gray-600 mb-6 leading-relaxed">{selectedReward?.desc}</p>
-                  <div className="bg-white p-4 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Cost To Deduct</span>
-                    <span className="text-xl font-extrabold text-red-500">-{selectedReward?.cost} Pts</span>
+                <div className="bg-[var(--color-surface-50)] p-8 rounded-sm border border-[var(--color-gold-200)] text-center relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--color-gold-500)]/10 rounded-bl-full pointer-events-none" />
+                  <Gift className="w-10 h-10 text-[var(--color-gold-600)] mx-auto mb-4" />
+                  <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-2 relative z-10">{selectedReward?.name}</h3>
+                  <p className="text-xs text-gray-500 mb-8 font-light leading-relaxed relative z-10">{selectedReward?.desc}</p>
+                  
+                  <div className="bg-white p-5 rounded-sm border border-gray-200 flex justify-between items-center shadow-sm relative z-10">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mileage Deduction</span>
+                    <span className="text-xl font-serif text-red-600">-{selectedReward?.cost} Pts</span>
                   </div>
                 </div>
-                <Button onClick={handleRedeem} isLoading={isRedeeming} className="w-full bg-navy hover:bg-[#122643] text-white py-4 rounded-xl font-bold shadow-xl">
-                  Confirm & Exchange Points
+                
+                <Button 
+                  onClick={handleRedeem} 
+                  isLoading={isRedeeming} 
+                  className="w-full !py-4 uppercase tracking-widest text-xs !rounded-sm shadow-luxury"
+                >
+                  Authorize Deduction
                 </Button>
               </motion.div>
             )}
@@ -328,17 +360,21 @@ export default function RewardsPage() {
                 initial={{ opacity: 0, scale: 0.95 }} 
                 animate={{ opacity: 1, scale: 1 }} 
                 exit={{ opacity: 0, scale: 0.95 }} 
-                className="text-center py-6 space-y-6"
+                className="text-center py-8 space-y-8"
               >
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto shadow-inner border border-green-200">
+                <div className="w-20 h-20 bg-green-50/50 rounded-full flex items-center justify-center mx-auto shadow-sm border border-green-200">
                   <CheckCircle2 className="w-10 h-10 text-green-500" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-extrabold text-navy mb-2">Voucher Secured!</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed px-4">The discount code has been added to your inventory. You can use it securely on your next checkout.</p>
+                  <h3 className="text-3xl font-serif text-[var(--color-navy-900)] mb-3">Code Vaulted!</h3>
+                  <p className="text-sm font-light text-gray-500 leading-relaxed px-4">The cryptographic discount code has been injected into your active inventory. You may utilize it on your next maritime checkout.</p>
                 </div>
-                <Button onClick={() => { setSelectedReward(null); setModalState('confirm'); setActiveTab('my-vouchers'); }} variant="outline" className="w-full py-4 rounded-xl font-bold">
-                  View My Vouchers
+                <Button 
+                  onClick={() => { setSelectedReward(null); setModalState('confirm'); setActiveTab('my-vouchers'); }} 
+                  variant="outline" 
+                  className="w-full !py-4 !rounded-sm uppercase tracking-widest text-xs"
+                >
+                  Inspect Inventory
                 </Button>
               </motion.div>
             )}
@@ -349,17 +385,21 @@ export default function RewardsPage() {
                 initial={{ opacity: 0, scale: 0.95 }} 
                 animate={{ opacity: 1, scale: 1 }} 
                 exit={{ opacity: 0, scale: 0.95 }} 
-                className="text-center py-6 space-y-6"
+                className="text-center py-8 space-y-8"
               >
-                <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto border border-red-100">
+                <div className="w-20 h-20 bg-red-50/50 rounded-full flex items-center justify-center mx-auto border border-red-200">
                   <AlertCircle className="w-10 h-10 text-red-500" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-extrabold text-navy mb-2">Transaction Failed</h3>
-                  <p className="text-sm text-gray-500">{errorMessage}</p>
+                  <h3 className="text-3xl font-serif text-[var(--color-navy-900)] mb-3">Deduction Failed</h3>
+                  <p className="text-sm font-light text-gray-500">{errorMessage}</p>
                 </div>
-                <Button onClick={() => setModalState('confirm')} variant="outline" className="w-full py-4 rounded-xl font-bold">
-                  Try Again
+                <Button 
+                  onClick={() => setModalState('confirm')} 
+                  variant="outline" 
+                  className="w-full !py-4 !rounded-sm uppercase tracking-widest text-xs"
+                >
+                  Restart Protocol
                 </Button>
               </motion.div>
             )}

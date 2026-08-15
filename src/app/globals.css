@@ -1,28 +1,78 @@
 @import "tailwindcss";
 
-/* 1. Mendaftarkan warna identitas PMM Voyage ke dalam memori Tailwind v4 */
 @theme {
-  --color-navy: #0B192C;
-  --color-gold: #D4AF37;
+  /* 1. EXPANDED LUXURY COLOR PALETTE */
+  /* Shades of Navy (Nautical & Trust) */
+  --color-navy-900: #050b14;
+  --color-navy-800: #0B192C; /* Base Brand Navy */
+  --color-navy-700: #1a2a40;
+  --color-navy-600: #2a3c56;
+  
+  /* Shades of Gold (Luxury & Accent) */
+  --color-gold-600: #b5952f;
+  --color-gold-500: #D4AF37; /* Base Brand Gold */
+  --color-gold-400: #dfc264;
+  --color-gold-100: #fbf8eb; /* Untuk background subtle / highlight */
+  
+  /* Enterprise Surfaces (Clean Backgrounds) */
+  --color-surface-50: #FAFAFA;
+  --color-surface-100: #F0F2F5;
+
+  /* 2. TYPOGRAPHY SYSTEM (Variabel ini akan kita inject dari Next.js Fonts nanti) */
+  --font-serif: var(--font-playfair), "Georgia", serif;
+  --font-sans: var(--font-jakarta), "Inter", system-ui, sans-serif;
+
+  /* 3. PREMIUM SHADOWS (Bukan shadow tebal yang norak, tapi soft & elegan) */
+  --shadow-luxury: 0 10px 40px -10px rgba(11, 25, 44, 0.08);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
-/* 2. Mengunci warna dasar agar tidak dirusak oleh Dark Mode bawaan OS */
-body {
-  background-color: #F8F9FA;
-  color: #0B192C;
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Menghilangkan blok biru saat tombol di-tap di HP (Native App Feel) */
+    -webkit-tap-highlight-color: transparent; 
+  }
+  
+  body {
+    background-color: var(--color-surface-50);
+    color: var(--color-navy-800);
+    /* Menggunakan font sans-serif untuk body (keterbacaan maksimal) */
+    font-family: var(--font-sans);
+    
+    /* Font rendering engine optimization (bikin teks setajam silet di layar Retina/OLED) */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 4. LUXURY SELECTION (Warna highlight saat user memblok teks) */
+  ::selection {
+    background-color: var(--color-gold-500);
+    color: #ffffff;
+  }
+
+  /* 5. HEADING TYPOGRAPHY */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
 }
 
-/* 3. Menghapus scrollbar bawaan browser agar UI terasa seperti aplikasi (Opsional tapi bikin mewah) */
+/* 6. ENTERPRISE SCROLLBAR (Lebih ramping dan transparan) */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #F8F9FA;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #0B192C;
+  background-color: rgba(11, 25, 44, 0.15); /* Navy transparan */
   border-radius: 10px;
+  transition: background-color 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(11, 25, 44, 0.3);
 }

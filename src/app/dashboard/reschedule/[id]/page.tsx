@@ -5,11 +5,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, MapPin, Ship, Users, Loader2, 
-  ArrowRight, ShieldAlert, CheckCircle2, AlertTriangle
+  ArrowRight, ShieldAlert, CheckCircle2, AlertTriangle, ArrowLeft
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore'; 
-// PERBAIKAN: Import collection, query, where, getDocs dihapus karena sudah via API Backend
+import { DatePicker } from '@/components/ui/DatePicker';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 export default function ReschedulePage() {
   const params = useParams();
@@ -19,9 +21,10 @@ export default function ReschedulePage() {
   const [booking, setBooking] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // State Logika Reschedule
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState("");
+  // State Logika Reschedule (menggunakan Date Object untuk DatePicker UI)
+  const [selectedDateObj, setSelectedDateObj] = useState<Date | null>(null);
+  const [selectedDateStr, setSelectedDateStr] = useState<string>("");
+  
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,7 +45,7 @@ export default function ReschedulePage() {
           const data = docSnap.data();
           setBooking({ id: docSnap.id, ...data });
 
-          // Cek Aturan H-3 (Tidak bisa reschedule jika sisa waktu <= 3 hari)
+          // Cek Aturan H-3
           const today = new Date();
           const departure = new Date(data.dateOfDeparture);
           const diffTime = departure.getTime() - today.getTime();
@@ -50,7 +53,7 @@ export default function ReschedulePage() {
           
           if (diffDays <= 3) setIsLockedH3(true);
 
-          // Cek Aturan 1x Limit (Hanya boleh 1x reschedule)
+          // Cek Aturan 1x Limit
           if (data.rescheduleCount && data.rescheduleCount >= 1) {
             setIsLockedLimit(true);
           }
@@ -67,41 +70,37 @@ export default function ReschedulePage() {
     fetchBooking();
   }, [id, router]);
 
-  // 2. Generate Jadwal Baru (Sabtu, 52 Minggu ke depan)
-  useEffect(() => {
-    const getNextSaturdays = () => {
-      const dates = [];
-      let d = new Date();
-      const currentDay = d.getDay();
-      
-      if (currentDay === 5 || currentDay === 6) {
-         d.setDate(d.getDate() + (6 - currentDay + 7)); 
-      } else {
-         d.setDate(d.getDate() + (6 - currentDay));
-      }
+  // Handle Pemilihan Tanggal dari DatePicker
+  const handleDateSelect = (date: Date) => {
+    setSelectedDateObj(date);
+    
+    // Format YYYY-MM-DD aman timezone
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - (offset*60*1000));
+    setSelectedDateStr(localDate.toISOString().split('T')[0]);
+  };
 
-      for (let i = 0; i < 52; i++) {
-        const nextSat = new Date(d);
-        nextSat.setDate(d.getDate() + (i * 7));
-        const dateString = nextSat.toISOString().split('T')[0];
-        
-        // Jangan masukkan tanggal yang sama dengan jadwal saat ini
-        if (booking && dateString !== booking.dateOfDeparture) {
-            dates.push(dateString);
-        }
-      }
-      return dates;
-    };
+  // Filter Tanggal (Hanya Sabtu, H+3, dan bukan tanggal lama)
+  const isDateValidForReschedule = (date: Date) => {
+    // Syarat 1: Harus hari Sabtu (6)
+    if (date.getDay() !== 6) return false;
+    
+    // Syarat 2: Harus minimal H+3 dari hari ini
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const diffTime = date.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays <= 3) return false;
 
-    if (booking && !isLockedH3 && !isLockedLimit) {
-        const dates = getNextSaturdays();
-        setAvailableDates(dates);
-        // Default kosong agar tamu memilih dulu
-        setSelectedDate(""); 
+    // Syarat 3: Tidak boleh sama dengan jadwal lama
+    if (booking && booking.dateOfDeparture) {
+        const oldDate = new Date(booking.dateOfDeparture);
+        if (date.getTime() === oldDate.getTime()) return false;
     }
-  }, [booking, isLockedH3, isLockedLimit]);
 
-  // Kapasitas Maksimal per Kabin (Sama seperti di Homepage)
+    return true;
+  };
+
   const getCabinCapacity = (cabinName: string) => {
     const name = cabinName.toLowerCase();
     if (name.includes("sea view")) return 8; 
@@ -109,29 +108,25 @@ export default function ReschedulePage() {
     if (name.includes("down deck") && name.includes("2 pax")) return 16; 
     if (name.includes("down deck") && name.includes("1 pax")) return 2; 
     if (name.includes("sharing")) return 22; 
-    return 8; // Default fallback
+    return 8; 
   };
 
-  // 3. Cek Ketersediaan Kuota Secara Real-time (VIA SECURE API)
+  // 3. Cek Ketersediaan Kuota Secara Real-time
   useEffect(() => {
     const checkAvailability = async () => {
-      if (!selectedDate || !booking) return;
+      if (!selectedDateStr || !booking) return;
       
       setIsCheckingAvailability(true);
       setIsAvailable(null);
 
       try {
-        // PERBAIKAN: Hit API Backend untuk menghindari pemblokiran Firestore Rules
-        const res = await fetch(`/api/availability?date=${selectedDate}`);
+        const res = await fetch(`/api/availability?date=${selectedDateStr}`);
         
         if (res.ok) {
           const data = await res.json();
-          
-          // Ambil jumlah tamu yang sudah ada di kabin ini, default 0 jika kosong
           const currentPaxCount = data.booked?.[booking.cabinClass] || 0;
           const maxCapacity = getCabinCapacity(booking.cabinClass);
           
-          // Cek apakah kuota yang ada ditambah jumlah tamu kita masih muat
           if (currentPaxCount + booking.paxCount <= maxCapacity) {
               setIsAvailable(true);
           } else {
@@ -140,41 +135,39 @@ export default function ReschedulePage() {
         } else {
           setIsAvailable(false);
         }
-
       } catch (error) {
         console.error("Error checking availability:", error);
         setIsAvailable(false);
       } finally {
-        setIsCheckingAvailability(false);
+        setTimeout(() => setIsCheckingAvailability(false), 500); // Smooth skeleton
       }
     };
 
     checkAvailability();
-  }, [selectedDate, booking]);
+  }, [selectedDateStr, booking]);
 
   // 4. Proses Reschedule
   const handleRescheduleSubmit = async () => {
-    if (!booking || !selectedDate || !isAvailable) return;
+    if (!booking || !selectedDateStr || !isAvailable) return;
     
     setIsSubmitting(true);
     try {
         const docRef = doc(db, 'bookings', booking.id);
         
         await updateDoc(docRef, {
-            dateOfDeparture: selectedDate,
+            dateOfDeparture: selectedDateStr,
             rescheduleCount: (booking.rescheduleCount || 0) + 1,
             rescheduledAt: new Date().toISOString(),
-            originalDateOfDeparture: booking.dateOfDeparture // Simpan jejak tanggal asli
+            originalDateOfDeparture: booking.dateOfDeparture 
         });
 
-        // Simulasi loading agar UI terasa sedang memproses data berat
         setTimeout(() => {
             router.push('/dashboard');
         }, 1500);
 
     } catch (error) {
         console.error("Error updating reschedule:", error);
-        alert("Failed to reschedule. Please try again or contact support.");
+        alert("Transaction failed. Please contact concierge support.");
         setIsSubmitting(false);
     }
   };
@@ -188,9 +181,14 @@ export default function ReschedulePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F8F9FA] flex flex-col items-center justify-center">
-        <Loader2 className="w-10 h-10 text-gold animate-spin mb-4" />
-        <h2 className="text-lg font-bold text-navy animate-pulse">Accessing Itinerary...</h2>
+      <div className="min-h-screen bg-[var(--color-surface-50)] flex flex-col font-sans">
+        <header className="bg-[var(--color-navy-900)] py-6 px-6 md:px-10 shadow-luxury">
+          <Skeleton variant="text" className="w-32 h-4 bg-white/10" />
+        </header>
+        <main className="max-w-5xl mx-auto px-6 mt-16 w-full flex gap-8">
+            <Skeleton className="w-1/2 h-[400px]" />
+            <Skeleton className="w-1/2 h-[400px]" />
+        </main>
       </div>
     );
   }
@@ -198,168 +196,169 @@ export default function ReschedulePage() {
   if (!booking) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] font-sans pb-24 selection:bg-gold selection:text-navy">
+    <div className="min-h-screen bg-[var(--color-surface-50)] font-sans pb-24">
       
-      {/* HEADER MINIMALIS */}
-      <header className="bg-navy py-6 px-4 md:px-8 shadow-xl sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      {/* HEADER MINIMALIS & EDITORIAL */}
+      <header className="bg-white py-6 px-6 md:px-10 border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
             <button 
                 onClick={() => router.back()} 
-                className="text-gray-400 hover:text-white text-sm font-bold transition-colors flex items-center gap-2"
+                className="text-[var(--color-navy-900)] hover:text-[var(--color-gold-500)] text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
             >
-                &larr; Back to Vault
+                <ArrowLeft className="w-4 h-4" /> Return to Vault
             </button>
-            <h1 className="text-white font-extrabold tracking-widest uppercase text-sm">Reschedule Portal</h1>
+            <div className="flex items-center gap-2">
+              <Ship className="w-4 h-4 text-[var(--color-gold-500)]" />
+              <span className="text-[var(--color-navy-900)] font-bold tracking-widest uppercase text-xs">Modification Portal</span>
+            </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 mt-10">
+      <main className="max-w-5xl mx-auto px-6 mt-12 md:mt-16">
         
-        <div className="mb-8">
-            <h2 className="text-3xl font-extrabold text-navy">Modify Voyage</h2>
-            <p className="text-gray-500 mt-2">You are allowed to reschedule your voyage once (1x) free of charge, subject to cabin availability.</p>
+        <div className="mb-10 text-center max-w-2xl mx-auto">
+            <h2 className="text-4xl font-serif text-[var(--color-navy-900)] mb-3">Amend Voyage Dates</h2>
+            <p className="text-gray-500 font-light text-sm leading-relaxed">As a valued guest, you are granted one complimentary schedule modification prior to 72 hours of departure, subject strictly to cabin availability.</p>
         </div>
 
         {/* PESAN ERROR (ATURAN KUNCI) */}
         <AnimatePresence>
             {(isLockedH3 || isLockedLimit) && (
                 <motion.div 
-                    initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-                    className="bg-red-50 border-2 border-red-200 p-6 rounded-2xl mb-8 flex items-start gap-4"
+                    initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                    className="bg-white border-l-4 border-red-500 p-6 md:p-8 rounded-sm shadow-sm mb-10 flex items-start gap-5 max-w-3xl mx-auto"
                 >
-                    <ShieldAlert className="w-8 h-8 text-red-500 shrink-0" />
+                    <div className="bg-red-50 p-3 rounded-full shrink-0">
+                      <ShieldAlert className="w-6 h-6 text-red-600" />
+                    </div>
                     <div>
-                        <h3 className="text-lg font-extrabold text-red-700 mb-1">Modification Locked</h3>
+                        <h3 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Modification Locked</h3>
                         {isLockedLimit ? (
-                            <p className="text-sm text-red-600 font-medium">This booking has already been rescheduled once. Our policy allows a maximum of one (1) free modification per booking.</p>
+                            <p className="text-sm text-gray-600 font-light leading-relaxed">This reservation has been previously amended. Our maritime protocol permits a maximum of one (1) complimentary modification per itinerary.</p>
                         ) : isLockedH3 ? (
-                            <p className="text-sm text-red-600 font-medium">Rescheduling is strictly prohibited within 72 hours (3 Days) of departure due to maritime logistics and provisions lock-in.</p>
+                            <p className="text-sm text-gray-600 font-light leading-relaxed">Date modifications are strictly prohibited within 72 hours of departure to accommodate complex maritime logistics and provision procurements.</p>
                         ) : null}
-                        <button onClick={() => router.back()} className="mt-4 bg-red-100 hover:bg-red-200 text-red-700 px-5 py-2 rounded-lg text-xs font-extrabold uppercase tracking-widest transition-colors">
-                            Return to Dashboard
-                        </button>
+                        <Button variant="outline" onClick={() => router.back()} className="mt-5 !py-2 !px-6 !text-xs !rounded-sm">
+                            Acknowledge & Return
+                        </Button>
                     </div>
                 </motion.div>
             )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             
             {/* KOLOM 1: JADWAL SAAT INI */}
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 h-max">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-gray-100 text-gray-500 font-bold text-[10px] uppercase tracking-widest mb-6">
-                    Current Itinerary
-                </div>
+            <div className="bg-white p-8 md:p-10 shadow-luxury border border-gray-100 h-max relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-[var(--color-navy-900)]" />
+                <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-8 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[var(--color-gold-500)]" /> Current Manifest
+                </h4>
 
-                <div className="space-y-6">
+                <div className="space-y-8">
                     <div>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Departure Date</p>
-                        <p className="text-xl font-extrabold text-navy flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-gold" /> {formatDateUI(booking.dateOfDeparture)}
+                        <p className="text-xs text-gray-500 font-light mb-1">Scheduled Departure</p>
+                        <p className="text-2xl font-serif text-[var(--color-navy-900)]">
+                            {formatDateUI(booking.dateOfDeparture)}
                         </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 pt-6 border-t border-gray-100">
+                    <div className="grid grid-cols-2 gap-6 pt-6 border-t border-gray-100">
                         <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Cabin Class</p>
-                            <p className="text-sm font-extrabold text-navy flex items-center gap-1.5"><Ship className="w-4 h-4 text-gold"/> {booking.cabinClass}</p>
+                            <p className="text-xs text-gray-500 font-light mb-1.5">Accommodations</p>
+                            <p className="text-sm font-medium text-[var(--color-navy-900)] flex items-center gap-2"><Ship className="w-4 h-4 text-gray-400"/> {booking.cabinClass}</p>
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Guests</p>
-                            <p className="text-sm font-extrabold text-navy flex items-center gap-1.5"><Users className="w-4 h-4 text-gold"/> {booking.paxCount} Pax</p>
+                            <p className="text-xs text-gray-500 font-light mb-1.5">Party Size</p>
+                            <p className="text-sm font-medium text-[var(--color-navy-900)] flex items-center gap-2"><Users className="w-4 h-4 text-gray-400"/> {booking.paxCount} Guests</p>
                         </div>
                     </div>
-                    <div>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Route</p>
-                        <p className="text-sm font-extrabold text-navy flex items-center gap-1.5"><MapPin className="w-4 h-4 text-gold"/> Lombok ➔ Komodo</p>
+                    <div className="pt-6 border-t border-gray-100">
+                        <p className="text-xs text-gray-500 font-light mb-1.5">Expedition Route</p>
+                        <p className="text-sm font-medium text-[var(--color-navy-900)] flex items-center gap-2"><MapPin className="w-4 h-4 text-[var(--color-gold-500)]"/> Lombok to Komodo</p>
                     </div>
                 </div>
             </div>
 
             {/* KOLOM 2: FORM PILIH JADWAL BARU */}
-            <div className={`bg-white rounded-3xl p-8 shadow-2xl border transition-colors ${selectedDate ? 'border-gold' : 'border-gray-100'} relative overflow-hidden`}>
+            <div className={`bg-[var(--color-surface-50)] p-8 md:p-10 shadow-sm border transition-colors duration-500 relative ${selectedDateStr ? 'border-[var(--color-gold-400)]' : 'border-gray-200'}`}>
+                
                 {/* Overlay transparan jika sedang dilock */}
                 {(isLockedH3 || isLockedLimit) && (
-                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10" />
+                    <div className="absolute inset-0 bg-[var(--color-surface-50)]/60 backdrop-blur-sm z-20 flex items-center justify-center">
+                      <LockIcon />
+                    </div>
                 )}
 
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-gold/10 text-gold font-extrabold text-[10px] uppercase tracking-widest mb-6">
-                    New Itinerary
-                </div>
+                <h4 className="text-[10px] font-bold text-[var(--color-gold-600)] uppercase tracking-widest mb-8">
+                  Propose New Itinerary
+                </h4>
 
-                <div className="mb-6">
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Select New Departure Date</label>
-                    <div className="relative group">
-                      <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                        <Calendar className="w-5 h-5 text-navy" />
-                      </div>
-                      <select 
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        disabled={isLockedH3 || isLockedLimit || isSubmitting}
-                        className="w-full bg-gray-50 hover:bg-white border-2 border-gray-200 focus:border-gold text-navy font-extrabold text-sm px-4 py-4 pl-12 rounded-2xl focus:outline-none appearance-none transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        <option value="" disabled>Select available date...</option>
-                        {availableDates.map(date => (
-                          <option key={date} value={date}>{formatDateUI(date)}</option>
-                        ))}
-                      </select>
-                      <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                         <ChevronDown className="w-4 h-4 text-gray-400" />
-                      </div>
-                    </div>
+                <div className="mb-8 relative z-10">
+                    <DatePicker 
+                        label="Select New Saturday Departure"
+                        selectedDate={selectedDateObj}
+                        onSelect={handleDateSelect}
+                        filterDate={isDateValidForReschedule}
+                    />
                 </div>
 
                 {/* STATUS KETERSEDIAAN */}
-                <div className="min-h-[80px] mb-8">
-                    {isCheckingAvailability ? (
-                        <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <Loader2 className="w-5 h-5 animate-spin text-gold" />
-                            <p className="text-xs font-bold text-navy">Checking cabin quota with Harbor Master...</p>
-                        </div>
-                    ) : selectedDate && isAvailable === true ? (
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex items-start gap-3 bg-green-50 p-4 rounded-xl border border-green-200">
-                            <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
-                            <div>
-                                <p className="text-sm font-extrabold text-green-700">Cabins Available!</p>
-                                <p className="text-[10px] font-medium text-green-600 mt-1">There are enough seats for your group ({booking.paxCount} Pax) in the {booking.cabinClass} on this date.</p>
-                            </div>
-                        </motion.div>
-                    ) : selectedDate && isAvailable === false ? (
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex items-start gap-3 bg-red-50 p-4 rounded-xl border border-red-200">
-                            <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                            <div>
-                                <p className="text-sm font-extrabold text-red-700">Not Enough Space</p>
-                                <p className="text-[10px] font-medium text-red-600 mt-1">The {booking.cabinClass} is fully booked or does not have enough capacity for {booking.paxCount} guests on this date. Please select another date.</p>
-                            </div>
-                        </motion.div>
-                    ) : null}
+                <div className="min-h-[80px] mb-8 relative z-10">
+                    <AnimatePresence mode="wait">
+                        {isCheckingAvailability ? (
+                            <motion.div key="checking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-4">
+                                <Skeleton className="w-12 h-12 rounded-full shrink-0" />
+                                <div className="space-y-2 w-full">
+                                  <Skeleton variant="text" className="w-1/2 h-3" />
+                                  <Skeleton variant="text" className="w-3/4 h-2" />
+                                </div>
+                            </motion.div>
+                        ) : selectedDateStr && isAvailable === true ? (
+                            <motion.div key="available" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex items-start gap-4 bg-white p-5 rounded-sm border border-green-100 shadow-sm">
+                                <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-serif text-[var(--color-navy-900)] mb-1">Clearance Granted</p>
+                                    <p className="text-[11px] font-light text-gray-500 leading-relaxed">Adequate capacity confirmed for {booking.paxCount} guests in {booking.cabinClass}.</p>
+                                </div>
+                            </motion.div>
+                        ) : selectedDateStr && isAvailable === false ? (
+                            <motion.div key="full" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex items-start gap-4 bg-white p-5 rounded-sm border border-red-100 shadow-sm">
+                                <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-serif text-[var(--color-navy-900)] mb-1">Capacity Exceeded</p>
+                                    <p className="text-[11px] font-light text-gray-500 leading-relaxed">The {booking.cabinClass} cannot accommodate {booking.paxCount} guests on this date. Please select an alternate weekend.</p>
+                                </div>
+                            </motion.div>
+                        ) : null}
+                    </AnimatePresence>
                 </div>
 
                 {/* TOMBOL KONFIRMASI */}
-                <button 
+                <Button 
                     onClick={handleRescheduleSubmit}
-                    disabled={!selectedDate || isAvailable !== true || isSubmitting || isLockedH3 || isLockedLimit}
-                    className="w-full bg-gold hover:bg-[#b8972e] text-navy py-4 rounded-xl font-extrabold shadow-xl shadow-gold/20 transition-all flex items-center justify-center gap-2 hover:-translate-y-1 disabled:opacity-40 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
+                    disabled={!selectedDateStr || isAvailable !== true || isSubmitting || isLockedH3 || isLockedLimit}
+                    className="w-full !rounded-sm !py-4 uppercase tracking-widest text-xs relative z-10"
                 >
                     {isSubmitting ? (
-                        <>Processing Modification <Loader2 className="w-5 h-5 animate-spin" /></>
+                        <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Finalizing Manifest</>
                     ) : (
-                        <>Confirm New Itinerary <ArrowRight className="w-5 h-5" /></>
+                        <>Confirm New Dates</>
                     )}
-                </button>
+                </Button>
             </div>
         </div>
       </main>
-
     </div>
   );
 }
 
-// Komponen ikon kecil
-function ChevronDown(props: any) {
+function LockIcon() {
   return (
-    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m6 9 6 6 6-6"/>
-    </svg>
+    <div className="flex flex-col items-center opacity-50">
+      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-2">
+        <ShieldAlert className="w-5 h-5 text-gray-400" />
+      </div>
+      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Locked</span>
+    </div>
   )
 }
