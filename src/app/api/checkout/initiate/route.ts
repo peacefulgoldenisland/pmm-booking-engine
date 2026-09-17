@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 import { v4 as uuidv4 } from 'uuid';
 
 const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY 
@@ -18,6 +19,22 @@ const db = getFirestore();
 
 export async function POST(request: Request) {
   try {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
+    }
+    const token = authHeader.split('Bearer ')[1];
+    
+    let decodedToken;
+    try {
+      decodedToken = await getAuth().verifyIdToken(token);
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
+    }
+    
+    const userId = decodedToken.uid;
+
     const body = await request.json();
     const { booking, contact, passengers } = body;
 
@@ -29,30 +46,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Server configuration error: Firebase Service Account missing' }, { status: 500 });
     }
 
-    // 1. Cek atau Buat Shadow Account
-    const usersRef = db.collection('users');
-    const q = usersRef.where('email', '==', contact.email).limit(1);
-    const querySnapshot = await q.get();
-
-    let userId: string;
-    let isNewUser = false;
-
-    if (querySnapshot.empty) {
-      const newUserRef = usersRef.doc(); 
-      userId = newUserRef.id;
-      isNewUser = true;
-
-      await newUserRef.set({
-        email: contact.email,
-        phone: contact.phone,
-        fullName: passengers[0]?.fullName || 'Guest',
-        createdAt: new Date().toISOString(),
-        role: 'guest',
-        pointsBalance: 0
-      });
-    } else {
-      userId = querySnapshot.docs[0].id;
-    }
+    // 1. Validasi Keberadaan User (Telah ditangani oleh Firebase Auth Token)
 
     // 2. Generate Order ID Unik (Misal: PMM-1704209123-ABCD)
     const orderId = `PMM-${Date.now()}-${uuidv4().substring(0, 4).toUpperCase()}`;
@@ -95,7 +89,7 @@ export async function POST(request: Request) {
       success: true, 
       orderId: orderId,
       paymentMethod: paymentMethod,
-      message: isNewUser ? 'Shadow Account and Booking created' : 'Booking created for existing user',
+      message: 'Booking created successfully',
     });
 
   } catch (error: any) {

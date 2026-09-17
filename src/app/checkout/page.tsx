@@ -297,6 +297,11 @@ function CheckoutContent() {
     setIsLoading(true);
 
     try {
+      let token = '';
+      if (currentUser) {
+        token = await currentUser.getIdToken();
+      }
+
       const payload = {
         booking: { 
           date: selectedDate, 
@@ -307,7 +312,7 @@ function CheckoutContent() {
           basePrice: basePrice,
           discountAmount: discountAmount,
           voucherId: appliedVoucher?.id || null,
-          bookingSource: currentUser ? "B2C_MEMBER" : "B2C_GUEST",
+          bookingSource: "B2C_MEMBER",
           paymentMethod: paymentMethod 
         },
         contact: { email, phone, pickupArea, pickupLocation },
@@ -316,7 +321,10 @@ function CheckoutContent() {
 
       const response = await fetch('/api/checkout/initiate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload),
       });
 

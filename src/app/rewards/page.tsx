@@ -4,22 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowRight, Loader2, Sparkles, Gift, ShieldCheck, 
-  Ticket, Crown, CheckCircle2, AlertCircle, Clock, 
-  Tag, Star, Gem
+  ArrowRight, Loader2, Sparkles, Gift, 
+  Ticket, Crown
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { Modal } from '@/components/ui/Modal';
+import { doc, onSnapshot, collection, query, where } from 'firebase/firestore';
 import { Button } from '@/components/ui/Button';
 import { DashboardHeader } from '@/components/layout/DashboardHeader'; 
 import { Skeleton } from '@/components/ui/Skeleton';
 
-// --- PEMETAAN IKON DINAMIS ---
-const ICON_MAP: Record<string, any> = {
-  Ticket, Gift, Crown, Tag, Star, Gem
-};
+import { RewardCatalog } from '@/components/rewards/RewardCatalog';
+import { MyVouchers } from '@/components/rewards/MyVouchers';
+import { RedeemModal } from '@/components/rewards/RedeemModal';
 
 const FALLBACK_CATALOG = [
   { id: 'VOUCHER-50K', name: 'IDR 50,000 Privilege', desc: 'A quick treat. Applicable to any booking without restrictions.', cost: 5, value: 50000, iconName: 'Ticket' },
@@ -40,7 +37,7 @@ export default function RewardsPage() {
   const [activeTab, setActiveTab] = useState<'catalog' | 'my-vouchers'>('catalog');
   
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [isRedeeming, setIsRedeeming] = useState(false);
 
   const [selectedReward, setSelectedReward] = useState<any>(null);
@@ -56,45 +53,47 @@ export default function RewardsPage() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Fetch Data
+  // 2. Fetch Data (REAL-TIME LISTENER)
   useEffect(() => {
-    const fetchRewardsData = async () => {
-      if (!user) return;
-      setIsLoadingData(true);
-      try {
-        const userRef = doc(db, 'users', user.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) setUserData(userSnap.data());
+    if (!user) return;
+    setIsLoadingData(true);
 
-        const catalogSnap = await getDocs(collection(db, 'rewards_catalog'));
-        if (!catalogSnap.empty) {
-          const fetchedCatalog = catalogSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          fetchedCatalog.sort((a: any, b: any) => a.cost - b.cost);
-          setCatalog(fetchedCatalog);
-        } else {
-          setCatalog(FALLBACK_CATALOG);
-        }
+    const userRef = doc(db, 'users', user.uid);
+    const unsubscribeUser = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) setUserData(docSnap.data());
+    });
 
-        const rewardsRef = collection(db, 'user_rewards');
-        const q = query(rewardsRef, where('userId', '==', user.uid));
-        const rewardsSnap = await getDocs(q);
-        const vouchers: any[] = [];
-        rewardsSnap.forEach(doc => {
-          vouchers.push({ id: doc.id, ...doc.data() });
-        });
-        
-        vouchers.sort((a, b) => new Date(b.redeemedAt).getTime() - new Date(a.redeemedAt).getTime());
-        setMyVouchers(vouchers);
-
-      } catch (error) {
-        console.error("Error fetching rewards data:", error);
-        if (catalog.length === 0) setCatalog(FALLBACK_CATALOG);
-      } finally {
-        setTimeout(() => setIsLoadingData(false), 600); // Smooth skeleton transition
+    const catalogRef = collection(db, 'rewards_catalog');
+    const unsubscribeCatalog = onSnapshot(catalogRef, (snapshot) => {
+      if (!snapshot.empty) {
+        const fetchedCatalog = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        fetchedCatalog.sort((a: any, b: any) => a.cost - b.cost);
+        setCatalog(fetchedCatalog);
+      } else {
+        setCatalog(FALLBACK_CATALOG);
       }
-    };
+    });
 
-    fetchRewardsData();
+    const rewardsRef = collection(db, 'user_rewards');
+    const q = query(rewardsRef, where('userId', '==', user.uid));
+    const unsubscribeRewards = onSnapshot(q, (snapshot) => {
+      const vouchers: any[] = [];
+      snapshot.forEach(d => {
+        vouchers.push({ id: d.id, ...d.data() });
+      });
+      vouchers.sort((a, b) => new Date(b.redeemedAt).getTime() - new Date(a.redeemedAt).getTime());
+      setMyVouchers(vouchers);
+      setIsLoadingData(false);
+    }, (error) => {
+      console.error("Error fetching rewards data:", error);
+      setIsLoadingData(false);
+    });
+
+    return () => {
+      unsubscribeUser();
+      unsubscribeCatalog();
+      unsubscribeRewards();
+    };
   }, [user]);
 
   // 3. Proses Penukaran Poin via API
@@ -119,15 +118,8 @@ export default function RewardsPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
 
-      setUserData((prev: any) => ({ ...prev, pointsBalance: prev.pointsBalance - selectedReward.cost }));
-      setMyVouchers(prev => [{
-        id: 'new-' + Date.now(),
-        rewardName: selectedReward.name,
-        discountValue: selectedReward.value,
-        status: 'ACTIVE',
-        redeemedAt: new Date().toISOString()
-      }, ...prev]);
-
+      // Karena kita menggunakan onSnapshot, state userData (saldo) dan myVouchers akan 
+      // otomatis ter-update sesaat setelah dokumen Firestore berubah di backend!
       setModalState('success');
     } catch (error: any) {
       setErrorMessage(error.message || 'Failed to redeem points.');
@@ -231,182 +223,41 @@ export default function RewardsPage() {
           
           {/* TAB 1: CATALOG */}
           {activeTab === 'catalog' && (
-            <motion.div key="catalog" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {isLoadingData ? (
-                Array(6).fill(0).map((_, i) => (
-                  <Skeleton key={i} className="w-full h-[280px] rounded-sm shadow-sm" />
-                ))
-              ) : (
-                catalog.map((reward) => {
-                  const Icon = ICON_MAP[reward.iconName] || Ticket;
-                  const canAfford = (userData?.pointsBalance || 0) >= reward.cost;
-
-                  return (
-                    <div key={reward.id} className="bg-white rounded-sm p-8 shadow-sm hover:shadow-luxury border border-gray-200/50 transition-all flex flex-col group relative overflow-hidden">
-                      <div className="absolute top-0 left-0 w-full h-1 bg-[var(--color-gold-500)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                      
-                      <div className="w-12 h-12 bg-[var(--color-surface-50)] group-hover:bg-[var(--color-gold-50)] rounded-lg flex items-center justify-center mb-6 transition-colors border border-gray-100 group-hover:border-[var(--color-gold-200)]">
-                        <Icon className="w-5 h-5 text-[var(--color-navy-800)] group-hover:text-[var(--color-gold-600)] transition-colors" />
-                      </div>
-                      
-                      <h3 className="text-xl font-serif text-[var(--color-navy-900)] mb-2 pr-4">{reward.name}</h3>
-                      <p className="text-xs text-gray-500 mb-8 font-light leading-relaxed flex-grow">{reward.desc}</p>
-                      
-                      <div className="pt-6 border-t border-gray-100 mt-auto flex items-end justify-between">
-                        <div>
-                          <p className="text-[9px] uppercase font-bold tracking-widest text-gray-400 mb-1">Required Miles</p>
-                          <div className="font-serif text-[var(--color-navy-900)] text-2xl">{reward.cost}</div>
-                        </div>
-                        <Button 
-                          onClick={() => openRedeemModal(reward)}
-                          disabled={!canAfford}
-                          variant={canAfford ? 'primary' : 'outline'}
-                          className="!rounded-sm !py-2.5 !px-5 !text-xs uppercase tracking-widest"
-                        >
-                          Redeem
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </motion.div>
+            <RewardCatalog 
+              catalog={catalog} 
+              isLoadingData={isLoadingData} 
+              userData={userData} 
+              openRedeemModal={openRedeemModal} 
+            />
           )}
 
           {/* TAB 2: MY VOUCHERS */}
           {activeTab === 'my-vouchers' && (
-            <motion.div key="vouchers" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4 max-w-4xl mx-auto">
-              {isLoadingData ? (
-                 Array(3).fill(0).map((_, i) => (
-                   <Skeleton key={i} className="w-full h-32 rounded-sm shadow-sm" />
-                 ))
-              ) : myVouchers.length === 0 ? (
-                <div className="bg-white rounded-sm p-16 text-center border border-gray-200/50 shadow-sm">
-                  <div className="w-16 h-16 bg-[var(--color-surface-50)] rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-100">
-                    <Ticket className="w-6 h-6 text-gray-300" />
-                  </div>
-                  <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-2">Vault Empty</h3>
-                  <p className="text-gray-500 font-light text-sm">You have not redeemed any privilege codes yet.</p>
-                </div>
-              ) : (
-                myVouchers.map(v => (
-                  <div key={v.id} className={`bg-white rounded-sm p-6 md:p-8 border-l-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-luxury transition-shadow ${v.status === 'USED' ? 'border-l-gray-300 opacity-60' : 'border-l-[var(--color-gold-500)]'}`}>
-                    <div className="flex items-start md:items-center gap-5">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 border ${v.status === 'USED' ? 'bg-gray-50 border-gray-200 text-gray-400' : 'bg-[var(--color-surface-50)] border-[var(--color-gold-200)] text-[var(--color-gold-600)]'}`}>
-                        {v.status === 'USED' ? <Ticket className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
-                      </div>
-                      <div>
-                        <h4 className="font-serif text-[var(--color-navy-900)] text-xl mb-1">{v.rewardName}</h4>
-                        <div className="flex items-center gap-3 text-xs text-gray-500 font-light">
-                          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Authenticated</span>
-                          <span className={`px-2 py-0.5 rounded-sm uppercase font-bold text-[9px] tracking-widest border ${v.status === 'USED' ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
-                            {v.status}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-[var(--color-surface-50)] px-6 py-4 rounded-sm text-left md:text-right border border-gray-200 border-dashed shrink-0 w-full md:w-auto">
-                      <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-1">Authorization Code</p>
-                      <p className="font-mono font-bold text-[var(--color-navy-900)] text-xl tracking-widest">{v.id.split('-').pop()?.toUpperCase()}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </motion.div>
+            <MyVouchers 
+              myVouchers={myVouchers} 
+              isLoadingData={isLoadingData} 
+            />
           )}
 
         </AnimatePresence>
       </main>
 
       {/* MODAL REDEEM */}
-      <Modal isOpen={!!selectedReward} onClose={() => { setSelectedReward(null); setModalState('confirm'); }} title="Privilege Authorization">
-        <div className="overflow-hidden">
-          <AnimatePresence mode="wait">
-            
-            {modalState === 'confirm' && (
-              <motion.div 
-                key="confirm" 
-                initial={{ opacity: 0, x: -10 }} 
-                animate={{ opacity: 1, x: 0 }} 
-                exit={{ opacity: 0, x: 10 }} 
-                className="space-y-6 pt-2"
-              >
-                <div className="bg-[var(--color-surface-50)] p-8 rounded-sm border border-[var(--color-gold-200)] text-center relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--color-gold-500)]/10 rounded-bl-full pointer-events-none" />
-                  <Gift className="w-10 h-10 text-[var(--color-gold-600)] mx-auto mb-4" />
-                  <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-2 relative z-10">{selectedReward?.name}</h3>
-                  <p className="text-xs text-gray-500 mb-8 font-light leading-relaxed relative z-10">{selectedReward?.desc}</p>
-                  
-                  <div className="bg-white p-5 rounded-sm border border-gray-200 flex justify-between items-center shadow-sm relative z-10">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mileage Deduction</span>
-                    <span className="text-xl font-serif text-red-600">-{selectedReward?.cost} Pts</span>
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={handleRedeem} 
-                  isLoading={isRedeeming} 
-                  className="w-full !py-4 uppercase tracking-widest text-xs !rounded-sm shadow-luxury"
-                >
-                  Authorize Deduction
-                </Button>
-              </motion.div>
-            )}
-
-            {modalState === 'success' && (
-              <motion.div 
-                key="success" 
-                initial={{ opacity: 0, scale: 0.95 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                exit={{ opacity: 0, scale: 0.95 }} 
-                className="text-center py-8 space-y-8"
-              >
-                <div className="w-20 h-20 bg-green-50/50 rounded-full flex items-center justify-center mx-auto shadow-sm border border-green-200">
-                  <CheckCircle2 className="w-10 h-10 text-green-500" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-serif text-[var(--color-navy-900)] mb-3">Code Vaulted!</h3>
-                  <p className="text-sm font-light text-gray-500 leading-relaxed px-4">The cryptographic discount code has been injected into your active inventory. You may utilize it on your next maritime checkout.</p>
-                </div>
-                <Button 
-                  onClick={() => { setSelectedReward(null); setModalState('confirm'); setActiveTab('my-vouchers'); }} 
-                  variant="outline" 
-                  className="w-full !py-4 !rounded-sm uppercase tracking-widest text-xs"
-                >
-                  Inspect Inventory
-                </Button>
-              </motion.div>
-            )}
-
-            {modalState === 'error' && (
-              <motion.div 
-                key="error" 
-                initial={{ opacity: 0, scale: 0.95 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                exit={{ opacity: 0, scale: 0.95 }} 
-                className="text-center py-8 space-y-8"
-              >
-                <div className="w-20 h-20 bg-red-50/50 rounded-full flex items-center justify-center mx-auto border border-red-200">
-                  <AlertCircle className="w-10 h-10 text-red-500" />
-                </div>
-                <div>
-                  <h3 className="text-3xl font-serif text-[var(--color-navy-900)] mb-3">Deduction Failed</h3>
-                  <p className="text-sm font-light text-gray-500">{errorMessage}</p>
-                </div>
-                <Button 
-                  onClick={() => setModalState('confirm')} 
-                  variant="outline" 
-                  className="w-full !py-4 !rounded-sm uppercase tracking-widest text-xs"
-                >
-                  Restart Protocol
-                </Button>
-              </motion.div>
-            )}
-
-          </AnimatePresence>
-        </div>
-      </Modal>
+      <RedeemModal 
+        isOpen={!!selectedReward} 
+        onClose={() => { setSelectedReward(null); setModalState('confirm'); }}
+        selectedReward={selectedReward}
+        modalState={modalState}
+        isRedeeming={isRedeeming}
+        errorMessage={errorMessage}
+        handleRedeem={handleRedeem}
+        onRestart={() => setModalState('confirm')}
+        onInspectInventory={() => {
+          setSelectedReward(null); 
+          setModalState('confirm'); 
+          setActiveTab('my-vouchers');
+        }}
+      />
 
     </div>
   );
