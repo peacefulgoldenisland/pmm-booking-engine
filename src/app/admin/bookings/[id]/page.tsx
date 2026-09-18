@@ -569,8 +569,8 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
                         value={editGlobalData.paymentMethod || booking.paymentMethod}
                         onChange={(val) => setEditGlobalData({...editGlobalData, paymentMethod: val as any})}
                         options={[
-                          { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
-                          { value: 'PAYPAL', label: 'PayPal' },
+                          { value: 'DIRECT_TRANSFER', label: 'Direct Transfer' },
+                          { value: 'PAY_LATER', label: 'Pay Later / Chat' },
                           { value: 'CASH', label: 'Cash' }
                         ]}
                       />
@@ -597,7 +597,7 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
           </AdminCard>
 
           {/* ACTION PANEL: Verification */}
-          {booking.status === 'WAITING_VERIFICATION' && booking.paymentMethod !== 'PAYPAL' && (
+          {booking.status === 'WAITING_VERIFICATION' && (
             <AdminCard className="border-2 border-amber-200">
               <AdminCardHeader>
                 <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-navy-900)] flex items-center gap-2">
@@ -605,7 +605,7 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
                 </h3>
               </AdminCardHeader>
               <AdminCardContent>
-                <p className="text-xs text-gray-500 font-light mb-6">Guest has submitted remittance documentation. Please verify the transfer.</p>
+                <p className="text-xs text-gray-500 font-light mb-6">Guest has requested verification. Please verify manually.</p>
 
                 {booking.paymentProofUrl ? (
                   <div className="mb-6 rounded-sm overflow-hidden border border-gray-200 shadow-inner group relative cursor-pointer" onClick={() => booking.paymentProofUrl && window.open(booking.paymentProofUrl, '_blank')}>

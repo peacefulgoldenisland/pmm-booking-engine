@@ -172,7 +172,7 @@ function PaymentContent() {
         
         {/* SCENARIO 1: ALREADY PAID OR WAITING FOR VERIFICATION */}
         {(status === 'WAITING_VERIFICATION' || status === 'PAID') && (
-          <PaymentSuccessState status={status} />
+          <PaymentSuccessState status={status} paymentMethod={paymentMethod} />
         )}
 
         {/* SCENARIO 2: PENDING PAYMENT */}

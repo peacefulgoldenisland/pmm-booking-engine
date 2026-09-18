@@ -7,9 +7,10 @@ import type { BookingStatus } from '@/types/booking';
 
 interface PaymentSuccessStateProps {
   status: BookingStatus;
+  paymentMethod?: string;
 }
 
-export function PaymentSuccessState({ status }: PaymentSuccessStateProps) {
+export function PaymentSuccessState({ status, paymentMethod }: PaymentSuccessStateProps) {
   const router = useRouter();
   
   return (
@@ -31,7 +32,9 @@ export function PaymentSuccessState({ status }: PaymentSuccessStateProps) {
       <p className="text-gray-500 text-sm font-light mb-12 leading-relaxed max-w-lg mx-auto">
         {status === 'PAID' 
           ? "Your maritime expedition is fully secured. We have dispatched your official digital manifest to your registered email address. Prepare for an unforgettable journey." 
-          : "Your proof of remittance has been vaulted securely. The harbor master is executing manual verification. Your boarding documents will be issued momentarily."}
+          : paymentMethod === 'PAY_LATER'
+            ? "Your consultation request has been submitted securely. Our administrative team is reviewing your itinerary. Your boarding documents will be issued upon manual verification."
+            : "Your proof of remittance has been vaulted securely. The harbor master is executing manual verification. Your boarding documents will be issued momentarily."}
       </p>
       
       <Button onClick={() => router.push('/dashboard')} variant="primary" className="!rounded-sm !py-4 !px-10 uppercase tracking-widest text-xs mx-auto flex items-center gap-3">

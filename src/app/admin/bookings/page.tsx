@@ -96,7 +96,7 @@ export default function AdminBookingsPage() {
     "Action"
   ];
 
-  const exportToExcel = async () => {
+  const exportToExcel = async (type: 'RECAP' | 'SYAHBANDAR' = 'RECAP') => {
     if (filteredBookings.length === 0) {
       alert("No data available to export.");
       return;
@@ -115,8 +115,19 @@ export default function AdminBookingsPage() {
       }
     }
 
+    const isSyahbandar = type === 'SYAHBANDAR';
+
     // Set Column Widths (matching standard Syahbandar)
-    worksheet.columns = [
+    worksheet.columns = isSyahbandar ? [
+      { width: 5 },   // A: NO
+      { width: 30 },  // B: NAMA
+      { width: 3 },   // C: empty space
+      { width: 25 },  // D: KELAS
+      { width: 5 },   // E: F/M
+      { width: 14 },  // F: UMUR (THN)
+      { width: 15 },  // G: NO PASSPOR
+      { width: 15 },  // H: KEBANGSAAN
+    ] : [
       { width: 5 },   // A: NO
       { width: 30 },  // B: NAMA
       { width: 3 },   // C: empty space
@@ -137,25 +148,36 @@ export default function AdminBookingsPage() {
     worksheet.addRow(["NAMA KAPAL", null, ": PULAU MAS 88", null, "PELABUHAN ASAL", null, null, ": LOMBOK"]);
     worksheet.addRow(["GT", null, ": 119", null, "PELABUHAN TUJUAN", null, null, ": LABUAN BAJO"]);
     worksheet.addRow(["JUMLAH ABK", null, ": 8 ORANG", null, "TANGGAL", null, null, `: ${formattedTanggal}`]);
-    worksheet.addRow([null, null, null, null, null, null, null, null, null, null, null, null, "BLN/TGL/THN", null]);
     
-    // Format "BLN/TGL/THN" explicitly to match the document styling
-    const blnTglThnCell = worksheet.getRow(4).getCell(13);
-    blnTglThnCell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-    blnTglThnCell.alignment = { horizontal: 'center', vertical: 'middle' };
-    blnTglThnCell.font = { bold: true };
+    if (!isSyahbandar) {
+      worksheet.addRow([null, null, null, null, null, null, null, null, null, null, null, null, "BLN/TGL/THN", null]);
+      // Format "BLN/TGL/THN" explicitly to match the document styling
+      const blnTglThnCell = worksheet.getRow(4).getCell(13);
+      blnTglThnCell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      blnTglThnCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      blnTglThnCell.font = { bold: true };
+    } else {
+      worksheet.addRow([]);
+    }
     
     // Style Header rows 1-3 to be bold
     [1, 2, 3].forEach(rowNum => {
       worksheet.getRow(rowNum).font = { bold: true };
     });
 
-    const headerRow = worksheet.addRow(["NO.", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN", "AGENT/WEB", "AREA", "PRICE", null, "LAHIR", "Hari "]);
+    const headerFields = isSyahbandar 
+      ? ["NO.", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN"]
+      : ["NO.", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN", "AGENT/WEB", "AREA", "PRICE", null, "LAHIR", "Hari "];
+
+    const headerRow = worksheet.addRow(headerFields);
     headerRow.font = { bold: true };
     headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
     
     // Apply borders to headerRow (only columns that have text or are part of the table body)
-    const columnsWithBorder = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14];
+    const columnsWithBorder = isSyahbandar 
+      ? [1, 2, 4, 5, 6, 7, 8]
+      : [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14];
+      
     columnsWithBorder.forEach(colNum => {
        const cell = headerRow.getCell(colNum);
        cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
@@ -184,22 +206,35 @@ export default function AdminBookingsPage() {
            }
         }
 
-        const dataRow = worksheet.addRow([
-          paxNo++,
-          pax.fullName || '',
-          null,
-          b.cabinClass || '',
-          pax.gender || '',
-          pax.age ? `${pax.age} THN` : '',
-          pax.passportNumber || '',
-          pax.nationality || '',
-          sourceLabel,
-          b.pickupLocation || '',
-          pricePerPax,
-          null,
-          birthDateFormatted,
-          dayName
-        ]);
+        const rowData = isSyahbandar 
+          ? [
+              paxNo++,
+              pax.fullName || '',
+              null,
+              b.cabinClass || '',
+              pax.gender || '',
+              pax.age ? `${pax.age} THN` : '',
+              pax.passportNumber || '',
+              pax.nationality || ''
+            ]
+          : [
+              paxNo++,
+              pax.fullName || '',
+              null,
+              b.cabinClass || '',
+              pax.gender || '',
+              pax.age ? `${pax.age} THN` : '',
+              pax.passportNumber || '',
+              pax.nationality || '',
+              sourceLabel,
+              b.pickupLocation || '',
+              pricePerPax,
+              null,
+              birthDateFormatted,
+              dayName
+            ];
+
+        const dataRow = worksheet.addRow(rowData);
         
         // Add borders to data row
         columnsWithBorder.forEach(colNum => {
@@ -207,7 +242,8 @@ export default function AdminBookingsPage() {
         });
         
         // Center alignment for specific columns
-        [1, 4, 5, 6, 13, 14].forEach(colNum => {
+        const centerColumns = isSyahbandar ? [1, 4, 5, 6] : [1, 4, 5, 6, 13, 14];
+        centerColumns.forEach(colNum => {
            dataRow.getCell(colNum).alignment = { horizontal: 'center' };
         });
         
@@ -216,16 +252,22 @@ export default function AdminBookingsPage() {
     });
 
     worksheet.addRow([]); // Empty row
-    const sumRow = worksheet.addRow([null, null, null, null, null, null, null, null, null, "TOTAL", totalPriceSum, null, null, null]);
-    sumRow.getCell(10).font = { bold: true };
-    sumRow.getCell(10).alignment = { horizontal: 'right' };
-    sumRow.getCell(11).font = { bold: true };
-    sumRow.getCell(11).alignment = { horizontal: 'center' };
-    worksheet.addRow([]);
+    
+    if (!isSyahbandar) {
+      const sumRow = worksheet.addRow([null, null, null, null, null, null, null, null, null, "TOTAL", totalPriceSum, null, null, null]);
+      sumRow.getCell(10).font = { bold: true };
+      sumRow.getCell(10).alignment = { horizontal: 'right' };
+      sumRow.getCell(11).font = { bold: true };
+      sumRow.getCell(11).alignment = { horizontal: 'center' };
+      worksheet.addRow([]);
+    }
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    saveAs(blob, `DAFTAR PENUMPANG PM88 ${formattedTanggal}.xlsx`);
+    const filename = isSyahbandar 
+      ? `MANIFEST SYAHBANDAR PM88 ${formattedTanggal}.xlsx`
+      : `RECAP PENUMPANG PM88 ${formattedTanggal}.xlsx`;
+    saveAs(blob, filename);
   };
 
   return (
@@ -430,8 +472,11 @@ export default function AdminBookingsPage() {
           </div>
           <div className="flex justify-end gap-2 shrink-0">
             <AdminButton variant="outline" onClick={() => setIsPreviewModalOpen(false)}>Cancel</AdminButton>
-            <AdminButton variant="success" onClick={() => { setIsPreviewModalOpen(false); exportToExcel(); }}>
-              <Download className="w-4 h-4 mr-2" /> Download Excel Now
+            <AdminButton variant="primary" onClick={() => { setIsPreviewModalOpen(false); exportToExcel('RECAP'); }}>
+              <Download className="w-4 h-4 mr-2" /> Download Recap (Internal)
+            </AdminButton>
+            <AdminButton variant="success" onClick={() => { setIsPreviewModalOpen(false); exportToExcel('SYAHBANDAR'); }}>
+              <Download className="w-4 h-4 mr-2" /> Download Manifest (Syahbandar)
             </AdminButton>
           </div>
         </div>

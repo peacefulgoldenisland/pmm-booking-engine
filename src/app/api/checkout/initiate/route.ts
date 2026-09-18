@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     const orderId = `PMM-${Date.now()}-${uuidv4().substring(0, 4).toUpperCase()}`;
     
     // 3. Validasi Metode Pembayaran (Blokir paksa jika ada yang iseng injek Midtrans dari console)
-    const paymentMethod = booking.paymentMethod || 'MANUAL_BANK';
+    const paymentMethod = booking.paymentMethod || 'DIRECT_TRANSFER';
     
     if (paymentMethod === 'MIDTRANS') {
         return NextResponse.json({ error: 'Midtrans is currently under maintenance.' }, { status: 400 });

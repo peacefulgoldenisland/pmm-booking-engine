@@ -9,7 +9,7 @@ import {
   BedDouble, FileText, Loader2, ChevronRight, Lock,
   Ticket, XCircle, Info, Landmark, QrCode, CreditCard, CircleDollarSign, ChevronDown,
   Globe,
-  Utensils
+  Utensils, MessageCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -35,11 +35,9 @@ interface PassengerDetail {
   passportFileUrl: string;
 }
 
-const PAYMENT_METHODS = [
-  { id: 'MANUAL_BANK', title: 'Bank Transfer', desc: 'BCA, Mandiri, BNI, BRI', icon: Landmark, disabled: false },
-  { id: 'MANUAL_QRIS', title: 'QRIS Quick Pay', desc: 'GoPay, OVO, Dana, ShopeePay', icon: QrCode, disabled: false },
-  { id: 'PAYPAL', title: 'PayPal / USD', desc: 'International Credit Card', icon: CircleDollarSign, disabled: false },
-  { id: 'MIDTRANS', title: 'Credit Card', desc: 'Visa, Mastercard, JCB', icon: CreditCard, disabled: true, tag: 'Maintenance' },
+const PAYMENT_METHODS: Array<{ id: string; title: string; desc: string; icon: any; disabled: boolean; tag?: string }> = [
+  { id: 'DIRECT_TRANSFER', title: 'Transfer Langsung', desc: 'Transfer Bank & QRIS Cepat', icon: Landmark, disabled: false },
+  { id: 'PAY_LATER', title: 'Bayar Nanti / Chat Admin', desc: 'Hubungi Admin via WhatsApp untuk DP / Persetujuan', icon: MessageCircle, disabled: false },
 ];
 
 function CheckoutContent() {
@@ -75,7 +73,7 @@ function CheckoutContent() {
   
   const [passengers, setPassengers] = useState<PassengerDetail[]>([]);
   const [uploadingState, setUploadingState] = useState<{ [key: number]: boolean }>({});
-  const [paymentMethod, setPaymentMethod] = useState('MANUAL_BANK');
+  const [paymentMethod, setPaymentMethod] = useState('DIRECT_TRANSFER');
   
   // Voucher States
   const [voucherCode, setVoucherCode] = useState('');
@@ -747,7 +745,7 @@ function CheckoutContent() {
                 <div className="flex justify-between items-end mb-1">
                   <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Invoice</div>
                   <div className="text-[10px] font-bold text-[var(--color-navy-900)] bg-[var(--color-gold-500)] px-2 py-0.5 rounded-sm uppercase tracking-widest">
-                    {paymentMethod === 'PAYPAL' ? 'USD/IDR' : 'IDR'}
+                    IDR
                   </div>
                 </div>
                 

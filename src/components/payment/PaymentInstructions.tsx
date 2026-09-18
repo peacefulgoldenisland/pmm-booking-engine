@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Clock, Landmark, QrCode, CircleDollarSign, 
+  Clock, Landmark, QrCode, 
   CheckCircle2, Copy, ShieldCheck, AlertTriangle, 
-  UploadCloud, Loader2 
+  UploadCloud, Loader2, MessageCircle, ExternalLink 
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { Booking } from '@/types/booking';
@@ -23,13 +22,30 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
+  const [isNotifying, setIsNotifying] = useState(false);
+
   const { paymentMethod } = bookingData;
-  const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test";
+  const adminWaNumber = "6287817865709";
 
   const handleCopy = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
     setCopiedText(type);
     setTimeout(() => setCopiedText(''), 2000);
+  };
+
+  const handleNotifyAdmin = async () => {
+    setIsNotifying(true);
+    try {
+      const docRef = doc(db, 'bookings', bookingData.id);
+      await updateDoc(docRef, {
+        status: 'WAITING_VERIFICATION'
+      });
+    } catch (err: unknown) {
+      const error = err as Error;
+      setErrorMessage(`Failed to notify admin: ${error.message}`);
+    } finally {
+      setIsNotifying(false);
+    }
   };
 
   const handleUploadProof = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,14 +109,14 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
       {/* Payment Details Box (Desktop Optimized Grid) */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-8 md:p-12 rounded-sm shadow-sm border border-gray-200/60">
         
-        {paymentMethod === 'MANUAL_BANK' && (
+        {paymentMethod === 'DIRECT_TRANSFER' && (
           <>
             <h3 className="text-xl font-serif text-[var(--color-navy-900)] flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
               <Landmark className="w-5 h-5 text-[var(--color-gold-500)]" /> Wire Transfer Credentials
             </h3>
             
             {/* BENTO GRID FOR BANK DETAILS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
               <div className="bg-[var(--color-surface-50)] p-6 border border-gray-100 rounded-sm hover:border-[var(--color-gold-300)] transition-colors">
                 <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Receiving Institution</p>
                 <p className="text-lg font-serif text-[var(--color-navy-900)]">Bank Central Asia (BCA)</p>
@@ -125,80 +141,65 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
                 </Button>
               </div>
             </div>
+
+            {/* QRIS SECTION (Merged into DIRECT_TRANSFER) */}
+            <div className="text-center mb-12">
+              <h3 className="text-sm font-serif text-[var(--color-navy-900)] flex items-center justify-center gap-3 mb-6">
+                <QrCode className="w-4 h-4 text-[var(--color-gold-500)]" /> Scan to Authorize (QRIS)
+              </h3>
+              <div className="bg-[var(--color-surface-50)] p-6 inline-block border border-gray-200 mb-4 rounded-sm shadow-inner">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QRIS PMM Voyage" className="w-48 h-48 object-contain mix-blend-multiply" />
+              </div>
+              <p className="text-xs text-gray-500 font-light leading-relaxed max-w-sm mx-auto">Utilize any integrated e-wallet application (GoPay, OVO, Dana) to scan this code.</p>
+            </div>
           </>
         )}
 
-        {paymentMethod === 'MANUAL_QRIS' && (
-          <div className="text-center">
-            <h3 className="text-xl font-serif text-[var(--color-navy-900)] flex items-center justify-center gap-3 mb-8 pb-4 border-b border-gray-100">
-              <QrCode className="w-5 h-5 text-[var(--color-gold-500)]" /> Scan to Authorize
+        {paymentMethod === 'PAY_LATER' && (
+          <div className="text-center pb-8">
+            <h3 className="text-xl font-serif text-[var(--color-navy-900)] flex items-center justify-center gap-3 mb-6">
+              <MessageCircle className="w-5 h-5 text-[var(--color-gold-500)]" /> Consultation & Authorization
             </h3>
-            <div className="bg-[var(--color-surface-50)] p-10 inline-block border border-gray-200 mb-6 rounded-sm shadow-inner">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QRIS PMM Voyage" className="w-56 h-56 md:w-64 md:h-64 object-contain mix-blend-multiply" />
-            </div>
-            <p className="text-sm text-gray-500 font-light leading-relaxed max-w-md mx-auto">Utilize any integrated e-wallet application (GoPay, OVO, Dana) or Mobile Banking platform to scan this code.</p>
-          </div>
-        )}
-
-        {paymentMethod === 'PAYPAL' && (
-          <div className="text-center">
-            <h3 className="text-xl font-serif text-[var(--color-navy-900)] flex items-center justify-center gap-3 mb-8 pb-4 border-b border-gray-100">
-              <CircleDollarSign className="w-5 h-5 text-[var(--color-gold-500)]" /> International Gateway
-            </h3>
+            <p className="text-sm text-gray-500 font-light max-w-md mx-auto leading-relaxed mb-8">
+              Your itinerary has been secured. Please contact our administrative team via WhatsApp to coordinate payment terms or request manual verification.
+            </p>
             
-            <div className="max-w-md mx-auto mt-8 relative z-10">
-              <PayPalScriptProvider options={{ clientId: paypalClientId, currency: "USD", intent: "capture" }}>
-                <PayPalButtons
-                  style={{ layout: "vertical", shape: "rect", color: "gold" }}
-                  createOrder={async () => {
-                    const res = await fetch('/api/paypal/create-order', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ orderId: bookingData.id })
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Failed to create PayPal order');
-                    return data.id; 
-                  }}
-                  onApprove={async (data, actions) => {
-                    try {
-                      const res = await fetch('/api/paypal/capture-order', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          paypalOrderId: data.orderID,
-                          pmmOrderId: bookingData.id
-                        })
-                      });
-                      const captureData = await res.json();
-                      if (!res.ok) throw new Error(captureData.error || 'Failed to capture payment');
-                      
-                      // PayPal Success
-                      const docRef = doc(db, 'bookings', bookingData.id);
-                      await updateDoc(docRef, { status: 'PAID' });
-                    } catch (err: unknown) {
-                      const error = err as Error;
-                      setErrorMessage(`PayPal Error: ${error.message}`);
-                    }
-                  }}
-                  onError={(err) => {
-                    console.error("PayPal Error:", err);
-                    alert("PayPal window encountered an error. Please refresh and try again.");
-                  }}
-                />
-              </PayPalScriptProvider>
-            </div>
+            <div className="flex flex-col gap-4 max-w-sm mx-auto">
+              <a 
+                href={`https://wa.me/${adminWaNumber}?text=Hello PMM Voyage, I would like to confirm my booking with Reference: ${bookingData.bookingId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:border-green-300 py-4 px-6 rounded-sm font-bold text-[11px] uppercase tracking-widest transition-all"
+              >
+                <MessageCircle className="w-4 h-4" /> Open WhatsApp
+                <ExternalLink className="w-3 h-3 ml-1 opacity-50" />
+              </a>
+              
+              <div className="my-2 flex items-center gap-4">
+                <div className="h-px bg-gray-100 flex-1"></div>
+                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">THEN</span>
+                <div className="h-px bg-gray-100 flex-1"></div>
+              </div>
 
-            <p className="text-xs text-gray-500 font-light mt-10 bg-[var(--color-surface-50)] p-5 border border-gray-100 flex items-start gap-3 text-left rounded-sm">
-              <ShieldCheck className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-              You will be securely redirected to PayPal's encrypted environment. Credit card credentials are never stored on our servers.
+              <Button 
+                onClick={handleNotifyAdmin} 
+                isLoading={isNotifying}
+                variant="primary" 
+                className="w-full !py-4 text-[11px] uppercase tracking-widest !bg-[var(--color-navy-900)] hover:!bg-[var(--color-navy-800)]"
+              >
+                I Have Contacted Admin
+              </Button>
+            </div>
+            
+            <p className="text-[10px] text-gray-400 mt-6 max-w-sm mx-auto">
+              Clicking the button above will pause the expiration timer and place your booking in the administrative review queue.
             </p>
           </div>
         )}
       </motion.div>
 
-      {/* UPLOAD PROOF AREA */}
-      {paymentMethod !== 'PAYPAL' && (
+      {/* UPLOAD PROOF AREA (Only for DIRECT_TRANSFER) */}
+      {paymentMethod === 'DIRECT_TRANSFER' && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-8 md:p-12 border border-gray-200/60 shadow-sm rounded-sm">
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
