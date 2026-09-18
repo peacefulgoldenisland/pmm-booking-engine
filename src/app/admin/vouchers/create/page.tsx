@@ -11,6 +11,7 @@ import { AdminCard, AdminCardContent } from '@/components/admin/ui/AdminCard';
 import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminSelect } from '@/components/admin/ui/AdminSelect';
 import { AdminButton } from '@/components/admin/ui/AdminButton';
+import type { DiscountType } from '@/types/voucher';
 
 export default function CreateVoucherPage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function CreateVoucherPage() {
   const [formData, setFormData] = useState({
     code: '',
     name: '',
-    discountType: 'PERCENTAGE',
+    discountType: 'PERCENTAGE' as DiscountType,
     discountValue: '',
     minTransaction: '',
     validUntil: ''
@@ -133,7 +134,7 @@ export default function CreateVoucherPage() {
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Discount Type <span className="text-red-500">*</span></label>
                 <AdminSelect 
                   value={formData.discountType}
-                  onChange={(val) => setFormData(prev => ({ ...prev, discountType: val }))}
+                  onChange={(val) => setFormData(prev => ({ ...prev, discountType: val as DiscountType }))}
                   options={[
                     { label: "Percentage (%)", value: "PERCENTAGE" },
                     { label: "Fixed Amount (IDR)", value: "FIXED" }

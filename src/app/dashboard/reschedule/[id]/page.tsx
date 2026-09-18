@@ -10,13 +10,14 @@ import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { CurrentManifestCard } from '@/components/dashboard/CurrentManifestCard';
 import { RescheduleForm } from '@/components/dashboard/RescheduleForm';
+import type { Booking } from '@/types/booking';
 
 export default function ReschedulePage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const router = useRouter();
   const id = params.id;
 
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Status Kunci (Locks)
@@ -33,11 +34,14 @@ export default function ReschedulePage(props: { params: Promise<{ id: string }> 
         
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setBooking({ id: docSnap.id, ...data });
+          setBooking({ id: docSnap.id, ...data } as Booking);
 
           // Cek Aturan H-3
           const today = new Date();
-          const departure = new Date(data.dateOfDeparture);
+          const departureDateVal = data.dateOfDeparture;
+          const departure = typeof departureDateVal === 'string' || typeof departureDateVal === 'number'
+            ? new Date(departureDateVal)
+            : departureDateVal.toDate?.() || new Date();
           const diffTime = departure.getTime() - today.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           

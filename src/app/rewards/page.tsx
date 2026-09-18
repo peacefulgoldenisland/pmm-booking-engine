@@ -17,8 +17,11 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { RewardCatalog } from '@/components/rewards/RewardCatalog';
 import { MyVouchers } from '@/components/rewards/MyVouchers';
 import { RedeemModal } from '@/components/rewards/RedeemModal';
+import type { User } from 'firebase/auth';
+import type { GuestProfile } from '@/types/user';
+import type { RewardCatalogItem, UserReward } from '@/types/voucher';
 
-const FALLBACK_CATALOG = [
+const FALLBACK_CATALOG: RewardCatalogItem[] = [
   { id: 'VOUCHER-50K', name: 'IDR 50,000 Privilege', desc: 'A quick treat. Applicable to any booking without restrictions.', cost: 5, value: 50000, iconName: 'Ticket' },
   { id: 'VOUCHER-100K', name: 'IDR 100,000 Privilege', desc: 'Perfect for Sharing Deck Upstair. Enjoy the ocean breeze for less.', cost: 10, value: 100000, iconName: 'Tag' },
   { id: 'VOUCHER-150K', name: 'IDR 150,000 Privilege', desc: 'Ideal for Down Deck Cabin (1 Pax). Solo travel made sweeter.', cost: 15, value: 150000, iconName: 'Gift' },
@@ -30,17 +33,17 @@ const FALLBACK_CATALOG = [
 export default function RewardsPage() {
   const router = useRouter();
   
-  const [user, setUser] = useState<any>(null);
-  const [userData, setUserData] = useState<any>(null);
-  const [catalog, setCatalog] = useState<any[]>([]);
-  const [myVouchers, setMyVouchers] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<GuestProfile | null>(null);
+  const [catalog, setCatalog] = useState<RewardCatalogItem[]>([]);
+  const [myVouchers, setMyVouchers] = useState<UserReward[]>([]);
   const [activeTab, setActiveTab] = useState<'catalog' | 'my-vouchers'>('catalog');
   
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isRedeeming, setIsRedeeming] = useState(false);
 
-  const [selectedReward, setSelectedReward] = useState<any>(null);
+  const [selectedReward, setSelectedReward] = useState<RewardCatalogItem | null>(null);
   const [modalState, setModalState] = useState<'confirm' | 'success' | 'error'>('confirm');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -60,14 +63,14 @@ export default function RewardsPage() {
 
     const userRef = doc(db, 'users', user.uid);
     const unsubscribeUser = onSnapshot(userRef, (docSnap) => {
-      if (docSnap.exists()) setUserData(docSnap.data());
+      if (docSnap.exists()) setUserData(docSnap.data() as GuestProfile);
     });
 
     const catalogRef = collection(db, 'rewards_catalog');
     const unsubscribeCatalog = onSnapshot(catalogRef, (snapshot) => {
       if (!snapshot.empty) {
-        const fetchedCatalog = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        fetchedCatalog.sort((a: any, b: any) => a.cost - b.cost);
+        const fetchedCatalog = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as RewardCatalogItem));
+        fetchedCatalog.sort((a, b) => a.cost - b.cost);
         setCatalog(fetchedCatalog);
       } else {
         setCatalog(FALLBACK_CATALOG);
@@ -77,11 +80,15 @@ export default function RewardsPage() {
     const rewardsRef = collection(db, 'user_rewards');
     const q = query(rewardsRef, where('userId', '==', user.uid));
     const unsubscribeRewards = onSnapshot(q, (snapshot) => {
-      const vouchers: any[] = [];
+      const vouchers: UserReward[] = [];
       snapshot.forEach(d => {
-        vouchers.push({ id: d.id, ...d.data() });
+        vouchers.push({ id: d.id, ...d.data() } as UserReward);
       });
-      vouchers.sort((a, b) => new Date(b.redeemedAt).getTime() - new Date(a.redeemedAt).getTime());
+      vouchers.sort((a, b) => {
+        const dateA = typeof a.redeemedAt === 'string' || typeof a.redeemedAt === 'number' ? new Date(a.redeemedAt).getTime() : (a.redeemedAt as any)?.toDate?.()?.getTime() || 0;
+        const dateB = typeof b.redeemedAt === 'string' || typeof b.redeemedAt === 'number' ? new Date(b.redeemedAt).getTime() : (b.redeemedAt as any)?.toDate?.()?.getTime() || 0;
+        return dateB - dateA;
+      });
       setMyVouchers(vouchers);
       setIsLoadingData(false);
     }, (error) => {
@@ -121,15 +128,16 @@ export default function RewardsPage() {
       // Karena kita menggunakan onSnapshot, state userData (saldo) dan myVouchers akan 
       // otomatis ter-update sesaat setelah dokumen Firestore berubah di backend!
       setModalState('success');
-    } catch (error: any) {
-      setErrorMessage(error.message || 'Failed to redeem points.');
+    } catch (error: unknown) {
+      const err = error as Error;
+      setErrorMessage(err.message || 'Failed to redeem points.');
       setModalState('error');
     } finally {
       setIsRedeeming(false);
     }
   };
 
-  const openRedeemModal = (reward: any) => {
+  const openRedeemModal = (reward: RewardCatalogItem) => {
     setSelectedReward(reward);
     setModalState('confirm');
   };

@@ -5,15 +5,16 @@ import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { 
-  Search, Eye, ShieldAlert, Sparkles, User
+  Search, Eye, ShieldAlert, Sparkles, User as UserIcon
 } from 'lucide-react';
 
 import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminTable } from '@/components/admin/ui/AdminTable';
 import { AdminBadge } from '@/components/admin/ui/AdminBadge';
+import type { User } from '@/types/user';
 
 export default function AdminGuestsPage() {
-  const [guests, setGuests] = useState<any[]>([]);
+  const [guests, setGuests] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -25,7 +26,7 @@ export default function AdminGuestsPage() {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as User[];
       setGuests(data);
       setIsLoading(false);
     }, (error) => {
@@ -87,7 +88,7 @@ export default function AdminGuestsPage() {
               <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-[var(--color-surface-50)] border border-gray-200 flex items-center justify-center text-[var(--color-navy-900)] shrink-0">
-                    <User className="w-5 h-5 text-gray-400" />
+                    <UserIcon className="w-5 h-5 text-gray-400" />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-[var(--color-navy-900)]">{g.fullName || 'Unnamed Guest'}</p>

@@ -3,12 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowRight, Ship, ShieldCheck, CheckCircle2, 
-  Minus, Plus, Loader2, Anchor, Bell, Lock
-} from 'lucide-react';
+import { Calendar as CalendarIcon, Users, ChevronRight, CheckCircle2, AlertCircle, Plus, Minus, Loader2, ArrowRight, Ship, X, LogOut, FileText, ChevronDown, Anchor, Calendar, DollarSign, Waves, Wind, UsersRound, ShieldCheck, Lock } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { collection, query, orderBy, onSnapshot, doc, getDocs } from 'firebase/firestore';
 import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
@@ -16,75 +14,23 @@ import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { Skeleton } from '@/components/ui/Skeleton';
-
-const defaultCabins = [
-  { 
-    name: "Private Cabin Sea View", 
-    desc: "A premium sanctuary offering panoramic ocean vistas right from your bed.", 
-    price: "4,600K", 
-    images: [
-      "https://images.unsplash.com/photo-1506012787146-f92b2d7d6d96?q=80&w=2069&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=2070&auto=format&fit=crop"
-    ], 
-    popular: true, 
-    maxCapacity: 8 
-  },
-  { 
-    name: "Private Cabin Standard", 
-    desc: "An elegant private quarters designed for ultimate comfort and tranquility.", 
-    price: "4,200K", 
-    images: [
-      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?q=80&w=2070&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1572987669554-0ba2ba9aee1f?q=80&w=2070&auto=format&fit=crop"
-    ], 
-    popular: false, 
-    maxCapacity: 4 
-  },
-  { 
-    name: "Down Deck Cabin (2 Pax)", 
-    desc: "Intimate lower-deck suite tailored for couples seeking a cozy maritime experience.", 
-    price: "3,800K", 
-    images: [
-      "https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?q=80&w=2070&auto=format&fit=crop"
-    ], 
-    popular: false, 
-    maxCapacity: 16 
-  },
-  { 
-    name: "Down Deck Cabin (1 Pax)", 
-    desc: "Exclusive solitary retreat perfectly appointed for the discerning solo voyager.", 
-    price: "3,800K", 
-    images: [
-      "https://images.unsplash.com/photo-1611892440504-42a792e24d32?q=80&w=2070&auto=format&fit=crop"
-    ], 
-    popular: false, 
-    maxCapacity: 2 
-  },
-  { 
-    name: "Sharing Deck Upstair", 
-    desc: "Open-air slumber under the stars with gentle ocean breezes on the upper deck.", 
-    price: "3,600K", 
-    images: [
-      "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?q=80&w=2073&auto=format&fit=crop"
-    ], 
-    popular: false, 
-    maxCapacity: 22 
-  }
-];
+import type { MasterCabin, VoyageSchedule } from '@/types/voyage';
 
 export default function Home() {
   const router = useRouter();
   
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [cabins, setCabins] = useState<any[]>(defaultCabins);
-  const [isFetchingData, setIsFetchingData] = useState(true);
+  const [cabins, setCabins] = useState<MasterCabin[]>([]);
+  const [isFullyBooked, setIsFullyBooked] = useState(false);
+  const [availableSeats, setAvailableSeats] = useState<Record<string, number> | null>(null);
+  const [isFetchingData, setIsFetchingData] = useState(false);
 
   const [selectedDateStr, setSelectedDateStr] = useState<string>("");
   const [selectedDateObj, setSelectedDateObj] = useState<Date | null>(null);
   const [selectedCabins, setSelectedCabins] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookedSeats, setBookedSeats] = useState<Record<string, number>>({});
+  
   
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isWaitlistModalOpen, setIsWaitlistModalOpen] = useState(false);
@@ -101,6 +47,22 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
+  // Fetch Master Cabins
+  useEffect(() => {
+    const fetchCabins = async () => {
+      try {
+        const q = query(collection(db, 'products'), orderBy('price', 'desc'));
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as MasterCabin[];
+        setCabins(data);
+      } catch (error) {
+        console.error("Error fetching cabins:", error);
+      }
+    };
+    fetchCabins();
+  }, []);
+
+  // Set default date (next Saturday)
   useEffect(() => {
     let d = new Date();
     const currentDay = d.getDay();
@@ -121,62 +83,64 @@ export default function Home() {
     setSelectedDateStr(localDate.toISOString().split('T')[0]);
   };
 
+  // Fetch Availability for the selected date from Firestore directly
   useEffect(() => {
-    const fetchAvailability = async () => {
-      if (!selectedDateStr) return;
-      setIsFetchingData(true);
-      setSelectedCabins({});
-      
-      try {
-        const res = await fetch(`/api/availability?date=${selectedDateStr}`);
-        if (res.ok) {
-          const data = await res.json();
-          setBookedSeats(data.booked || {});
-        }
-      } catch (error) {
-        console.error("Error fetching availability:", error);
-      } finally {
-        setTimeout(() => setIsFetchingData(false), 600); // Smoother loading
+    if (!selectedDateStr) return;
+    setIsFetchingData(true);
+    setSelectedCabins({});
+    
+    const docRef = doc(db, 'voyages', selectedDateStr);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const voyage = docSnap.data() as VoyageSchedule;
+        setAvailableSeats(voyage.cabinQuotas || {});
+      } else {
+        // If the schedule doesn't exist, we auto-assume FULL capacity. 
+        // The API route will auto-create the schedule on checkout.
+        setAvailableSeats(null);
       }
-    };
-    fetchAvailability();
+      setTimeout(() => setIsFetchingData(false), 600);
+    });
+    
+    return () => unsubscribe();
   }, [selectedDateStr]);
 
-  const getAvailabilityInfo = (cabinName: string, maxCapacity: number) => {
-    const booked = bookedSeats[cabinName] || 0;
-    const available = Math.max(0, maxCapacity - booked);
+  const getAvailabilityInfo = (cabinId: string, totalUnits: number) => {
+    let available = totalUnits; // default if null
     
-    if (available === 0) return { text: "Fully Booked", isLow: true, availablePax: 0, maxPax: maxCapacity };
-    if (available <= 4) return { text: `${available} Left`, isLow: true, availablePax: available, maxPax: maxCapacity };
-    return { text: "Available", isLow: false, availablePax: available, maxPax: maxCapacity };
+    if (availableSeats !== null) {
+      available = availableSeats[cabinId] ?? 0;
+    }
+    
+    if (available === 0) return { text: "Fully Booked", isLow: true, availableUnits: 0, totalUnits: totalUnits };
+    if (available <= 5 && available < totalUnits) return { text: `Almost Sold Out - ${available} Left`, isLow: true, availableUnits: available, totalUnits: totalUnits };
+    return { text: "Available", isLow: false, availableUnits: available, totalUnits: totalUnits };
   };
 
-  const handleAddPax = (cabinName: string, availablePax: number) => {
+  const handleAddPax = (cabinId: string, availablePax: number) => {
     setSelectedCabins(prev => {
-      const current = prev[cabinName] || 0;
+      const current = prev[cabinId] || 0;
       if (current >= availablePax) return prev; 
-      return { ...prev, [cabinName]: current + 1 };
+      return { ...prev, [cabinId]: current + 1 };
     });
   };
 
-  const handleRemovePax = (cabinName: string) => {
+  const handleRemovePax = (cabinId: string) => {
     setSelectedCabins(prev => {
-      const current = prev[cabinName] || 0;
+      const current = prev[cabinId] || 0;
       if (current <= 1) {
         const newState = { ...prev };
-        delete newState[cabinName]; 
+        delete newState[cabinId]; 
         return newState;
       }
-      return { ...prev, [cabinName]: current - 1 };
+      return { ...prev, [cabinId]: current - 1 };
     });
   };
 
-  const parsePrice = (priceStr: string) => parseInt(priceStr.replace(/,/g, '').replace('K', '000').replace(/[^0-9]/g, '')) || 0;
-  
   const totalPax = Object.values(selectedCabins).reduce((a, b) => a + b, 0);
-  const totalPrice = Object.entries(selectedCabins).reduce((total, [cabinName, count]) => {
-    const cabinData = cabins.find(c => c.name === cabinName);
-    return total + ((cabinData ? parsePrice(cabinData.price) : 0) * count);
+  const totalPrice = Object.entries(selectedCabins).reduce((total, [cabinId, count]) => {
+    const cabinData = cabins.find(c => c.id === cabinId);
+    return total + ((cabinData?.price || 0) * count);
   }, 0);
 
   const handleProceedToCheckout = () => {
@@ -185,16 +149,21 @@ export default function Home() {
       return;
     }
     setIsSubmitting(true);
-    const cartString = encodeURIComponent(JSON.stringify(selectedCabins));
-    const queryParams = new URLSearchParams({ date: selectedDateStr, cart: cartString, pax: totalPax.toString() });
+    const cartString = JSON.stringify(selectedCabins);
+    const queryParams = new URLSearchParams({ 
+      date: selectedDateStr, 
+      cart: cartString, 
+      pax: totalPax.toString() 
+    });
 
     setTimeout(() => {
       router.push(`/checkout?${queryParams.toString()}`);
     }, 600);
   };
 
-  const openWaitlistModal = (cabinName: string) => {
-    setWaitlistCabin(cabinName);
+  const openWaitlistModal = (cabinId: string) => {
+    const cabin = cabins.find(c => c.id === cabinId);
+    setWaitlistCabin(cabin?.name || '');
     setWaitlistSuccess(false);
     setWaitlistForm({ name: '', email: '', phone: '', pax: 1 });
     setIsWaitlistModalOpen(true);
@@ -221,23 +190,23 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[var(--color-surface-50)] pb-24">
       
       {isLoggedIn ? (
         <DashboardHeader />
       ) : (
-        <nav className="fixed top-0 w-full z-50 bg-[var(--color-navy-900)]/90 backdrop-blur-md border-b border-white/5 py-4 transition-all">
-          <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+        <nav className="sticky top-0 w-full z-50 bg-[var(--color-navy-900)] border-b border-white/10 py-4 shadow-md">
+          <div className="max-w-7xl mx-auto px-4 md:px-6 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <Ship className="w-5 h-5 text-[var(--color-gold-500)]" />
-              <span className="text-xl tracking-widest text-white flex items-center gap-2">
+              <span className="text-lg tracking-widest text-white flex items-center gap-2">
                 <span className="font-bold uppercase">PMM</span> 
-                <span className="font-serif italic text-[var(--color-gold-500)] lowercase text-2xl relative top-[2px]">Reserve</span>
+                <span className="font-serif italic text-[var(--color-gold-500)] lowercase text-xl relative top-[1px]">Booking</span>
               </span>
             </div>
             <button 
               onClick={() => router.push('/login')} 
-              className="text-white hover:text-[var(--color-gold-500)] text-sm font-medium tracking-wide transition-colors"
+              className="text-white hover:text-[var(--color-gold-500)] text-[10px] md:text-xs font-bold uppercase tracking-widest transition-colors"
             >
               Member Sign In
             </button>
@@ -245,135 +214,127 @@ export default function Home() {
         </nav>
       )}
 
-      {/* IMMERSIVE LUXURY HERO SECTION */}
-      <section className="relative h-[65vh] min-h-[500px] w-full flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-105 animate-slow-zoom"
-          style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=2070&auto=format&fit=crop")' }}
-        />
-        {/* Elegant Dark Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-navy-900)]/80 via-[var(--color-navy-900)]/40 to-[var(--color-navy-900)]/90" />
-        
-        <div className="relative z-10 text-center px-4 max-w-3xl mt-16">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-            <div className="inline-flex items-center justify-center gap-2 mb-6">
-              <div className="h-px w-8 bg-[var(--color-gold-500)]" />
-              <span className="text-[var(--color-gold-500)] uppercase tracking-[0.2em] text-xs font-semibold">The Ultimate Voyage</span>
-              <div className="h-px w-8 bg-[var(--color-gold-500)]" />
+      {/* BOOKING ENGINE HEADER */}
+      <div className={`bg-[var(--color-navy-900)] text-white ${isLoggedIn ? 'pt-28' : 'pt-8'} pb-16 px-4 md:px-6 relative z-10 border-b-4 border-[var(--color-gold-500)] transition-all`}>
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl md:text-4xl font-serif mb-2">Book Your Voyage</h1>
+          <p className="text-gray-400 font-light text-sm mb-6 max-w-xl leading-relaxed">Select your Saturday departure date and configure your accommodations for the Komodo expedition.</p>
+          
+          <div className="bg-white rounded-xl p-4 md:p-6 shadow-2xl flex flex-col md:flex-row items-center gap-6 transform translate-y-12 border border-gray-100 max-w-3xl">
+            <div className="w-full">
+               <DatePicker 
+                 label="Select Departure Date (Saturdays)" 
+                 selectedDate={selectedDateObj} 
+                 onSelect={handleDateSelect} 
+                 filterDate={(date) => date.getDay() === 6}
+               />
             </div>
-            <h1 className="text-5xl md:text-7xl font-serif text-white mb-6 leading-tight">
-              Lombok to <span className="italic text-[var(--color-gold-400)]">Komodo</span>
-            </h1>
-            <p className="text-gray-300 text-sm md:text-base font-light tracking-wide max-w-xl mx-auto leading-relaxed">
-              Experience the pinnacle of maritime luxury. Select your exquisite quarters and embark on a majestic 4-day, 3-night expedition across the Indonesian archipelago.
-            </p>
-          </motion.div>
+            {isFetchingData && (
+              <div className="flex items-center gap-2 text-[var(--color-gold-600)] font-bold text-[10px] uppercase tracking-widest animate-pulse w-full md:w-auto shrink-0 justify-center">
+                <Loader2 className="w-4 h-4 animate-spin" /> Checking Quotas...
+              </div>
+            )}
+          </div>
         </div>
-      </section>
+      </div>
 
-      {/* ALIGNMENT FIX: Margin Top Positif (mt-12 md:mt-16) dan Grid Sejajar */}
-      <main className="max-w-7xl mx-auto px-4 md:px-6 mt-12 md:mt-16 relative z-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 mt-16 md:mt-20 relative z-0">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           
           {/* LEFT COLUMN - Cabin List */}
-          <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-8 pt-4">
-            <div className="flex flex-col border-b border-gray-200 pb-4">
-              <h2 className="text-3xl font-serif text-[var(--color-navy-900)]">Accommodations</h2>
-            </div>
+          <div className="lg:col-span-8 flex flex-col gap-4 pt-4">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-navy-900)] mb-2">Available Suites & Cabins</h2>
 
-            <div className="grid grid-cols-1 gap-8">
-              {isFetchingData ? (
+            <div className="grid grid-cols-1 gap-4">
+              {isFetchingData || cabins.length === 0 ? (
                 Array(3).fill(0).map((_, i) => (
-                  <div key={`skel-${i}`} className="bg-white flex flex-col md:flex-row gap-6 pb-8 border-b border-gray-100">
-                    <Skeleton className="w-full md:w-5/12 h-[250px] rounded-xl" />
-                    <div className="flex flex-col justify-center flex-1 space-y-4">
-                      <Skeleton variant="text" className="w-3/4 h-8 mb-2" />
-                      <Skeleton variant="text" className="w-full h-4" />
-                      <Skeleton variant="text" className="w-5/6 h-4" />
-                      <Skeleton variant="text" className="w-1/3 h-6 mt-4" />
+                  <div key={`skel-${i}`} className="bg-white rounded-xl flex flex-col md:flex-row h-[280px] md:h-[180px] border border-gray-200 overflow-hidden">
+                    <Skeleton className="w-full md:w-48 h-48 md:h-full shrink-0" />
+                    <div className="p-5 flex flex-col justify-center flex-1 space-y-4">
+                      <Skeleton variant="text" className="w-3/4 h-6" />
+                      <Skeleton variant="text" className="w-full h-3" />
+                      <Skeleton variant="text" className="w-5/6 h-3" />
                     </div>
                   </div>
                 ))
               ) : (
                 cabins.map((cabin, idx) => {
-                  const availability = getAvailabilityInfo(cabin.name, cabin.maxCapacity);
-                  const paxInCabin = selectedCabins[cabin.name] || 0;
+                  const availability = getAvailabilityInfo(cabin.id, cabin.totalUnits || 0);
+                  const paxInCabin = selectedCabins[cabin.id] || 0;
                   const isSelected = paxInCabin > 0;
-                  const isFullyBooked = availability.availablePax === 0;
+                  const isFullyBooked = availability.availableUnits === 0;
 
                   return (
                     <motion.div 
-                      key={idx}
-                      initial={{ opacity: 0, y: 20 }}
+                      key={cabin.id}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1, duration: 0.6 }}
-                      className={`flex flex-col md:flex-row gap-6 md:gap-8 pb-8 border-b border-gray-200 last:border-0 transition-opacity ${isFullyBooked ? 'opacity-60' : 'opacity-100'}`}
+                      transition={{ delay: idx * 0.05, duration: 0.4 }}
+                      className={`bg-white rounded-xl border overflow-hidden flex flex-col sm:flex-row transition-all duration-300 shadow-sm hover:shadow-md ${isFullyBooked ? 'opacity-60 grayscale-[0.3]' : 'opacity-100'} ${isSelected ? 'border-[var(--color-navy-900)] ring-1 ring-[var(--color-navy-900)]' : 'border-gray-200'}`}
                     >
-                      {/* Image - Sharper corners, elegant proportions */}
-                      <div className="w-full md:w-5/12 h-[280px] md:h-[240px] relative shrink-0 group">
-                        <ImageCarousel images={cabin.images} alt={cabin.name} className="w-full h-full rounded-xl" />
+                      {/* Image */}
+                      <div className="w-full sm:w-56 h-48 sm:h-auto relative shrink-0">
+                        {cabin.images && cabin.images.length > 0 ? (
+                           <ImageCarousel images={cabin.images} alt={cabin.name} className="w-full h-full object-cover" />
+                        ) : (
+                           <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">No Image</div>
+                        )}
                         {cabin.popular && (
-                          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur text-[var(--color-navy-900)] text-[10px] font-bold px-3 py-1.5 rounded-sm uppercase tracking-widest shadow-sm z-10">
-                            Signature Suites
+                          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur text-[var(--color-navy-900)] text-[9px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest shadow-sm z-10">
+                            Popular
                           </div>
                         )}
                       </div>
 
-                      {/* Content - Editorial style */}
-                      <div className={`flex flex-col justify-center flex-1 transition-colors duration-500 rounded-xl ${isSelected ? 'bg-[var(--color-surface-50)] -mx-4 px-4 md:mx-0 md:px-6 py-4' : 'py-2'}`}>
-                        <div className="mb-4">
-                          <div className="flex items-center justify-between gap-4 mb-2">
-                            <h3 className="text-2xl font-serif text-[var(--color-navy-900)] leading-tight">{cabin.name}</h3>
+                      {/* Content */}
+                      <div className="p-5 flex flex-col justify-between flex-1">
+                        <div>
+                          <div className="flex justify-between items-start mb-2 gap-4">
+                            <h3 className="text-lg md:text-xl font-serif text-[var(--color-navy-900)] font-bold leading-tight">{cabin.name}</h3>
+                            <div className="text-right shrink-0">
+                               <p className="font-serif text-lg text-[var(--color-navy-900)] whitespace-nowrap">IDR {Number(cabin.price).toLocaleString('id-ID')}</p>
+                               <p className="text-[9px] text-gray-400 uppercase tracking-widest">Per Cabin</p>
+                            </div>
                           </div>
                           
-                          {/* Availability Badge Minimalist */}
-                          <div className="inline-flex items-center gap-1.5 mb-4">
+                          <div className="flex items-center gap-1.5 mt-2 mb-3">
+                            <UsersRound className="w-3.5 h-3.5 text-gray-400" />
+                            <span className="text-xs text-gray-600 font-medium">Up to {cabin.maxCapacity} Pax / Unit</span>
+                          </div>
+
+                          <div className="inline-flex items-center gap-1.5 mb-3">
                             <span className={`w-1.5 h-1.5 rounded-full ${isFullyBooked ? 'bg-gray-400' : availability.isLow ? 'bg-red-500' : 'bg-green-500'}`} />
-                            <span className="text-xs uppercase tracking-widest font-medium text-gray-500">
+                            <span className={`text-[10px] font-bold uppercase tracking-widest ${availability.isLow ? 'text-red-500' : 'text-emerald-500'}`}>
                               {availability.text}
                             </span>
                           </div>
-
-                          <p className="text-sm text-gray-600 font-light leading-relaxed mb-6">
-                            {cabin.desc}
-                          </p>
+                          
+                          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4">{cabin.description}</p>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mt-auto border-t border-gray-100 pt-4">
-                          <div>
-                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest mb-1">Per Guest</p>
-                            <p className="font-serif text-xl text-[var(--color-navy-900)]">
-                              IDR {cabin.price}
-                            </p>
-                          </div>
-
-                          <div className="w-full sm:w-auto">
+                        {/* Actions */}
+                        <div className="flex justify-between items-center mt-auto border-t border-gray-100 pt-4">
+                            <div className="flex gap-2">
+                               {cabin.facilities?.slice(0,2).map((f, i) => (
+                                 <span key={i} className="text-[9px] px-2 py-1 bg-gray-50 text-gray-500 rounded-sm truncate max-w-[100px] border border-gray-100">{f}</span>
+                               ))}
+                            </div>
+                            
                             {isFullyBooked ? (
-                              <button 
-                                onClick={() => openWaitlistModal(cabin.name)}
-                                className="w-full sm:w-max px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-[var(--color-navy-900)] text-xs font-semibold uppercase tracking-widest rounded-sm transition-colors flex items-center justify-center gap-2"
-                              >
-                                Waitlist
+                              <button onClick={() => openWaitlistModal(cabin.id)} className="px-4 py-2 bg-[var(--color-navy-900)] hover:bg-[var(--color-navy-800)] text-white text-[10px] font-bold uppercase tracking-widest rounded-sm transition-colors shadow-sm">
+                                Join Waitlist
                               </button>
                             ) : (
-                              <div className="flex items-center justify-between sm:justify-start gap-4">
-                                <button 
-                                  onClick={() => handleRemovePax(cabin.name)} disabled={paxInCabin === 0}
-                                  className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 rounded-full text-[var(--color-navy-900)] disabled:opacity-30 disabled:bg-gray-50 transition-all hover:border-[var(--color-navy-900)]"
-                                >
-                                  <Minus className="w-4 h-4" />
+                              <div className="flex items-center gap-3">
+                                <button onClick={() => handleRemovePax(cabin.id)} disabled={paxInCabin === 0} className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 disabled:opacity-30 hover:border-[var(--color-navy-900)] hover:text-[var(--color-navy-900)] hover:bg-gray-50 transition-colors">
+                                  <Minus className="w-3 h-3" />
                                 </button>
-                                <span className="text-lg font-serif w-6 text-center text-[var(--color-navy-900)]">{paxInCabin}</span>
-                                <button 
-                                  onClick={() => handleAddPax(cabin.name, availability.availablePax)} disabled={paxInCabin >= availability.availablePax}
-                                  className="w-10 h-10 flex items-center justify-center bg-white border border-gray-300 rounded-full text-[var(--color-navy-900)] disabled:opacity-30 disabled:bg-gray-50 transition-all hover:border-[var(--color-navy-900)]"
-                                >
-                                  <Plus className="w-4 h-4" />
+                                <span className="font-bold text-sm w-4 text-center text-[var(--color-navy-900)]">{paxInCabin}</span>
+                                <button onClick={() => handleAddPax(cabin.id, availability.availableUnits)} disabled={paxInCabin >= availability.availableUnits} className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 disabled:opacity-30 hover:border-[var(--color-navy-900)] hover:text-[var(--color-navy-900)] hover:bg-gray-50 transition-colors">
+                                  <Plus className="w-3 h-3" />
                                 </button>
                               </div>
                             )}
-                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -383,63 +344,57 @@ export default function Home() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN - Sticky Cart (Editorial & Minimalist) */}
-          <div className="lg:col-span-5 xl:col-span-4 relative">
-            <div className="lg:sticky lg:top-28 pt-4">
+          {/* RIGHT COLUMN - Sticky Cart */}
+          <div className="lg:col-span-4 relative">
+            <div className="lg:sticky lg:top-24 pt-4 lg:pt-11">
               
-              <div className="bg-white p-8 shadow-luxury border border-gray-200/50 rounded-xl relative overflow-hidden">
+              <div className="bg-white p-6 shadow-luxury border border-[var(--color-gold-500)]/20 rounded-xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-[var(--color-gold-500)]" />
                 
-                <h2 className="text-2xl font-serif text-[var(--color-navy-900)] mb-6">Reservation Details</h2>
+                <h2 className="text-xl font-serif text-[var(--color-navy-900)] mb-6 flex items-center gap-2">
+                   <CheckCircle2 className="w-5 h-5 text-[var(--color-gold-500)]" />
+                   Booking Summary
+                </h2>
 
-                <div className="mb-8">
-                  <DatePicker 
-                    label="Select Departure Date (Saturdays)" 
-                    selectedDate={selectedDateObj} 
-                    onSelect={handleDateSelect} 
-                    filterDate={(date) => date.getDay() === 6}
-                  />
-                </div>
-
-                <div className="bg-[var(--color-surface-50)] rounded-sm p-6 border border-gray-100">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    Guest Manifest
+                <div className="bg-[var(--color-surface-50)] rounded-lg p-5 border border-gray-100">
+                  <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-gray-200 pb-2">
+                    Date: <span className="text-[var(--color-navy-900)]">{selectedDateObj ? selectedDateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span>
                   </h4>
 
-                  <div className="space-y-4 min-h-[60px] mb-6">
+                  <div className="space-y-4 min-h-[60px] mb-4">
                     <AnimatePresence mode="popLayout">
                       {Object.keys(selectedCabins).length === 0 && (
-                        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm font-light text-gray-400 italic">
-                          No quarters selected.
+                        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs font-light text-gray-400 italic text-center py-4">
+                          No cabins selected yet.
                         </motion.p>
                       )}
 
-                      {Object.entries(selectedCabins).map(([cabinName, count]) => {
-                        const cabinData = cabins.find(c => c.name === cabinName);
-                        const price = cabinData ? parsePrice(cabinData.price) : 0;
+                      {Object.entries(selectedCabins).map(([cabinId, count]) => {
+                        const cabinData = cabins.find(c => c.id === cabinId);
+                        const price = cabinData?.price || 0;
                         return (
                           <motion.div 
-                            key={cabinName} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+                            key={cabinId} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, scale: 0.95 }}
                             className="flex justify-between items-start border-b border-gray-200 pb-3 last:border-0 last:pb-0"
                           >
-                            <div>
-                              <p className="font-serif text-[var(--color-navy-900)] font-medium text-sm">{cabinName}</p>
-                              <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{count} Guest{count > 1 ? 's' : ''}</p>
+                            <div className="pr-4">
+                              <p className="font-serif text-[var(--color-navy-900)] font-medium text-sm leading-tight">{cabinData?.name || 'Cabin'}</p>
+                              <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">{count} &times; Cabin</p>
                             </div>
-                            <span className="font-medium text-[var(--color-navy-900)] text-sm">{(count * price).toLocaleString('id-ID')}</span>
+                            <span className="font-medium text-[var(--color-navy-900)] text-sm whitespace-nowrap">{(count * price).toLocaleString('id-ID')}</span>
                           </motion.div>
                         );
                       })}
                     </AnimatePresence>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-5">
-                    <div className="flex justify-between items-end mb-1 text-xs text-gray-500 uppercase tracking-widest">
+                  <div className="border-t border-dashed border-gray-300 pt-4 mt-2">
+                    <div className="flex justify-between items-end mb-1 text-[10px] text-gray-500 uppercase tracking-widest font-bold">
                       <span>Total Invoice</span>
-                      <span className="font-bold text-[var(--color-navy-900)]">{totalPax} Pax</span>
+                      <span className="text-[var(--color-navy-900)]">{totalPax} Cabins</span>
                     </div>
-                    <div className="text-3xl font-serif text-[var(--color-navy-900)] tracking-tight text-right flex items-baseline justify-end gap-1.5 mt-2">
-                      <span className="text-sm font-sans text-gray-500 font-normal">IDR</span> 
+                    <div className="text-2xl font-serif text-[var(--color-navy-900)] tracking-tight text-right flex items-baseline justify-end gap-1 mt-1">
+                      <span className="text-xs font-sans text-gray-500 font-normal">IDR</span> 
                       {totalPrice.toLocaleString('id-ID')}
                     </div>
                   </div>
@@ -448,15 +403,15 @@ export default function Home() {
                 <Button 
                   onClick={handleProceedToCheckout} 
                   disabled={isSubmitting || totalPax === 0 || isFetchingData}
-                  className="w-full mt-6 !py-4 text-sm uppercase tracking-widest rounded-sm"
+                  className="w-full mt-6 !py-4 text-sm uppercase tracking-widest rounded-sm bg-[var(--color-navy-900)] hover:bg-[var(--color-navy-800)] text-white shadow-md transition-all disabled:opacity-50"
                 >
-                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Request Clearance</>}
+                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continue to Checkout</>}
                 </Button>
                 
-                <div className="mt-6 flex items-start gap-3">
-                  <ShieldCheck className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-gray-400 font-light leading-relaxed">
-                    Sailing credentials and passenger manifests are protected under strict maritime privacy encryptions.
+                <div className="mt-5 flex items-start gap-2 bg-gray-50 p-3 rounded-sm border border-gray-100">
+                  <ShieldCheck className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-gray-500 font-light leading-relaxed">
+                    Secure 256-bit encrypted checkout. Your reservation is completely safe.
                   </p>
                 </div>
               </div>

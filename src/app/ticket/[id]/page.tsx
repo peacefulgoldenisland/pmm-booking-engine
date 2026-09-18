@@ -9,13 +9,14 @@ import { Button } from '@/components/ui/Button';
 
 import { TicketLockedState } from '@/components/ticket/TicketLockedState';
 import { TicketBoardingPass } from '@/components/ticket/TicketBoardingPass';
+import type { Booking } from '@/types/booking';
 
 export default function TicketPage() {
   const params = useParams();
   const router = useRouter();
   const { id } = params as { id: string };
 
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // REAL-TIME LISTENER
@@ -25,7 +26,7 @@ export default function TicketPage() {
     const docRef = doc(db, 'bookings', id);
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        setBooking({ id: docSnap.id, ...docSnap.data() });
+        setBooking({ id: docSnap.id, ...docSnap.data() } as Booking);
       } else {
         router.push('/dashboard');
       }

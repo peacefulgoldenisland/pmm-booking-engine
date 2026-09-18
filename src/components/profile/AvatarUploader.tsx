@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { Camera, User, Loader2 } from 'lucide-react';
 
 interface AvatarUploaderProps {
-  photoUrl: string;
+  photoUrl?: string | null;
   isUploading: boolean;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
@@ -15,10 +15,11 @@ export function AvatarUploader({ photoUrl, isUploading, onUpload }: AvatarUpload
         <div className="relative w-24 h-24 bg-[var(--color-surface-50)] rounded-full p-1 border border-gray-200 group overflow-hidden shrink-0">
           {photoUrl ? (
             <Image 
-              src={photoUrl} 
+              src={photoUrl as string} 
               alt="Avatar Preview" 
               width={96} 
               height={96} 
+              unoptimized={true}
               className="w-full h-full object-cover rounded-full"
             />
           ) : (

@@ -2,8 +2,10 @@ import React from 'react';
 import { Award, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
+import type { GuestProfile } from '@/types/user';
+
 interface ClearanceStatusCardProps {
-  userProfile: any;
+  userProfile: GuestProfile | null;
   onEditProfile: () => void;
 }
 
@@ -41,7 +43,7 @@ export function ClearanceStatusCard({ userProfile, onEditProfile }: ClearanceSta
             </div>
             <p className="text-[11px] text-gray-500 font-light leading-relaxed mb-4">Your travel document has been vaulted and approved by harbor authority.</p>
             <a 
-              href={userProfile.passportFileUrl} 
+              href={userProfile.passportFileUrl as string} 
               target="_blank" 
               rel="noopener noreferrer"
               className="block w-full bg-gray-50 border border-gray-200 hover:border-green-300 text-[var(--color-navy-900)] py-2.5 rounded-sm text-[10px] font-bold uppercase tracking-widest transition-colors text-center"

@@ -3,9 +3,10 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
+import type { BookingStatus } from '@/types/booking';
 
 interface PaymentSuccessStateProps {
-  status: 'PAID' | 'WAITING_VERIFICATION';
+  status: BookingStatus;
 }
 
 export function PaymentSuccessState({ status }: PaymentSuccessStateProps) {

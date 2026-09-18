@@ -10,7 +10,9 @@ Setiap fase di bawah ini akan dipecah menjadi **Implementation Plan** tersendiri
 *Mengubah sistem yang saat ini masih hardcoded (produk, harga, jadwal statis) menjadi sistem database dinamis (CRUD) yang bisa dikendalikan sepenuhnya dari Portal Admin.*
 
 ### Target & Fitur:
-- **Database Architecture**: Membuat koleksi `voyages` (atau `products`) di Firestore yang menyimpan: Nama Kapal, Jadwal Keberangkatan, Gambar, Deskripsi, Harga (Dewasa/Anak), **Total Kuota**, dan **Sisa Kuota**.
+- **Database Architecture**: Membuat dua koleksi di Firestore: 
+  - `products` (Master Cabins): Menyimpan tipe kabin, deskripsi, gambar, harga per pax (berdasarkan tipe kabin, tanpa beda usia), dan kapasitas maksimal.
+  - `voyages` (Schedules): Menyimpan jadwal keberangkatan setiap Sabtu, melacak sisa kuota untuk tiap tipe kabin pada tanggal tersebut.
 - **Admin - Product Management (CRUD)**:
   - Menu baru: **Fleet & Voyages** di sidebar Admin.
   - Halaman Daftar Produk dengan `<AdminTable>`.
@@ -29,6 +31,8 @@ Setiap fase di bawah ini akan dipecah menjadi **Implementation Plan** tersendiri
   - Formulir pemesanan khusus Admin untuk mendaftarkan tamu secara manual (meng-input nama, jumlah pax, pembayaran langsung lunas/DP).
 - **Source Tracking (Pelacakan Sumber)**:
   - Modifikasi koleksi `bookings` dengan parameter baru: `source` (contoh: `APP`, `AGENT_A`, `AGENT_B`, `INTERNAL_OFFICE`).
+- **Admin Manifest Editing**:
+  - Menyediakan fitur *Inline Edit* pada dasbor detail pemesanan untuk melengkapi data penumpang B2C yang kosong, termasuk *upload* ulang foto paspor/KTP.
 - **Visual Separation**:
   - Mengubah tampilan tabel di Dasbor Utama Admin agar memiliki *Badge* pembeda (misal: Warna Biru untuk APP, warna Emas untuk AGENT).
 

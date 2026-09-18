@@ -7,6 +7,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import type { User } from '@/types/user';
 
 interface LoginFormProps {
   onSwitchMode: (mode: 'register') => void;
@@ -34,8 +35,8 @@ export function LoginForm({ onSwitchMode }: LoginFormProps) {
         const userDocSnap = await getDoc(userDocRef);
         
         if (userDocSnap.exists()) {
-          const role = userDocSnap.data().role;
-          if (role === 'admin') {
+          const userData = userDocSnap.data() as User;
+          if (userData.role === 'admin' || userData.role === 'superadmin') {
             router.push('/admin/dashboard');
             return;
           }
@@ -45,8 +46,9 @@ export function LoginForm({ onSwitchMode }: LoginFormProps) {
       // Default to Guest Dashboard
       router.push('/dashboard');
 
-    } catch (error: any) {
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         setErrorMessage('Invalid credentials. Please verify your email and secure passphrase.');
       } else {
         setErrorMessage('An unexpected encrypted error occurred. Please try again.');

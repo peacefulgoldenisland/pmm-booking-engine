@@ -79,6 +79,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
             fill
             className="object-cover"
             priority={currentIndex === 0} // Prioritaskan loading gambar pertama
+            unoptimized={true} // Bypasses Next.js image optimizer to avoid MODULE_UNPARSABLE with Cloudflare R2
           />
           {/* Overlay Gradient Halus dari Bawah */}
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-navy-900)]/60 via-transparent to-transparent" />

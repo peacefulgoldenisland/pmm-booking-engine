@@ -20,19 +20,30 @@ export async function GET(request: Request) {
 
     if (!date) return NextResponse.json({ error: 'Date is required' }, { status: 400 });
 
-    const bookingsRef = db.collection('bookings');
-    // Cari tiket yang sudah dibayar atau sedang proses bayar
-    const snapshot = await bookingsRef
-      .where('dateOfDeparture', '==', date)
-      .where('status', 'in', ['PAID', 'PENDING'])
-      .get();
+    const scheduleDoc = await db.collection('voyages').doc(date).get();
 
+    // Jika schedule belum digenerate admin (tidak ada), tolak request
+    // RescheduleForm akan menganggap ini isAvailable = false
+    if (!scheduleDoc.exists) {
+      return NextResponse.json({ error: 'Voyage schedule not found for this date' }, { status: 404 });
+    }
+
+    const scheduleData = scheduleDoc.data();
+    const quotas = scheduleData?.cabinQuotas || {};
     const booked: Record<string, number> = {};
     
-    // Hitung total pax per tipe kabin
-    snapshot.forEach(doc => {
+    const productsSnap = await db.collection('products').get();
+    
+    // Hitung mundur (Booked = Max - Available) agar RescheduleForm tetap berjalan tanpa perlu diubah
+    productsSnap.forEach(doc => {
       const data = doc.data();
-      booked[data.cabinClass] = (booked[data.cabinClass] || 0) + (data.paxCount || 0);
+      const cabinId = doc.id;
+      const cabinName = data.name;
+      const maxCapacity = data.maxCapacity || 0;
+      
+      const available = quotas[cabinId] !== undefined ? quotas[cabinId] : 0;
+      
+      booked[cabinName] = Math.max(0, maxCapacity - available);
     });
 
     return NextResponse.json({ booked });

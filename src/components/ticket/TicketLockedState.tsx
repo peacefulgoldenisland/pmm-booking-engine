@@ -2,9 +2,10 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import type { Booking } from '@/types/booking';
 
 interface TicketLockedStateProps {
-  booking: any;
+  booking: Booking;
 }
 
 export function TicketLockedState({ booking }: TicketLockedStateProps) {

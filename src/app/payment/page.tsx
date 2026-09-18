@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { PaymentSuccessState } from '@/components/payment/PaymentSuccessState';
 import { PaymentInstructions } from '@/components/payment/PaymentInstructions';
 import { InvoiceSummaryCard } from '@/components/payment/InvoiceSummaryCard';
+import type { Booking } from '@/types/booking';
 
 function PaymentContent() {
   const searchParams = useSearchParams();
@@ -21,7 +22,7 @@ function PaymentContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [bookingData, setBookingData] = useState<any>(null);
+  const [bookingData, setBookingData] = useState<Booking | null>(null);
 
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isExpired, setIsExpired] = useState(false);
@@ -53,7 +54,7 @@ function PaymentContent() {
     // onSnapshot membuat halaman bereaksi real-time jika Admin menekan Approve
     const unsubscribeDoc = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        setBookingData({ id: docSnap.id, ...docSnap.data() });
+        setBookingData({ id: docSnap.id, ...docSnap.data() } as Booking);
       } else {
         setErrorMessage("Invoice documentation could not be retrieved from our secure vault.");
       }
@@ -71,7 +72,12 @@ function PaymentContent() {
   useEffect(() => {
     if (!bookingData || !bookingData.createdAt || bookingData.status !== 'PENDING') return;
 
-    const expiryTime = new Date(bookingData.createdAt).getTime() + (24 * 60 * 60 * 1000);
+    const createdAt = bookingData.createdAt;
+    const createdAtMs = typeof createdAt === 'string' || typeof createdAt === 'number' 
+      ? new Date(createdAt).getTime()
+      : (createdAt as any)?.toDate?.()?.getTime() || new Date().getTime();
+      
+    const expiryTime = createdAtMs + (24 * 60 * 60 * 1000);
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
@@ -126,6 +132,8 @@ function PaymentContent() {
       </div>
     );
   }
+
+  if (!bookingData) return null;
 
   const { status, paymentMethod, totalAmount } = bookingData;
 

@@ -15,11 +15,12 @@ import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { PersonalDossierCard } from '@/components/profile/PersonalDossierCard';
 import { ClearanceStatusCard } from '@/components/profile/ClearanceStatusCard';
+import type { GuestProfile } from '@/types/user';
 
 export default function ProfilePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<GuestProfile | null>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -33,9 +34,9 @@ export default function ProfilePage() {
       // REAL-TIME LISTENER: Profil dan Poin otomatis berubah ketika Admin melakukan update
       const unsubscribeDoc = onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists()) {
-          setUserProfile(docSnap.data());
+          setUserProfile({ email: user.email, ...docSnap.data() } as GuestProfile);
         } else {
-          setUserProfile({ email: user.email, pointsBalance: 0 });
+          setUserProfile({ email: user.email, pointsBalance: 0 } as GuestProfile);
         }
         setIsLoading(false);
       }, (error) => {
@@ -93,11 +94,12 @@ export default function ProfilePage() {
                   <div className="w-full h-full rounded-full bg-[var(--color-navy-800)] flex items-center justify-center overflow-hidden">
                     {userProfile?.photoUrl ? (
                       <Image 
-                        src={userProfile.photoUrl} 
+                        src={userProfile.photoUrl as string} 
                         alt="Profile" 
                         width={128} 
                         height={128} 
                         className="w-full h-full object-cover"
+                        unoptimized={true}
                       />
                     ) : (
                       <span className="text-4xl font-serif text-[var(--color-gold-500)]">

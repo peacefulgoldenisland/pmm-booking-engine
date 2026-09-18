@@ -14,13 +14,15 @@ import { DashboardHeader } from '@/components/layout/DashboardHeader';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { BookingCard, Booking } from '@/components/dashboard/BookingCard';
+import { BookingCard } from '@/components/dashboard/BookingCard';
+import type { Booking } from '@/types/booking';
+import type { GuestProfile } from '@/types/user';
 import { PastVoyagesModal, ConciergeServicesModal } from '@/components/dashboard/DashboardModals';
 
 export default function DashboardPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<GuestProfile | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [greeting, setGreeting] = useState("");
   
@@ -46,9 +48,9 @@ export default function DashboardPage() {
       const userDocRef = doc(db, 'users', user.uid);
       const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
         if (docSnap.exists()) {
-          setUserProfile({ uid: user.uid, email: user.email, ...docSnap.data() });
+          setUserProfile({ uid: user.uid, email: user.email, ...docSnap.data() } as GuestProfile);
         } else {
-          setUserProfile({ uid: user.uid, email: user.email, pointsBalance: 0 });
+          setUserProfile({ uid: user.uid, email: user.email, pointsBalance: 0 } as GuestProfile);
         }
       });
 
@@ -62,7 +64,11 @@ export default function DashboardPage() {
         });
 
         // Urutkan berdasarkan tanggal keberangkatan (Terdekat)
-        fetchedBookings.sort((a, b) => new Date(b.dateOfDeparture).getTime() - new Date(a.dateOfDeparture).getTime());
+        fetchedBookings.sort((a, b) => {
+          const dateA = typeof a.dateOfDeparture === 'string' || typeof a.dateOfDeparture === 'number' ? new Date(a.dateOfDeparture) : (a.dateOfDeparture as any)?.toDate?.() || new Date();
+          const dateB = typeof b.dateOfDeparture === 'string' || typeof b.dateOfDeparture === 'number' ? new Date(b.dateOfDeparture) : (b.dateOfDeparture as any)?.toDate?.() || new Date();
+          return dateB.getTime() - dateA.getTime();
+        });
         setBookings(fetchedBookings);
         setIsLoading(false);
       });
@@ -76,8 +82,14 @@ export default function DashboardPage() {
     return () => unsubscribeAuth();
   }, [router]);
 
-  const upcomingBookings = bookings.filter(b => new Date(b.dateOfDeparture) >= new Date() || b.status !== 'PAID');
-  const pastBookings = bookings.filter(b => new Date(b.dateOfDeparture) < new Date() && b.status === 'PAID');
+  const upcomingBookings = bookings.filter(b => {
+    const d = typeof b.dateOfDeparture === 'string' || typeof b.dateOfDeparture === 'number' ? new Date(b.dateOfDeparture) : (b.dateOfDeparture as any)?.toDate?.() || new Date();
+    return d >= new Date() || b.status !== 'PAID';
+  });
+  const pastBookings = bookings.filter(b => {
+    const d = typeof b.dateOfDeparture === 'string' || typeof b.dateOfDeparture === 'number' ? new Date(b.dateOfDeparture) : (b.dateOfDeparture as any)?.toDate?.() || new Date();
+    return d < new Date() && b.status === 'PAID';
+  });
 
   const toggleExpand = (id: string) => {
     setExpandedBookingId(expandedBookingId === id ? null : id);
@@ -85,7 +97,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--color-surface-50)] font-sans pt-24 pb-24">
+      <div className="min-h-screen bg-[var(--color-surface-100)] font-sans pt-24 pb-24">
         <DashboardHeader />
         <main className="max-w-7xl mx-auto px-4 md:px-6 mt-8">
           <Skeleton className="w-full h-[400px] rounded-sm mb-12" />
@@ -100,7 +112,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface-50)] font-sans pb-24 pt-24">
+    <div className="min-h-screen bg-[var(--color-surface-100)] font-sans pb-24 pt-24">
       <DashboardHeader />
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 mt-8">
@@ -122,7 +134,7 @@ export default function DashboardPage() {
               <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-[var(--color-gold-400)] to-[var(--color-gold-600)] p-[2px] shadow-lg shrink-0">
                 <div className="w-full h-full rounded-full bg-[var(--color-navy-800)] flex items-center justify-center overflow-hidden">
                   {userProfile?.photoUrl ? (
-                    <Image src={userProfile.photoUrl} alt="Avatar" width={96} height={96} className="w-full h-full object-cover" />
+                    <Image src={userProfile.photoUrl as string} alt="Avatar" width={96} height={96} className="w-full h-full object-cover" unoptimized={true} />
                   ) : (
                     <span className="text-3xl font-serif text-[var(--color-gold-500)]">{userProfile?.fullName ? userProfile.fullName.charAt(0).toUpperCase() : <User className="w-8 h-8 text-[var(--color-gold-500)]" />}</span>
                   )}
@@ -191,11 +203,18 @@ export default function DashboardPage() {
         {/* ======================================================== */}
         {/* MAIN FOCUSED CONTENT: UPCOMING EXPEDITIONS               */}
         {/* ======================================================== */}
-        <div className="mb-6 pb-2 flex items-center justify-between">
-          <h2 className="text-3xl font-serif text-[var(--color-navy-900)]">Active Manifests</h2>
-          <span className="bg-[var(--color-surface-50)] border border-gray-200 text-gray-500 px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-widest">
-            {upcomingBookings.length} Trips
-          </span>
+        <div className="mb-6 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <h2 className="text-3xl font-serif text-[var(--color-navy-900)]">Active Manifests</h2>
+            <span className="bg-[var(--color-surface-50)] border border-gray-200 text-gray-500 px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-widest hidden sm:inline-block">
+              {upcomingBookings.length} Trips
+            </span>
+          </div>
+          {upcomingBookings.length > 0 && (
+            <Button onClick={() => router.push('/')} variant="outline" className="!rounded-sm uppercase tracking-widest text-xs flex items-center gap-2 border-[var(--color-navy-900)] text-[var(--color-navy-900)] hover:bg-[var(--color-navy-900)] hover:text-white transition-all w-full sm:w-auto">
+              <Plus className="w-4 h-4" /> Book New Voyage
+            </Button>
+          )}
         </div>
         
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-0">

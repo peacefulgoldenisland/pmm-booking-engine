@@ -8,11 +8,14 @@ const ICON_MAP: Record<string, any> = {
   Ticket, Gift, Crown, Tag, Star, Gem
 };
 
+import type { RewardCatalogItem } from '@/types/voucher';
+import type { GuestProfile } from '@/types/user';
+
 interface RewardCatalogProps {
-  catalog: any[];
+  catalog: RewardCatalogItem[];
   isLoadingData: boolean;
-  userData: any;
-  openRedeemModal: (reward: any) => void;
+  userData: GuestProfile | null;
+  openRedeemModal: (reward: RewardCatalogItem) => void;
 }
 
 export function RewardCatalog({ catalog, isLoadingData, userData, openRedeemModal }: RewardCatalogProps) {

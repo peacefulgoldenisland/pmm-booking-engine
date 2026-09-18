@@ -104,9 +104,10 @@ export default function EditProfilePage() {
       } else {
         alert(`Upload failed: ${result.error || 'Server error'}`);
       }
-    } catch (error: any) {
-      console.error(`Error uploading ${type}:`, error);
-      alert(error.message || "Connection error during upload.");
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error(`Error uploading ${type}:`, err);
+      alert(err.message || "Connection error during upload.");
     } finally {
       if (type === 'photo') setUploadingPhoto(false);
       if (type === 'passport') setUploadingPassport(false);

@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import type { RewardCatalogItem } from '@/types/voucher';
 
 interface RedeemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedReward: any;
+  selectedReward: RewardCatalogItem | null;
   modalState: 'confirm' | 'success' | 'error';
   isRedeeming: boolean;
   errorMessage: string;

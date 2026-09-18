@@ -14,12 +14,14 @@ import { AdminCard, AdminCardHeader, AdminCardContent } from '@/components/admin
 import { AdminButton } from '@/components/admin/ui/AdminButton';
 import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminBadge } from '@/components/admin/ui/AdminBadge';
+import type { GuestProfile } from '@/types/user';
+import type { Booking } from '@/types/booking';
 
 export default function GuestDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const router = useRouter();
-  const [guest, setGuest] = useState<any>(null);
-  const [bookingHistory, setBookingHistory] = useState<any[]>([]);
+  const [guest, setGuest] = useState<GuestProfile | null>(null);
+  const [bookingHistory, setBookingHistory] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Point Manager State
@@ -36,7 +38,7 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
         const userSnap = await getDoc(userRef);
         
         if (userSnap.exists()) {
-          setGuest({ id: userSnap.id, ...userSnap.data() });
+          setGuest({ id: userSnap.id, ...userSnap.data() } as GuestProfile);
         } else {
           setIsLoading(false);
           return;
@@ -49,8 +51,8 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
         
         // Sorting manually since querying with where + orderBy requires a composite index
         const history = bookingsSnap.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          .map(d => ({ id: d.id, ...d.data() } as Booking))
+          .sort((a, b) => new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime());
           
         setBookingHistory(history);
       } catch (error) {
@@ -75,7 +77,7 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
     setIsProcessingPoints(true);
     try {
       const userRef = doc(db, 'users', params.id);
-      const currentBalance = guest.pointsBalance || 0;
+      const currentBalance = guest?.pointsBalance || 0;
       
       let newBalance = currentBalance;
       if (pointOperation === 'ADD') {
@@ -89,7 +91,7 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
       });
 
       // Update local state
-      setGuest((prev: any) => ({ ...prev, pointsBalance: newBalance }));
+      setGuest((prev) => prev ? ({ ...prev, pointsBalance: newBalance }) : prev);
       
       // Reset form
       setPointAmount('');
@@ -183,7 +185,13 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
                   <div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-widest">Member Since</p>
                     <p className="text-sm font-medium text-[var(--color-navy-900)]">
-                      {guest.createdAt ? new Date(guest.createdAt).toLocaleDateString('id-ID') : 'Unknown'}
+                      {guest.createdAt 
+                        ? new Date(
+                            typeof guest.createdAt === 'string' || typeof guest.createdAt === 'number' 
+                              ? guest.createdAt 
+                              : (guest.createdAt as any).toDate?.() || new Date()
+                          ).toLocaleDateString('id-ID') 
+                        : 'Unknown'}
                     </p>
                   </div>
                 </div>
@@ -282,7 +290,13 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
                         <div>
                           <p className="font-mono text-sm font-bold text-[var(--color-navy-900)]">{booking.bookingId}</p>
                           <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">
-                            Booked on: {new Date(booking.createdAt).toLocaleDateString('id-ID')}
+                            Booked on: {booking.createdAt 
+                              ? new Date(
+                                  typeof booking.createdAt === 'string' || typeof booking.createdAt === 'number' 
+                                    ? booking.createdAt 
+                                    : (booking.createdAt as any).toDate?.() || new Date()
+                                ).toLocaleDateString('id-ID') 
+                              : '-'}
                           </p>
                         </div>
                         
@@ -303,7 +317,13 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
                         <div>
                           <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1">Departure</p>
                           <p className="text-xs font-bold text-[var(--color-navy-900)]">
-                            {new Date(booking.dateOfDeparture).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                            {booking.dateOfDeparture 
+                              ? new Date(
+                                  typeof booking.dateOfDeparture === 'string' || typeof booking.dateOfDeparture === 'number' 
+                                    ? booking.dateOfDeparture 
+                                    : (booking.dateOfDeparture as any).toDate?.() || new Date()
+                                ).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+                              : '-'}
                           </p>
                         </div>
                         <div>

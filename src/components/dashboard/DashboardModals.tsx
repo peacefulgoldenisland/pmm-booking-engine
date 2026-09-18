@@ -3,7 +3,9 @@ import { useRouter } from 'next/navigation';
 import { Anchor, PlaneTakeoff, Wine, Compass } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { BookingCard, Booking } from './BookingCard';
+import { BookingCard } from './BookingCard';
+import type { Booking } from '@/types/booking';
+import type { GuestProfile } from '@/types/user';
 
 interface PastVoyagesModalProps {
   isOpen: boolean;
@@ -11,7 +13,7 @@ interface PastVoyagesModalProps {
   pastBookings: Booking[];
   expandedBookingId: string | null;
   onToggleExpand: (id: string) => void;
-  userProfile: any;
+  userProfile: GuestProfile | null;
 }
 
 export function PastVoyagesModal({ 

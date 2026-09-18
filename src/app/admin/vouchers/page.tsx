@@ -13,9 +13,10 @@ import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminButton } from '@/components/admin/ui/AdminButton';
 import { AdminCard, AdminCardContent } from '@/components/admin/ui/AdminCard';
 import { AdminBadge } from '@/components/admin/ui/AdminBadge';
+import type { Voucher } from '@/types/voucher';
 
 export default function AdminVouchersPage() {
-  const [vouchers, setVouchers] = useState<any[]>([]);
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -27,7 +28,7 @@ export default function AdminVouchersPage() {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as Voucher[];
       setVouchers(data);
       setIsLoading(false);
     }, (error) => {
@@ -86,7 +87,14 @@ export default function AdminVouchersPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredVouchers.map((voucher) => {
-            const isExpired = new Date(voucher.validUntil) < new Date();
+            const validDate = voucher.validUntil 
+              ? new Date(
+                  typeof voucher.validUntil === 'string' || typeof voucher.validUntil === 'number' 
+                    ? voucher.validUntil 
+                    : (voucher.validUntil as any).toDate?.() || new Date()
+                )
+              : new Date();
+            const isExpired = validDate < new Date();
             const isActive = voucher.status === 'ACTIVE' && !isExpired;
             
             return (
@@ -123,7 +131,13 @@ export default function AdminVouchersPage() {
                           <Calendar className="w-3 h-3 text-gray-500" />
                         </div>
                         <p className="text-xs text-gray-500">
-                          Valid til {new Date(voucher.validUntil).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          Valid til {voucher.validUntil 
+                            ? new Date(
+                                typeof voucher.validUntil === 'string' || typeof voucher.validUntil === 'number' 
+                                  ? voucher.validUntil 
+                                  : (voucher.validUntil as any).toDate?.() || new Date()
+                              ).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                            : '-'}
                         </p>
                       </div>
 

@@ -3,14 +3,19 @@ import {
   Ship, MapPin, Calendar, Clock, 
   Anchor, ShieldCheck 
 } from 'lucide-react';
+import type { Booking } from '@/types/booking';
 
 interface TicketBoardingPassProps {
-  booking: any;
+  booking: Booking;
 }
 
 export function TicketBoardingPass({ booking }: TicketBoardingPassProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
+  const formatDate = (dateObj: any) => {
+    if (!dateObj) return "-";
+    const d = typeof dateObj === 'string' || typeof dateObj === 'number' 
+        ? new Date(dateObj) 
+        : dateObj.toDate?.() || new Date();
+    return d.toLocaleDateString('en-US', { 
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
     });
   };

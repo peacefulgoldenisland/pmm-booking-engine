@@ -2,7 +2,7 @@ import React from 'react';
 import { UploadCloud, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface DocumentUploaderProps {
-  passportFileUrl: string;
+  passportFileUrl?: string | null;
   isUploading: boolean;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
@@ -23,7 +23,7 @@ export function DocumentUploader({ passportFileUrl, isUploading, onUpload }: Doc
           </div>
           <div className="flex items-center gap-4 w-full md:w-auto">
             <a 
-              href={passportFileUrl} 
+              href={passportFileUrl as string} 
               target="_blank" 
               rel="noopener noreferrer" 
               className="text-[10px] font-bold text-[var(--color-navy-900)] hover:text-[var(--color-gold-600)] transition-colors uppercase tracking-widest underline underline-offset-4 w-1/2 md:w-auto text-center"

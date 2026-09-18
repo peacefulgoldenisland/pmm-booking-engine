@@ -1,8 +1,10 @@
 import React from 'react';
 import { User, Phone, Globe, CreditCard, Utensils, Shield } from 'lucide-react';
 
+import type { GuestProfile } from '@/types/user';
+
 interface PersonalDossierCardProps {
-  userProfile: any;
+  userProfile: GuestProfile | null;
 }
 
 export function PersonalDossierCard({ userProfile }: PersonalDossierCardProps) {

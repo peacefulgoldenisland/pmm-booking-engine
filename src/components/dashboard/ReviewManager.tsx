@@ -7,10 +7,12 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import type { Booking } from '@/types/booking';
+import type { GuestProfile } from '@/types/user';
 
 interface ReviewManagerProps {
-  booking: any;
-  userProfile: any;
+  booking: Booking;
+  userProfile: GuestProfile | null;
 }
 
 export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
@@ -33,7 +35,10 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
-  const depDate = new Date(booking.dateOfDeparture || booking.date); 
+  const depDateRaw = booking.dateOfDeparture || booking.date; 
+  const depDate = typeof depDateRaw === 'string' || typeof depDateRaw === 'number'
+    ? new Date(depDateRaw)
+    : (depDateRaw as any)?.toDate?.() || new Date();
   depDate.setHours(0, 0, 0, 0);
 
   const diffTime = today.getTime() - depDate.getTime();
@@ -107,7 +112,7 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: userProfile.uid || booking.userId,
+          userId: userProfile?.uid || booking.userId,
           bookingId: booking.id,
           tripDay: selectedDay,
           userName: userProfile?.fullName || 'Esteemed Guest',

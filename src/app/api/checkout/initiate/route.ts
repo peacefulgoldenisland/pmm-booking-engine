@@ -58,32 +58,80 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Midtrans is currently under maintenance.' }, { status: 400 });
     }
 
-    // 4. Simpan Data Booking ke Firestore (Tanpa Midtrans Snap Token)
+    // 4. Simpan Data Booking ke Firestore dengan Transaction (Concurrency Protection)
     const bookingsRef = db.collection('bookings');
-    const newBooking = {
-      bookingId: orderId,
-      userId: userId,
-      status: 'PENDING',
-      paymentMethod: paymentMethod, 
-      totalAmount: booking.total,
-      basePrice: booking.basePrice || booking.total,
-      discountAmount: booking.discountAmount || 0,
-      voucherId: booking.voucherId || null,
-      currency: 'IDR', 
-      dateOfDeparture: booking.date,
-      cabinClass: booking.cabin,
-      paxCount: booking.pax,
-      pickupLocation: contact.pickupLocation,
-      pickupArea: contact.pickupArea,
-      passengersManifest: passengers,
-      contactEmail: contact.email,
-      contactPhone: contact.phone,
-      bookingSource: booking.bookingSource || "B2C_WEB",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    const voyageRef = db.collection('voyages').doc(booking.date);
 
-    await bookingsRef.doc(orderId).set(newBooking);
+    await db.runTransaction(async (transaction) => {
+      const voyageDoc = await transaction.get(voyageRef);
+      let cabinQuotas: Record<string, number> = {};
+
+      if (!voyageDoc.exists) {
+        // Auto-create voyage schedule for this date just like B2B admin!
+        const productsSnap = await db.collection('products').get();
+        productsSnap.forEach(doc => {
+            const data = doc.data();
+            if(data.totalUnits) cabinQuotas[doc.id] = data.totalUnits;
+        });
+        
+        transaction.set(voyageRef, {
+            departureDate: booking.date,
+            status: 'SCHEDULED',
+            cabinQuotas: cabinQuotas,
+            createdAt: new Date().toISOString()
+        });
+      } else {
+        const voyageData = voyageDoc.data() || {};
+        cabinQuotas = voyageData.cabinQuotas || {};
+      }
+      
+      const cart = booking.cart || {};
+      
+      // Validasi kuota
+      for (const [cabinId, qty] of Object.entries(cart)) {
+        const available = cabinQuotas[cabinId] || 0;
+        if (available < (qty as number)) {
+          throw new Error(`Insufficient quota for ${cabinId}. Available: ${available}`);
+        }
+      }
+      
+      // Kurangi kuota
+      for (const [cabinId, qty] of Object.entries(cart)) {
+        cabinQuotas[cabinId] -= (qty as number);
+      }
+      
+      // Simpan perubahan kuota
+      transaction.update(voyageRef, { cabinQuotas });
+
+      // Simpan Booking
+      const newBooking = {
+        bookingId: orderId,
+        userId: userId,
+        status: 'PENDING',
+        paymentMethod: paymentMethod, 
+        totalAmount: booking.total,
+        basePrice: booking.basePrice || booking.total,
+        discountAmount: booking.discountAmount || 0,
+        voucherId: booking.voucherId || null,
+        currency: 'IDR', 
+        dateOfDeparture: booking.date,
+        voyageScheduleId: booking.voyageScheduleId || booking.date,
+        cart: cart,
+        cabinClass: booking.cabin,
+        paxCount: booking.pax,
+        pickupLocation: contact.pickupLocation,
+        pickupArea: contact.pickupArea,
+        passengersManifest: passengers,
+        contactEmail: contact.email,
+        contactPhone: contact.phone,
+        bookingSource: booking.bookingSource || "B2C_WEB",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const newBookingRef = bookingsRef.doc(orderId);
+      transaction.set(newBookingRef, newBooking);
+    });
 
     return NextResponse.json({ 
       success: true, 

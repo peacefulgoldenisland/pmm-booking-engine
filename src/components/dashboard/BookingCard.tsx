@@ -3,35 +3,28 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, Users, ChevronDown, CreditCard, 
-  Clock, Ticket, Calendar, User
+  Clock, Ticket, Calendar, User, Anchor
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ReviewManager } from '@/components/dashboard/ReviewManager';
-
-export interface Booking {
-  id: string;
-  dateOfDeparture: string;
-  cabinClass: string;
-  paxCount: number;
-  status: string;
-  totalAmount: number;
-  createdAt: string;
-  passengersManifest: any[];
-}
+import type { Booking } from '@/types/booking';
+import type { GuestProfile } from '@/types/user';
 
 interface BookingCardProps {
   booking: Booking;
   isExpanded: boolean;
   onToggleExpand: (id: string) => void;
-  userProfile: any;
+  userProfile: GuestProfile | null;
 }
 
 export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }: BookingCardProps) {
   const router = useRouter();
 
-  const getDayAndMonth = (dateString: string) => {
-    if (!dateString) return { day: '-', month: '-', year: '-' };
-    const d = new Date(dateString);
+  const getDayAndMonth = (dateObj: any) => {
+    if (!dateObj) return { day: '-', month: '-', year: '-' };
+    const d = typeof dateObj === 'string' || typeof dateObj === 'number' 
+      ? new Date(dateObj) 
+      : dateObj.toDate?.() || new Date();
     return {
       day: d.toLocaleDateString('en-US', { day: '2-digit' }),
       month: d.toLocaleDateString('en-US', { month: 'short' }),
@@ -55,7 +48,7 @@ export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }
   const dateInfo = getDayAndMonth(booking.dateOfDeparture);
 
   return (
-    <div className="bg-white rounded-sm shadow-sm hover:shadow-luxury border border-gray-200/60 overflow-hidden transition-all duration-300 mb-5 relative group">
+    <div className="bg-white rounded-sm shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-200/80 overflow-hidden transition-all duration-300 mb-5 relative group">
       <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-navy-900)]" />
       
       <div className="flex flex-col md:flex-row md:items-center justify-between p-6 md:p-8 cursor-pointer pl-8 md:pl-10" onClick={() => onToggleExpand(booking.id)}>
@@ -100,34 +93,8 @@ export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }
             className="border-t border-gray-100 bg-[var(--color-surface-50)] overflow-hidden"
           >
             <div className="p-6 md:p-10 pl-8 md:pl-10">
-              
-              {/* Action Banners */}
-              <div className="flex flex-wrap gap-4 mb-8">
-                {booking.status === 'PENDING' && (
-                  <Button onClick={() => router.push(`/payment?order_id=${booking.id}`)} variant="primary" className="!rounded-sm !py-2.5 !px-6 !text-[10px] uppercase tracking-widest !bg-red-600 hover:!bg-red-700 !shadow-none flex items-center gap-2">
-                    <CreditCard className="w-4 h-4" /> Remit Payment
-                  </Button>
-                )}
-                {booking.status === 'WAITING_VERIFICATION' && (
-                  <div className="bg-amber-50/50 text-amber-700 text-xs font-medium px-6 py-2.5 rounded-sm flex items-center gap-2 border border-amber-200 shadow-sm">
-                    <Clock className="w-4 h-4" /> Harbor Master is authenticating transaction
-                  </div>
-                )}
-                {booking.status === 'PAID' && (
-                  <>
-                    <Button onClick={() => window.open(`/ticket/${booking.id}`, '_blank')} variant="outline" className="!rounded-sm !py-2.5 !px-6 !text-[10px] uppercase tracking-widest flex items-center gap-2">
-                      <Ticket className="w-4 h-4" /> Retrieve Manifest
-                    </Button>
-                    {new Date(booking.dateOfDeparture) >= new Date() && (
-                      <Button onClick={() => router.push(`/dashboard/reschedule/${booking.id}`)} variant="outline" className="!rounded-sm !py-2.5 !px-6 !text-[10px] uppercase tracking-widest flex items-center gap-2">
-                        <Calendar className="w-4 h-4" /> Modify Dates
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              {/* Dynamic Grid Layout */}
+              <div className={`grid grid-cols-1 ${booking.status === 'PAID' ? 'lg:grid-cols-2' : ''} gap-10`}>
                 <div>
                   <h4 className="text-[9px] font-bold text-[var(--color-gold-600)] uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-gray-200 pb-2">
                     <User className="w-3.5 h-3.5" /> Registered Guests
@@ -151,11 +118,40 @@ export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }
 
                 {booking.status === 'PAID' && (
                   <div>
+                    <h4 className="text-[9px] font-bold text-[var(--color-gold-600)] uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-gray-200 pb-2">
+                      Feedback & Review
+                    </h4>
                     <ReviewManager booking={booking} userProfile={userProfile} />
                   </div>
                 )}
               </div>
             </div>
+
+            {/* Action Banners Footer */}
+            <div className="border-t border-gray-200/60 bg-white p-4 md:px-10 flex flex-wrap items-center justify-end gap-4">
+                {booking.status === 'PENDING' && (
+                  <Button onClick={() => router.push(`/payment?order_id=${booking.id}`)} variant="primary" className="!rounded-sm !py-2.5 !px-6 !text-[10px] uppercase tracking-widest !bg-red-600 hover:!bg-red-700 !shadow-none flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" /> Remit Payment
+                  </Button>
+                )}
+                {booking.status === 'WAITING_VERIFICATION' && (
+                  <div className="bg-amber-50/50 text-amber-700 text-xs font-medium px-6 py-2.5 rounded-sm flex items-center gap-2 border border-amber-200 shadow-sm w-full md:w-auto">
+                    <Clock className="w-4 h-4" /> Harbor Master is authenticating transaction
+                  </div>
+                )}
+                {booking.status === 'PAID' && (
+                  <>
+                    {(typeof booking.dateOfDeparture === 'string' || typeof booking.dateOfDeparture === 'number' ? new Date(booking.dateOfDeparture) : (booking.dateOfDeparture as any)?.toDate?.() || new Date()) >= new Date() && (
+                      <Button onClick={() => router.push(`/dashboard/reschedule/${booking.id}`)} variant="outline" className="!rounded-sm !py-2.5 !px-6 !text-[10px] uppercase tracking-widest flex items-center gap-2 text-gray-500 hover:text-[var(--color-navy-900)]">
+                        <Calendar className="w-4 h-4" /> Modify Dates
+                      </Button>
+                    )}
+                    <Button onClick={() => window.open(`/ticket/${booking.id}`, '_blank')} variant="outline" className="!rounded-sm !py-2.5 !px-6 !text-[10px] uppercase tracking-widest flex items-center gap-2 border-[var(--color-navy-900)] text-[var(--color-navy-900)] hover:bg-[var(--color-surface-50)]">
+                      <Ticket className="w-4 h-4" /> Retrieve Manifest
+                    </Button>
+                  </>
+                )}
+              </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -2,9 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Ticket, CheckCircle2, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
+import type { UserReward } from '@/types/voucher';
 
 interface MyVouchersProps {
-  myVouchers: any[];
+  myVouchers: UserReward[];
   isLoadingData: boolean;
 }
 

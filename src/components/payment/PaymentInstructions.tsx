@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/Button';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { db } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import type { Booking } from '@/types/booking';
 
 interface PaymentInstructionsProps {
-  bookingData: any;
+  bookingData: Booking;
   timeLeft: string;
   isExpired: boolean;
   setErrorMessage: (msg: string) => void;
@@ -60,8 +61,9 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
       });
       // Karena parent menggunakan onSnapshot, halaman akan otomatis re-render!
 
-    } catch (err: any) {
-      setUploadError(`Upload failed: ${err.message}`);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setUploadError(`Upload failed: ${error.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -174,8 +176,9 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
                       // PayPal Success
                       const docRef = doc(db, 'bookings', bookingData.id);
                       await updateDoc(docRef, { status: 'PAID' });
-                    } catch (err: any) {
-                      setErrorMessage(`PayPal Error: ${err.message}`);
+                    } catch (err: unknown) {
+                      const error = err as Error;
+                      setErrorMessage(`PayPal Error: ${error.message}`);
                     }
                   }}
                   onError={(err) => {

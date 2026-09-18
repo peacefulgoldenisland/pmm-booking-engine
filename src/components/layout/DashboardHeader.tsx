@@ -8,12 +8,13 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import type { GuestProfile } from '@/types/user';
 
 export function DashboardHeader() {
   const router = useRouter();
   const pathname = usePathname();
   
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<GuestProfile | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   
@@ -31,9 +32,9 @@ export function DashboardHeader() {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
-            setUserProfile({ email: user.email, ...userDoc.data() });
+            setUserProfile({ email: user.email, ...userDoc.data() } as GuestProfile);
           } else {
-            setUserProfile({ email: user.email });
+            setUserProfile({ email: user.email } as GuestProfile);
           }
         } catch (error) {
           console.error("Error fetching user data for header:", error);
@@ -184,11 +185,12 @@ export function DashboardHeader() {
                 <div className={`w-full h-full rounded-full flex items-center justify-center overflow-hidden ${isScrolled ? 'bg-[var(--color-navy-800)]' : 'bg-white'}`}>
                   {userProfile?.photoUrl ? (
                     <Image 
-                      src={userProfile.photoUrl} 
+                      src={userProfile.photoUrl as string} 
                       alt="Avatar" 
                       width={40} 
                       height={40} 
                       className="w-full h-full object-cover"
+                      unoptimized={true}
                     />
                   ) : (
                     <span className="text-base font-serif text-[var(--color-gold-600)]">

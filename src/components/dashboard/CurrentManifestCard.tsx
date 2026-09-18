@@ -1,14 +1,18 @@
 import React from 'react';
 import { Calendar, Ship, Users, MapPin } from 'lucide-react';
+import type { Booking } from '@/types/booking';
 
 interface CurrentManifestCardProps {
-  booking: any;
+  booking: Booking;
 }
 
 export function CurrentManifestCard({ booking }: CurrentManifestCardProps) {
-  const formatDateUI = (dateString: string) => {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString('en-US', { 
+  const formatDateUI = (dateObj: any) => {
+    if (!dateObj) return "-";
+    const d = typeof dateObj === 'string' || typeof dateObj === 'number' 
+        ? new Date(dateObj) 
+        : dateObj.toDate?.() || new Date();
+    return d.toLocaleDateString('en-US', { 
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
     });
   };

@@ -17,11 +17,13 @@ import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, type User as FirebaseAuthUser } from 'firebase/auth';
+import type { UserReward } from '@/types/voucher';
+import type { MasterCabin } from '@/types/voyage';
 
 interface PassengerDetail {
   id: number;
-  cabinName: string; 
+  cabinId: string; 
   fullName: string;
   gender: string;
   placeOfBirth: string;
@@ -58,10 +60,11 @@ function CheckoutContent() {
 
   const [basePrice, setBasePrice] = useState(0);
   const [isFetchingPrice, setIsFetchingPrice] = useState(true);
-  const [cabinDetails, setCabinDetails] = useState<any[]>([]);
+  const [cabinDetails, setCabinDetails] = useState<MasterCabin[]>([]);
+  const [cabinMap, setCabinMap] = useState<Record<string, string>>({});
   
   // Auth Guard States
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<FirebaseAuthUser | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Form States
@@ -76,7 +79,7 @@ function CheckoutContent() {
   
   // Voucher States
   const [voucherCode, setVoucherCode] = useState('');
-  const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
+  const [appliedVoucher, setAppliedVoucher] = useState<UserReward | null>(null);
   const [isVerifyingVoucher, setIsVerifyingVoucher] = useState(false);
   const [voucherError, setVoucherError] = useState('');
   
@@ -89,7 +92,7 @@ function CheckoutContent() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        router.push('/login'); // Tendang kembali ke login jika pengunjung gelap
+        router.push('/login');
         return;
       }
       
@@ -103,7 +106,7 @@ function CheckoutContent() {
       } catch (err) {
         console.error("Error fetching user data", err);
       } finally {
-        setTimeout(() => setIsAuthChecking(false), 500); // Skeleton transition
+        setTimeout(() => setIsAuthChecking(false), 500);
       }
     });
     return () => unsubscribe();
@@ -111,7 +114,7 @@ function CheckoutContent() {
 
   // 2. Inisialisasi Form Penumpang
   useEffect(() => {
-    if (isAuthChecking) return; // Tunggu auth selesai
+    if (isAuthChecking) return; 
 
     if (!selectedDate || Object.keys(initialCart).length === 0) {
       router.push('/');
@@ -121,11 +124,11 @@ function CheckoutContent() {
     let paxIndex = 1;
     const initialPassengers: PassengerDetail[] = [];
     
-    Object.entries(initialCart).forEach(([cabin, count]) => {
+    Object.entries(initialCart).forEach(([cabinId, count]) => {
       for (let i = 0; i < count; i++) {
         initialPassengers.push({
           id: paxIndex++,
-          cabinName: cabin,
+          cabinId: cabinId,
           fullName: '',
           gender: '',
           placeOfBirth: '',
@@ -142,32 +145,30 @@ function CheckoutContent() {
     setPassengers(initialPassengers);
   }, [initialCart, selectedDate, router, isAuthChecking]);
 
-  // 3. Fetch Harga
+  // 3. Fetch Harga Dinamis dari Products (MasterCabins)
   useEffect(() => {
     const fetchAndCalculatePrice = async () => {
       try {
-        const docRef = doc(db, 'settings', 'expedition');
-        const docSnap = await getDoc(docRef);
+        const productsSnapshot = await getDocs(collection(db, 'products'));
+        const productsMap: Record<string, MasterCabin> = {};
+        const tempNameMap: Record<string, string> = {};
         
+        productsSnapshot.forEach(docSnap => {
+          const cabinData = { id: docSnap.id, ...docSnap.data() } as MasterCabin;
+          productsMap[docSnap.id] = cabinData;
+          tempNameMap[docSnap.id] = cabinData.name || 'Cabin';
+        });
+        
+        setCabinDetails(Object.values(productsMap));
+        setCabinMap(tempNameMap);
+
         let calculatedTotal = 0;
-        let fetchedCabins: any[] = [];
 
-        if (docSnap.exists() && docSnap.data().cabinPackages) {
-          fetchedCabins = docSnap.data().cabinPackages;
-          setCabinDetails(fetchedCabins);
-        }
-
-        Object.entries(initialCart).forEach(([cabinName, count]) => {
-          const matchedCabin = fetchedCabins.find((c: any) => c.name === cabinName);
+        Object.entries(initialCart).forEach(([cabinId, count]) => {
+          const cabin = productsMap[cabinId];
           let priceNum = 0;
-          if (matchedCabin && matchedCabin.price) {
-            priceNum = parseInt(matchedCabin.price.replace(/,/g, '').replace('K', '000').replace(/[^0-9]/g, '')) || 0;
-          } else {
-            const nameLower = cabinName.toLowerCase();
-            if (nameLower.includes('sea view')) priceNum = 4600000;
-            else if (nameLower.includes('standard')) priceNum = 4200000;
-            else if (nameLower.includes('down deck')) priceNum = 3800000;
-            else priceNum = 3600000;
+          if (cabin && cabin.price) {
+            priceNum = Number(cabin.price);
           }
           calculatedTotal += (priceNum * count);
         });
@@ -207,10 +208,11 @@ function CheckoutContent() {
       });
 
       if (!foundVoucher) throw new Error("Invalid or expired voucher code.");
-      setAppliedVoucher(foundVoucher);
+      setAppliedVoucher(foundVoucher as UserReward);
       setVoucherCode('');
-    } catch (error: any) {
-      setVoucherError(error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      setVoucherError(err.message);
     } finally {
       setIsVerifyingVoucher(false);
     }
@@ -239,7 +241,7 @@ function CheckoutContent() {
     }));
   };
 
-  // 🚨 REFACTOR UPLOAD: Menggunakan API Backend R2 kita, bukan Cloudinary langsung!
+  // Upload ke R2 Bucket
   const handleFileUpload = async (id: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -259,9 +261,10 @@ function CheckoutContent() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Upload failed');
       
-      handlePassengerChange(id, 'passportFileUrl', data.url); // Sesuai respons R2 kita (data.url)
-    } catch (err: any) {
-      setErrorMessage(`Failed to upload passport: ${err.message}`);
+      handlePassengerChange(id, 'passportFileUrl', data.url); 
+    } catch (err: unknown) {
+      const error = err as Error;
+      setErrorMessage(`Failed to upload passport: ${error.message}`);
     } finally {
       setUploadingState(prev => ({ ...prev, [id]: false }));
     }
@@ -270,7 +273,7 @@ function CheckoutContent() {
   const validateForm = () => {
     if (!email || !phone || !pickupArea || !pickupLocation) return false;
     for (const p of passengers) {
-      if (!p.fullName || !p.gender || !p.placeOfBirth || !p.dateOfBirth || !p.passportNumber || !p.nationality || !p.passportFileUrl) {
+      if (!p.fullName) {
         return false;
       }
     }
@@ -305,8 +308,9 @@ function CheckoutContent() {
       const payload = {
         booking: { 
           date: selectedDate, 
+          voyageScheduleId: selectedDate,
           cart: initialCart, 
-          cabin: Object.keys(initialCart).join(', '), 
+          cabin: Object.keys(initialCart).map(id => cabinMap[id] || id).join(', '), 
           pax: paxCount, 
           total: finalPrice, 
           basePrice: basePrice,
@@ -340,9 +344,10 @@ function CheckoutContent() {
       }
 
       router.push(`/payment?order_id=${result.orderId}`);
-    } catch (error: any) {
-      console.error(error);
-      setErrorMessage(error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error(err);
+      setErrorMessage(err.message);
       setIsLoading(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -353,18 +358,9 @@ function CheckoutContent() {
     return new Date(dateString).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  const getSubtotal = (cabinName: string, count: number) => {
-    const matchedCabin = cabinDetails.find((c: any) => c.name === cabinName);
-    let priceNum = 0;
-    if (matchedCabin && matchedCabin.price) {
-      priceNum = parseInt(matchedCabin.price.replace(/,/g, '').replace('K', '000').replace(/[^0-9]/g, '')) || 0;
-    } else {
-      const nameLower = cabinName.toLowerCase();
-      if (nameLower.includes('sea view')) priceNum = 4600000;
-      else if (nameLower.includes('standard')) priceNum = 4200000;
-      else if (nameLower.includes('down deck')) priceNum = 3800000;
-      else priceNum = 3600000;
-    }
+  const getSubtotal = (cabinId: string, count: number) => {
+    const matchedCabin = cabinDetails.find(c => c.id === cabinId);
+    let priceNum = matchedCabin?.price ? Number(matchedCabin.price) : 0;
     return priceNum * count;
   };
 
@@ -483,7 +479,7 @@ function CheckoutContent() {
                       <div className="flex items-center gap-2">
                         <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Assigned:</span>
                         <div className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-sm border border-gray-200 text-[var(--color-navy-900)] bg-white shadow-sm flex items-center gap-1.5">
-                          <Lock className="w-3 h-3 text-gray-400" /> {p.cabinName}
+                          <Lock className="w-3 h-3 text-gray-400" /> {cabinMap[p.cabinId] || p.cabinId}
                         </div>
                       </div>
                     </div>
@@ -493,10 +489,16 @@ function CheckoutContent() {
                       <Input label="Full Name (As in Passport) *" value={p.fullName} onChange={(e) => handlePassengerChange(p.id, 'fullName', e.target.value)} placeholder="John Doe" icon={<User className="w-4 h-4"/>} required />
                       
                       <div className="flex flex-col w-full relative">
-                        <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest block">Gender *</label>
+                        <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest flex items-center gap-1 group relative w-fit">
+                          Gender (Optional) 
+                          <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
+                          <div className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 normal-case tracking-normal">
+                            If left blank, our admin will contact you via WhatsApp to complete this detail later.
+                          </div>
+                        </label>
                         <div className="relative flex items-center">
                           <div className="absolute left-4 text-gray-400 pointer-events-none"><User className="w-4 h-4" /></div>
-                          <select value={p.gender} onChange={(e) => handlePassengerChange(p.id, 'gender', e.target.value)} className="w-full bg-[var(--color-surface-50)] border border-gray-200 text-[var(--color-navy-900)] px-4 py-3.5 pl-11 rounded-xl appearance-none outline-none hover:border-[var(--color-gold-400)] focus:border-[var(--color-gold-500)] focus:ring-4 focus:ring-[var(--color-gold-500)]/15 transition-all text-sm font-medium cursor-pointer" required>
+                          <select value={p.gender} onChange={(e) => handlePassengerChange(p.id, 'gender', e.target.value)} className="w-full bg-[var(--color-surface-50)] border border-gray-200 text-[var(--color-navy-900)] px-4 py-3.5 pl-11 rounded-xl appearance-none outline-none hover:border-[var(--color-gold-400)] focus:border-[var(--color-gold-500)] focus:ring-4 focus:ring-[var(--color-gold-500)]/15 transition-all text-sm font-medium cursor-pointer">
                             <option value="" disabled>Select</option>
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
@@ -505,18 +507,51 @@ function CheckoutContent() {
                         </div>
                       </div>
 
-                      <Input label="Place of Birth *" value={p.placeOfBirth} onChange={(e) => handlePassengerChange(p.id, 'placeOfBirth', e.target.value)} placeholder="City, Country" icon={<MapPin className="w-4 h-4"/>} required />
+                      <Input 
+                        label={
+                          <span className="flex items-center gap-1 group relative w-fit">
+                            Place of Birth (Optional)
+                            <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
+                            <span className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 font-normal normal-case">
+                              If left blank, our admin will contact you via WhatsApp to complete this detail later.
+                            </span>
+                          </span>
+                        } 
+                        value={p.placeOfBirth} onChange={(e) => handlePassengerChange(p.id, 'placeOfBirth', e.target.value)} placeholder="City, Country" icon={<MapPin className="w-4 h-4"/>} 
+                      />
                       
                       <div className="flex gap-4">
                         <div className="w-2/3">
-                          <Input label="Date of Birth *" type="date" value={p.dateOfBirth} onChange={(e) => handlePassengerChange(p.id, 'dateOfBirth', e.target.value)} required />
+                          <Input 
+                            label={
+                              <span className="flex items-center gap-1 group relative w-fit">
+                                Date of Birth (Optional)
+                                <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
+                                <span className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 font-normal normal-case">
+                                  If left blank, our admin will contact you via WhatsApp to complete this detail later.
+                                </span>
+                              </span>
+                            } 
+                            type="date" value={p.dateOfBirth} onChange={(e) => handlePassengerChange(p.id, 'dateOfBirth', e.target.value)} 
+                          />
                         </div>
                         <div className="w-1/3">
                           <Input label="Age" type="number" value={p.age} readOnly className="bg-gray-100 text-gray-500 font-bold cursor-not-allowed border-transparent shadow-inner text-center" />
                         </div>
                       </div>
 
-                      <Input label="Nationality *" value={p.nationality} onChange={(e) => handlePassengerChange(p.id, 'nationality', e.target.value)} placeholder="e.g. British" icon={<Globe className="w-4 h-4"/>} required />
+                      <Input 
+                        label={
+                          <span className="flex items-center gap-1 group relative w-fit">
+                            Nationality (Optional)
+                            <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
+                            <span className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 font-normal normal-case">
+                              If left blank, our admin will contact you via WhatsApp to complete this detail later.
+                            </span>
+                          </span>
+                        } 
+                        value={p.nationality} onChange={(e) => handlePassengerChange(p.id, 'nationality', e.target.value)} placeholder="e.g. British" icon={<Globe className="w-4 h-4"/>} 
+                      />
                       
                       <div className="flex flex-col w-full relative">
                         <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest block">Dietary Restrictions</label>
@@ -533,10 +568,27 @@ function CheckoutContent() {
                         </div>
                       </div>
 
-                      <Input label="Passport / ID Number *" value={p.passportNumber} onChange={(e) => handlePassengerChange(p.id, 'passportNumber', e.target.value)} placeholder="A1234567" className="uppercase font-mono tracking-widest" icon={<CreditCard className="w-4 h-4"/>} required />
+                      <Input 
+                        label={
+                          <span className="flex items-center gap-1 group relative w-fit">
+                            Passport / ID Number (Optional)
+                            <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
+                            <span className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 font-normal normal-case">
+                              If left blank, our admin will contact you via WhatsApp to complete this detail later.
+                            </span>
+                          </span>
+                        } 
+                        value={p.passportNumber} onChange={(e) => handlePassengerChange(p.id, 'passportNumber', e.target.value)} placeholder="A1234567" className="uppercase font-mono tracking-widest" icon={<CreditCard className="w-4 h-4"/>} 
+                      />
                       
                       <div className="flex flex-col justify-end">
-                        <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest block">Upload Document (Required) *</label>
+                        <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest flex items-center gap-1 group relative w-fit">
+                          Upload Document (Optional)
+                          <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
+                          <div className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 normal-case tracking-normal">
+                            If skipped, our admin will contact you via WhatsApp to complete this detail later.
+                          </div>
+                        </label>
                         <div className="relative h-[50px]"> 
                           <input type="file" accept="image/*,.pdf" onChange={(e) => handleFileUpload(p.id, e)} className="hidden" id={`passport-upload-${p.id}`} />
                           <label htmlFor={`passport-upload-${p.id}`} className={`flex items-center justify-center gap-2 h-full rounded-xl border border-dashed cursor-pointer transition-all text-xs font-bold uppercase tracking-widest ${uploadingState[p.id] ? 'border-[var(--color-gold-500)] bg-[var(--color-gold-50)] text-[var(--color-gold-600)]' : p.passportFileUrl ? 'border-green-500 bg-green-50 text-green-700 shadow-inner' : 'border-gray-300 hover:border-[var(--color-navy-800)] bg-[var(--color-surface-50)] hover:bg-gray-50 text-[var(--color-navy-900)]'}`}>
@@ -578,14 +630,14 @@ function CheckoutContent() {
                     Accommodations
                   </div>
                   <div className="space-y-3">
-                    {Object.entries(initialCart).map(([cabinName, count]) => (
-                      <div key={cabinName} className="flex justify-between items-start">
+                    {Object.entries(initialCart).map(([cabinId, count]) => (
+                      <div key={cabinId} className="flex justify-between items-start">
                         <div className="pr-2">
-                          <p className="text-sm font-medium text-white">{count}x Guest{count > 1 ? 's' : ''}</p>
-                          <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{cabinName}</p>
+                          <p className="text-sm font-medium text-white">{count}x Cabin{count > 1 ? 's' : ''}</p>
+                          <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{cabinMap[cabinId] || cabinId}</p>
                         </div>
                         <div className="text-sm font-medium text-white shrink-0">
-                          {isFetchingPrice ? "..." : getSubtotal(cabinName, count).toLocaleString('id-ID')}
+                          {isFetchingPrice ? "..." : getSubtotal(cabinId, count).toLocaleString('id-ID')}
                         </div>
                       </div>
                     ))}

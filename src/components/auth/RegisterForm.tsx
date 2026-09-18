@@ -45,8 +45,9 @@ export function RegisterForm({ onSwitchMode }: RegisterFormProps) {
       // Auto login setelah register (Guest Default)
       await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
       router.push('/dashboard');
-    } catch (error: any) {
-      setErrorMessage(error.message || 'Failed to establish vault credentials.');
+    } catch (error: unknown) {
+      const err = error as Error;
+      setErrorMessage(err.message || 'Failed to establish vault credentials.');
       setIsLoading(false);
     }
   };

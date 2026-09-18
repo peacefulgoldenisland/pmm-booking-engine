@@ -9,9 +9,10 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useRouter } from 'next/navigation';
+import type { Booking } from '@/types/booking';
 
 interface RescheduleFormProps {
-  booking: any;
+  booking: Booking;
   isLockedH3: boolean;
   isLockedLimit: boolean;
 }
@@ -48,7 +49,10 @@ export function RescheduleForm({ booking, isLockedH3, isLockedLimit }: Reschedul
 
     // Syarat 3: Tidak boleh sama dengan jadwal lama
     if (booking && booking.dateOfDeparture) {
-        const oldDate = new Date(booking.dateOfDeparture);
+        const oldDateVal = booking.dateOfDeparture;
+        const oldDate = typeof oldDateVal === 'string' || typeof oldDateVal === 'number'
+            ? new Date(oldDateVal)
+            : (oldDateVal as any).toDate?.() || new Date();
         if (date.getTime() === oldDate.getTime()) return false;
     }
 
@@ -110,7 +114,7 @@ export function RescheduleForm({ booking, isLockedH3, isLockedLimit }: Reschedul
         
         await updateDoc(docRef, {
             dateOfDeparture: selectedDateStr,
-            rescheduleCount: (booking.rescheduleCount || 0) + 1,
+            rescheduleCount: ((booking.rescheduleCount as number) || 0) + 1,
             rescheduledAt: new Date().toISOString(),
             originalDateOfDeparture: booking.dateOfDeparture 
         });
