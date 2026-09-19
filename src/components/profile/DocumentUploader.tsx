@@ -17,8 +17,8 @@ export function DocumentUploader({ passportFileUrl, isUploading, onUpload }: Doc
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <p className="font-serif text-[var(--color-navy-900)] text-lg mb-0.5">Document Vaulted</p>
-              <p className="text-xs text-gray-500 font-light">Your passport is securely stored on our servers.</p>
+              <p className="font-serif text-[var(--color-navy-900)] text-lg mb-0.5">Document Uploaded</p>
+              <p className="text-xs text-gray-500 font-light">Your passport has been uploaded successfully.</p>
             </div>
           </div>
           <div className="flex items-center gap-4 w-full md:w-auto">
@@ -28,7 +28,7 @@ export function DocumentUploader({ passportFileUrl, isUploading, onUpload }: Doc
               rel="noopener noreferrer" 
               className="text-[10px] font-bold text-[var(--color-navy-900)] hover:text-[var(--color-gold-600)] transition-colors uppercase tracking-widest underline underline-offset-4 w-1/2 md:w-auto text-center"
             >
-              Inspect File
+              View File
             </a>
             <label className="bg-white border border-gray-200 text-[var(--color-navy-900)] hover:border-[var(--color-gold-400)] hover:text-[var(--color-gold-600)] px-6 py-2.5 rounded-sm text-[10px] font-bold uppercase tracking-widest shadow-sm transition-all cursor-pointer w-1/2 md:w-auto text-center">
               {isUploading ? "Processing..." : "Update File"}
@@ -50,7 +50,7 @@ export function DocumentUploader({ passportFileUrl, isUploading, onUpload }: Doc
             <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-[var(--color-gold-500)] group-hover:scale-110 transition-all mb-4" />
           )}
           <p className="text-sm font-medium text-[var(--color-navy-900)] mb-1">
-            {isUploading ? "Encrypting and Uploading..." : "Click or drag file to upload"}
+            {isUploading ? "Uploading..." : "Click or drag file to upload"}
           </p>
           <p className="text-[11px] text-gray-400 font-light">Supports JPG, PNG, or PDF up to 5MB</p>
           <input 

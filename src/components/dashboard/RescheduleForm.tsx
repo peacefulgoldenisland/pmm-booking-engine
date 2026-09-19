@@ -125,7 +125,7 @@ export function RescheduleForm({ booking, isLockedH3, isLockedLimit }: Reschedul
 
     } catch (error) {
         console.error("Error updating reschedule:", error);
-        alert("Transaction failed. Please contact concierge support.");
+        alert("Failed to reschedule. Please contact support.");
         setIsSubmitting(false);
     }
   };
@@ -141,7 +141,7 @@ export function RescheduleForm({ booking, isLockedH3, isLockedLimit }: Reschedul
       )}
 
       <h4 className="text-[10px] font-bold text-[var(--color-gold-600)] uppercase tracking-widest mb-8">
-        Propose New Itinerary
+        Select New Travel Date
       </h4>
 
       <div className="mb-8 relative z-10">
@@ -168,16 +168,16 @@ export function RescheduleForm({ booking, isLockedH3, isLockedLimit }: Reschedul
                   <motion.div key="available" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex items-start gap-4 bg-white p-5 rounded-sm border border-green-100 shadow-sm">
                       <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
                       <div>
-                          <p className="text-sm font-serif text-[var(--color-navy-900)] mb-1">Clearance Granted</p>
-                          <p className="text-[11px] font-light text-gray-500 leading-relaxed">Adequate capacity confirmed for {booking.paxCount} guests in {booking.cabinClass}.</p>
+                          <p className="text-sm font-serif text-[var(--color-navy-900)] mb-1">Available</p>
+                          <p className="text-[11px] font-light text-gray-500 leading-relaxed">There is enough space for {booking.paxCount} guests in {booking.cabinClass}.</p>
                       </div>
                   </motion.div>
               ) : selectedDateStr && isAvailable === false ? (
                   <motion.div key="full" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex items-start gap-4 bg-white p-5 rounded-sm border border-red-100 shadow-sm">
                       <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                       <div>
-                          <p className="text-sm font-serif text-[var(--color-navy-900)] mb-1">Capacity Exceeded</p>
-                          <p className="text-[11px] font-light text-gray-500 leading-relaxed">The {booking.cabinClass} cannot accommodate {booking.paxCount} guests on this date. Please select an alternate weekend.</p>
+                          <p className="text-sm font-serif text-[var(--color-navy-900)] mb-1">Not Enough Space</p>
+                          <p className="text-[11px] font-light text-gray-500 leading-relaxed">The {booking.cabinClass} does not have enough space for {booking.paxCount} guests on this date. Please select another date.</p>
                       </div>
                   </motion.div>
               ) : null}
@@ -191,9 +191,9 @@ export function RescheduleForm({ booking, isLockedH3, isLockedLimit }: Reschedul
           className="w-full !rounded-sm !py-4 uppercase tracking-widest text-xs relative z-10"
       >
           {isSubmitting ? (
-              <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Finalizing Manifest</>
+              <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</>
           ) : (
-              <>Confirm New Dates</>
+              <>Confirm Date Change</>
           )}
       </Button>
     </div>

@@ -5,17 +5,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { v4 as uuidv4 } from 'uuid';
 
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY 
-  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY) 
-  : null;
-
-if (!getApps().length && serviceAccount) {
-  initializeApp({
-    credential: cert(serviceAccount)
-  });
-}
-
-const db = getFirestore();
+// Lazy init later inside POST
 
 export async function POST(request: Request) {
   try {
@@ -42,9 +32,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Incomplete booking data' }, { status: 400 });
     }
 
-    if (!serviceAccount) {
+    // Lazy Init Firebase Admin
+    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountKey) {
         return NextResponse.json({ error: 'Server configuration error: Firebase Service Account missing' }, { status: 500 });
     }
+
+    if (!getApps().length) {
+      try {
+        const parsedKey = JSON.parse(serviceAccountKey);
+        initializeApp({ credential: cert(parsedKey) });
+      } catch (err) {
+        console.error("Firebase Key Parse Error:", err);
+        return NextResponse.json({ error: 'Server configuration error: Invalid Firebase Service Account JSON' }, { status: 500 });
+      }
+    }
+
+    const db = getFirestore();
 
     // 1. Validasi Keberadaan User (Telah ditangani oleh Firebase Auth Token)
 

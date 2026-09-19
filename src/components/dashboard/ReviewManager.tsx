@@ -126,7 +126,7 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
       if (response.ok) {
         if (!editingReviewId) {
           // Alert native bisa diganti toast notification nanti, untuk sekarang biarkan alert
-          alert(`Voyage log sealed. You have been awarded ${result.earnedPoints} Gold Points.`);
+          alert(`Review submitted. You earned ${result.earnedPoints} points.`);
         }
         setIsModalOpen(false);
         fetchReviews(); 
@@ -158,7 +158,7 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
   return (
     <div className="mt-8 border-t border-gray-200 pt-8">
       <h4 className="text-[10px] font-bold text-[var(--color-navy-900)] uppercase tracking-widest mb-6 flex items-center gap-2">
-        <Calendar className="w-3.5 h-3.5 text-[var(--color-gold-500)]" /> Captain's Logbook
+        <Calendar className="w-3.5 h-3.5 text-[var(--color-gold-500)]" /> Daily Review
       </h4>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((day) => {
@@ -190,7 +190,7 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
                     {[...Array(existingReview.rating)].map((_, i) => <Star key={i} className="w-3 h-3 text-[var(--color-gold-500)] fill-[var(--color-gold-500)]" />)}
                   </div>
                   <button onClick={() => openReviewModal(day, existingReview)} className="text-[9px] font-bold text-[var(--color-navy-900)] hover:text-[var(--color-gold-600)] uppercase tracking-widest flex items-center gap-1 transition-colors">
-                    <Edit3 className="w-3 h-3" /> Amend Log
+                    <Edit3 className="w-3 h-3" /> Edit Review
                   </button>
                 </div>
               ) : isUnlocked ? (
@@ -198,11 +198,11 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
                   onClick={() => openReviewModal(day)} 
                   className="w-full mt-auto bg-[var(--color-navy-900)] hover:bg-[var(--color-navy-800)] text-white text-[9px] font-bold uppercase tracking-widest py-2 rounded-sm transition-colors flex justify-center items-center gap-1.5"
                 >
-                  <MessageSquareQuote className="w-3 h-3" /> Append (+50 Pts)
+                  <MessageSquareQuote className="w-3 h-3" /> Add Review (+50 Pts)
                 </button>
               ) : (
                 <div className="mt-auto">
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Classified</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Locked</p>
                 </div>
               )}
             </div>
@@ -210,20 +210,20 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
         })}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Day ${selectedDay} Logbook Entry`}>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Day ${selectedDay} Review`}>
         <div className="space-y-8">
           
           {!editingReviewId && (
             <div className="bg-[var(--color-surface-50)] border border-[var(--color-gold-200)] p-4 rounded-sm flex items-start gap-3">
               <Sparkles className="w-4 h-4 text-[var(--color-gold-600)] shrink-0 mt-0.5" />
               <p className="text-[11px] text-[var(--color-navy-900)] leading-relaxed">
-                Chronicle your maritime experiences for Day {selectedDay}. Detailed entries with imagery will be rewarded with up to <strong className="text-[var(--color-gold-600)]">75 Mileage Points</strong>.
+                Share your experience for Day {selectedDay}. Reviews with a photo will get up to <strong className="text-[var(--color-gold-600)]">75 Points</strong>.
               </p>
             </div>
           )}
 
           <div>
-            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3 block text-center">Voyage Rating</label>
+            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-3 block text-center">Rating</label>
             <div className="flex justify-center gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -241,25 +241,25 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
           </div>
 
           <div>
-            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Captain's Notes</label>
+            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Review</label>
             <textarea 
               value={comment} 
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Chronicle the ocean breeze, the manta rays, the exquisite dining..."
+              placeholder="Tell us about your day..."
               className="w-full bg-[var(--color-surface-50)] border border-gray-200 hover:border-[var(--color-gold-300)] focus:border-[var(--color-gold-500)] focus:ring-1 focus:ring-[var(--color-gold-500)] rounded-sm p-4 text-[var(--color-navy-900)] text-sm outline-none min-h-[120px] resize-none transition-all"
             />
           </div>
 
           <div>
             <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center justify-between">
-              Visual Documentation
+              Photo (Optional)
               {!editingReviewId && <span className="text-[var(--color-gold-600)]">+25 Bonus Points</span>}
             </label>
             <div className="relative h-36 border border-dashed border-gray-300 rounded-sm flex items-center justify-center bg-[var(--color-surface-50)] hover:bg-white hover:border-[var(--color-gold-400)] transition-colors overflow-hidden group">
               <input type="file" accept="image/*" onChange={handlePhotoUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" disabled={isUploadingPhoto || isSubmitting} />
               {reviewImage ? (
                 <>
-                  <img src={reviewImage} alt="Review Documentation" className="w-full h-full object-cover" />
+                  <img src={reviewImage} alt="Review Photo" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-0">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-2"><Camera className="w-4 h-4"/> Replace Image</p>
                   </div>
@@ -272,7 +272,7 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
                     <UploadCloud className="w-6 h-6 mx-auto mb-2 text-gray-400 group-hover:text-[var(--color-navy-800)] transition-colors" />
                   )}
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-navy-900)]">
-                    {isUploadingPhoto ? 'Encrypting File...' : 'Upload Photograph'}
+                    {isUploadingPhoto ? 'Uploading...' : 'Upload Photo'}
                   </p>
                 </div>
               )}
@@ -284,7 +284,7 @@ export function ReviewManager({ booking, userProfile }: ReviewManagerProps) {
             isLoading={isSubmitting || isUploadingPhoto} 
             className="w-full !rounded-sm !py-4 uppercase tracking-widest text-xs shadow-luxury"
           >
-            {editingReviewId ? 'Amend Logbook' : 'Seal Logbook Entry'}
+            {editingReviewId ? 'Update Review' : 'Submit Review'}
           </Button>
         </div>
       </Modal>

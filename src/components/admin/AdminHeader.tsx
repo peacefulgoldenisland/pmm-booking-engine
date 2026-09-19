@@ -50,7 +50,7 @@ export default function AdminHeader() {
         </button>
         <div>
           <h2 className="text-xl font-serif text-[var(--color-navy-900)]">{getPageTitle()}</h2>
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">PMM Command Center</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Admin Dashboard</p>
         </div>
       </div>
 
@@ -62,7 +62,7 @@ export default function AdminHeader() {
           <AdminInput 
             leftIcon={<Search className="w-4 h-4 text-gray-400" />}
             type="text" 
-            placeholder="Search manifests..." 
+            placeholder="Search..." 
             className="rounded-full bg-[var(--color-surface-50)] shadow-inner border-transparent"
           />
         </div>

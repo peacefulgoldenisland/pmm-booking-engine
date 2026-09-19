@@ -21,8 +21,8 @@ export function MyVouchers({ myVouchers, isLoadingData }: MyVouchersProps) {
           <div className="w-16 h-16 bg-[var(--color-surface-50)] rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-100">
             <Ticket className="w-6 h-6 text-gray-300" />
           </div>
-          <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-2">Vault Empty</h3>
-          <p className="text-gray-500 font-light text-sm">You have not redeemed any privilege codes yet.</p>
+          <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-2">No Vouchers Yet</h3>
+          <p className="text-gray-500 font-light text-sm">You haven't redeemed any vouchers yet.</p>
         </div>
       ) : (
         myVouchers.map(v => (
@@ -34,7 +34,7 @@ export function MyVouchers({ myVouchers, isLoadingData }: MyVouchersProps) {
               <div>
                 <h4 className="font-serif text-[var(--color-navy-900)] text-xl mb-1">{v.rewardName}</h4>
                 <div className="flex items-center gap-3 text-xs text-gray-500 font-light">
-                  <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Authenticated</span>
+                  <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Redeemed</span>
                   <span className={`px-2 py-0.5 rounded-sm uppercase font-bold text-[9px] tracking-widest border ${v.status === 'USED' ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
                     {v.status}
                   </span>
@@ -43,7 +43,7 @@ export function MyVouchers({ myVouchers, isLoadingData }: MyVouchersProps) {
             </div>
             
             <div className="bg-[var(--color-surface-50)] px-6 py-4 rounded-sm text-left md:text-right border border-gray-200 border-dashed shrink-0 w-full md:w-auto">
-              <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-1">Authorization Code</p>
+              <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-1">Voucher Code</p>
               <p className="font-mono font-bold text-[var(--color-navy-900)] text-xl tracking-widest">{v.id.split('-').pop()?.toUpperCase()}</p>
             </div>
           </div>

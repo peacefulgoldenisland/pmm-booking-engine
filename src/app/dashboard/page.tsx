@@ -142,7 +142,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-[var(--color-gold-500)] text-[10px] font-bold tracking-widest uppercase mb-2 flex items-center gap-1.5">
-                  <Shield className="w-3 h-3" /> VVIP Protocol Active
+                  <Shield className="w-3 h-3" /> Verified Member
                 </p>
                 <h2 className="text-3xl md:text-4xl font-serif text-white truncate max-w-[250px] md:max-w-[400px]">
                   {greeting}, <span className="italic text-[var(--color-gold-400)]">{userProfile?.fullName?.split(' ')[0] || 'Explorer'}</span>
@@ -174,8 +174,8 @@ export default function DashboardPage() {
                   <History className="w-5 h-5 text-gray-300 group-hover:text-[var(--color-gold-400)]" />
                 </div>
                 <div>
-                  <h3 className="font-serif text-lg text-white mb-0.5">Historical Logs</h3>
-                  <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Past Voyages</p>
+                  <h3 className="font-serif text-lg text-white mb-0.5">Booking History</h3>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Past Bookings</p>
                 </div>
               </div>
               <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-all transform group-hover:translate-x-1" />
@@ -190,8 +190,8 @@ export default function DashboardPage() {
                   <ConciergeBell className="w-5 h-5 text-gray-300 group-hover:text-[var(--color-gold-400)]" />
                 </div>
                 <div>
-                  <h3 className="font-serif text-lg text-white mb-0.5">Concierge Services</h3>
-                  <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">VVIP Privileges</p>
+                  <h3 className="font-serif text-lg text-white mb-0.5">Help & Support</h3>
+                  <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Contact Us</p>
                 </div>
               </div>
               <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-white transition-all transform group-hover:translate-x-1" />
@@ -205,14 +205,14 @@ export default function DashboardPage() {
         {/* ======================================================== */}
         <div className="mb-6 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <h2 className="text-3xl font-serif text-[var(--color-navy-900)]">Active Manifests</h2>
+            <h2 className="text-3xl font-serif text-[var(--color-navy-900)]">Upcoming Bookings</h2>
             <span className="bg-[var(--color-surface-50)] border border-gray-200 text-gray-500 px-3 py-1.5 rounded-sm text-[10px] font-bold uppercase tracking-widest hidden sm:inline-block">
               {upcomingBookings.length} Trips
             </span>
           </div>
           {upcomingBookings.length > 0 && (
             <Button onClick={() => router.push('/')} variant="outline" className="!rounded-sm uppercase tracking-widest text-xs flex items-center gap-2 border-[var(--color-navy-900)] text-[var(--color-navy-900)] hover:bg-[var(--color-navy-900)] hover:text-white transition-all w-full sm:w-auto">
-              <Plus className="w-4 h-4" /> Book New Voyage
+              <Plus className="w-4 h-4" /> Book New Trip
             </Button>
           )}
         </div>
@@ -223,12 +223,12 @@ export default function DashboardPage() {
               <div className="w-16 h-16 bg-[var(--color-surface-50)] rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-100">
                 <Anchor className="w-6 h-6 text-gray-300" />
               </div>
-              <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">No upcoming voyages</h3>
+              <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">No upcoming trips</h3>
               <p className="text-gray-500 text-sm mb-8 max-w-sm mx-auto font-light leading-relaxed">
-                Your manifest is currently empty. Curate your next grand maritime escape with us today.
+                You don't have any upcoming trips. Ready to plan your next getaway?
               </p>
               <Button onClick={() => router.push('/')} variant="outline" className="!rounded-sm mx-auto uppercase tracking-widest text-xs">
-                Explore Destinations
+                Book a Trip
               </Button>
             </div>
           ) : (

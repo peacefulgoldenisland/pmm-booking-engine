@@ -208,7 +208,7 @@ export default function Home() {
               onClick={() => router.push('/login')} 
               className="text-white hover:text-[var(--color-gold-500)] text-[10px] md:text-xs font-bold uppercase tracking-widest transition-colors"
             >
-              Member Sign In
+              Log In
             </button>
           </div>
         </nav>
@@ -217,8 +217,8 @@ export default function Home() {
       {/* BOOKING ENGINE HEADER */}
       <div className={`bg-[var(--color-navy-900)] text-white ${isLoggedIn ? 'pt-28' : 'pt-8'} pb-16 px-4 md:px-6 relative z-10 border-b-4 border-[var(--color-gold-500)] transition-all`}>
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-serif mb-2">Book Your Voyage</h1>
-          <p className="text-gray-400 font-light text-sm mb-6 max-w-xl leading-relaxed">Select your Saturday departure date and configure your accommodations for the Komodo expedition.</p>
+          <h1 className="text-3xl md:text-4xl font-serif mb-2">Book Your Trip</h1>
+          <p className="text-gray-400 font-light text-sm mb-6 max-w-xl leading-relaxed">Select your departure date and choose your cabin for the Komodo trip.</p>
           
           <div className="bg-white rounded-xl p-4 md:p-6 shadow-2xl flex flex-col md:flex-row items-center gap-6 transform translate-y-12 border border-gray-100 max-w-3xl">
             <div className="w-full">
@@ -243,7 +243,7 @@ export default function Home() {
           
           {/* LEFT COLUMN - Cabin List */}
           <div className="lg:col-span-8 flex flex-col gap-4 pt-4">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-navy-900)] mb-2">Available Suites & Cabins</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--color-navy-900)] mb-2">Available Cabins</h2>
 
             <div className="grid grid-cols-1 gap-4">
               {isFetchingData || cabins.length === 0 ? (
@@ -422,14 +422,14 @@ export default function Home() {
       </main>
 
       {/* 🚨 AUTH REQUIRED MODAL 🚨 */}
-      <Modal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} title="Authentication Required">
+      <Modal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} title="Log In to Continue">
         <div className="text-center py-4">
           <div className="w-16 h-16 bg-[var(--color-surface-50)] rounded-full flex items-center justify-center mx-auto mb-5 border border-gray-200">
             <Lock className="w-6 h-6 text-[var(--color-navy-800)]" />
           </div>
-          <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">Secure Your Quarters</h3>
+          <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">Log In Required</h3>
           <p className="text-gray-500 font-light text-sm mb-8 px-4 leading-relaxed">
-            To proceed with the clearance and ensure the security of your voyage manifest, please access your member account.
+            Please log in to your account to continue your booking.
           </p>
           <div className="grid grid-cols-2 gap-4">
             <Button variant="ghost" onClick={() => setIsAuthModalOpen(false)} className="w-full !rounded-sm">
@@ -449,8 +449,8 @@ export default function Home() {
             <div className="w-16 h-16 flex items-center justify-center mx-auto mb-5">
               <CheckCircle2 className="w-12 h-12 text-green-500" />
             </div>
-            <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">Priority Waitlist Secured</h3>
-            <p className="text-gray-500 font-light text-sm mb-8 px-2 leading-relaxed">Your request for the <strong className="text-[var(--color-navy-900)]">{waitlistCabin}</strong> has been registered. Our concierge will contact you immediately upon availability.</p>
+            <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">Waitlist Request Sent</h3>
+            <p className="text-gray-500 font-light text-sm mb-8 px-2 leading-relaxed">Your request for the <strong className="text-[var(--color-navy-900)]">{waitlistCabin}</strong> has been received. We will contact you when it's available.</p>
             <Button onClick={() => setIsWaitlistModalOpen(false)} className="w-full !rounded-sm">Close</Button>
           </div>
         ) : (

@@ -41,8 +41,8 @@ export function TicketBoardingPass({ booking }: TicketBoardingPassProps) {
               <Ship className="w-8 h-8 text-[var(--color-navy-900)]" />
             </div>
             <div>
-              <h1 className="text-3xl font-serif text-[var(--color-navy-900)] tracking-tight uppercase">PMM Reserve</h1>
-              <p className="text-[9px] font-bold text-gray-500 tracking-widest uppercase mt-1">Official Boarding Pass</p>
+              <h1 className="text-3xl font-serif text-[var(--color-navy-900)] tracking-tight uppercase">PMM Booking</h1>
+              <p className="text-[9px] font-bold text-gray-500 tracking-widest uppercase mt-1">E-Ticket</p>
             </div>
           </div>
           <div className="text-left md:text-right">
@@ -80,7 +80,7 @@ export function TicketBoardingPass({ booking }: TicketBoardingPassProps) {
               </div>
               <div className="col-span-2">
                 <p className="text-[9px] text-gray-400 uppercase font-bold tracking-widest mb-1.5 flex items-center gap-1.5">
-                  <Ship className="w-3 h-3 text-[var(--color-gold-500)]"/> Assigned Quarters
+                  <Ship className="w-3 h-3 text-[var(--color-gold-500)]"/> Cabin Class
                 </p>
                 <p className="text-xl font-serif text-[var(--color-navy-900)] border-b border-gray-100 pb-2">{booking.cabinClass}</p>
               </div>
@@ -95,7 +95,7 @@ export function TicketBoardingPass({ booking }: TicketBoardingPassProps) {
               className="w-40 h-40 mb-4 mix-blend-multiply border border-gray-200 p-2 bg-white"
             />
             <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest text-center leading-relaxed">
-              Harbor Scan
+              Scan at Harbor
             </p>
           </div>
         </div>
@@ -104,7 +104,7 @@ export function TicketBoardingPass({ booking }: TicketBoardingPassProps) {
         <div className="mb-14">
           <div className="flex items-end justify-between border-b border-[var(--color-navy-900)] pb-2 mb-6 break-inside-avoid">
             <h3 className="text-sm font-serif text-[var(--color-navy-900)] uppercase tracking-widest">
-              Guest Manifest
+              Guest Details
             </h3>
             <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest bg-[var(--color-surface-50)] px-2 py-1 rounded-sm border border-gray-200">
               {booking.paxCount} Pax
@@ -115,8 +115,8 @@ export function TicketBoardingPass({ booking }: TicketBoardingPassProps) {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="break-inside-avoid">
-                  <th className="py-3 text-[9px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200 w-1/3">Lead / Full Name</th>
-                  <th className="py-3 text-[9px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200">Travel Document ID</th>
+                  <th className="py-3 text-[9px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200 w-1/3">Full Name</th>
+                  <th className="py-3 text-[9px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200">Passport / ID</th>
                   <th className="py-3 text-[9px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200 hidden sm:table-cell print:table-cell">Origin</th>
                   <th className="py-3 text-[9px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200 text-right">Dietary</th>
                 </tr>
@@ -128,7 +128,7 @@ export function TicketBoardingPass({ booking }: TicketBoardingPassProps) {
                       <span className="text-sm font-serif text-[var(--color-navy-900)] block">
                         {pax.fullName}
                       </span>
-                      {idx === 0 && <span className="inline-block mt-1 bg-[var(--color-gold-500)] text-[var(--color-navy-900)] text-[8px] px-2 py-0.5 rounded-sm uppercase tracking-widest font-bold">Principal Guest</span>}
+                      {idx === 0 && <span className="inline-block mt-1 bg-[var(--color-gold-500)] text-[var(--color-navy-900)] text-[8px] px-2 py-0.5 rounded-sm uppercase tracking-widest font-bold">Primary Guest</span>}
                     </td>
                     <td className="py-4 text-xs font-mono tracking-widest text-[var(--color-navy-900)] uppercase">
                       {pax.passportNumber}
@@ -155,24 +155,24 @@ export function TicketBoardingPass({ booking }: TicketBoardingPassProps) {
         {/* TERMS & CONDITIONS (FOOTER TIKET) */}
         <div className="bg-[var(--color-surface-50)] p-8 border border-gray-200 rounded-sm break-inside-avoid">
           <h4 className="text-[9px] font-bold text-[var(--color-navy-900)] uppercase tracking-widest mb-4 flex items-center gap-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-gold-500)]" /> Maritime Protocols & Regulations
+            <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-gold-500)]" /> Important Information
           </h4>
           <ul className="text-[11px] text-gray-500 space-y-3 font-light leading-relaxed">
             <li className="flex items-start gap-2">
               <span className="text-[var(--color-gold-500)] mt-0.5">•</span>
-              <span>Harbor assembly is strictly mandated <strong className="text-[var(--color-navy-900)] font-medium">2 hours</strong> prior to the scheduled departure time. Failure to appear will result in manifest cancellation.</span>
+              <span>Please arrive at the harbor <strong className="text-[var(--color-navy-900)] font-medium">2 hours</strong> before departure.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--color-gold-500)] mt-0.5">•</span>
-              <span>This digital boarding pass and the original physical travel documents (Passport/ID) must be presented during clearance.</span>
+              <span>Please show this e-ticket and your original ID/Passport when checking in.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--color-gold-500)] mt-0.5">•</span>
-              <span>Cabin baggage allowance is restricted to 20kg per guest. Soft-shell luggage is highly advised for maritime safety.</span>
+              <span>Baggage allowance is 20kg per guest. Soft luggage is recommended.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-[var(--color-gold-500)] mt-0.5">•</span>
-              <span>24/7 Concierge & Harbor Master Direct Line: <strong className="text-[var(--color-navy-900)] font-mono">+62 812-3456-7890</strong>.</span>
+              <span>24/7 Support Line: <strong className="text-[var(--color-navy-900)] font-mono">+62 812-3456-7890</strong>.</span>
             </li>
           </ul>
         </div>

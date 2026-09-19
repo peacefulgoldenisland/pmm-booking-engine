@@ -11,7 +11,7 @@ interface WaitlistEmailProps {
 }
 
 export const WaitlistEmail: React.FC<WaitlistEmailProps> = ({
-  customerName = "Esteemed Guest",
+  customerName = "Guest",
   departureDate = new Date().toISOString(),
   cabinClass = "Private Sea View",
   paxCount = 2
@@ -24,35 +24,35 @@ export const WaitlistEmail: React.FC<WaitlistEmailProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>Your PMM Reserve Priority Waitlist Status</Preview>
+      <Preview>Your PMM Booking Waitlist Status</Preview>
       <Body style={main}>
         <Container style={container}>
           
           {/* HEADER: LUXURY BRANDING */}
           <Section style={headerSection}>
             <Text style={logoText}>
-              PMM <span style={logoAccent}>RESERVE</span>
+              PMM <span style={logoAccent}>BOOKING</span>
             </Text>
-            <Text style={headerSubtitle}>PRIORITY WAITLIST REGISTRY</Text>
+            <Text style={headerSubtitle}>WAITLIST CONFIRMATION</Text>
           </Section>
 
           {/* GREETING & INTRO */}
           <Section style={contentSection}>
-            <Text style={greeting}>Esteemed {customerName},</Text>
+            <Text style={greeting}>Dear {customerName},</Text>
             <Text style={paragraph}>
-              You have been successfully inscribed into our Priority Waitlist for the currently fully-booked maritime expedition. We greatly appreciate your desire to sail with us.
+              You have successfully joined the waitlist for this trip. We appreciate your interest in sailing with us.
             </Text>
 
             {/* EDITORIAL ITINERARY BOX */}
             <Section style={ticketWrapper}>
               <Section style={ticketHeader}>
-                <Text style={ticketHeaderText}>REQUESTED ITINERARY</Text>
+                <Text style={ticketHeaderText}>REQUESTED TRIP</Text>
               </Section>
               
               <Section style={ticketBody}>
                 <Row>
                   <Column style={columnLeft}>
-                    <Text style={label}>EXPEDITION ROUTE</Text>
+                    <Text style={label}>ROUTE</Text>
                     <Text style={valueSerif}>Lombok &#x279D; Komodo</Text>
                   </Column>
                   <Column style={columnRight}>
@@ -65,7 +65,7 @@ export const WaitlistEmail: React.FC<WaitlistEmailProps> = ({
                 
                 <Row>
                   <Column>
-                    <Text style={label}>REQUESTED QUARTERS</Text>
+                    <Text style={label}>REQUESTED CABIN</Text>
                     <Text style={valueSerifHighlight}>{cabinClass} <span style={paxBadge}>({paxCount} PAX)</span></Text>
                   </Column>
                 </Row>
@@ -74,29 +74,29 @@ export const WaitlistEmail: React.FC<WaitlistEmailProps> = ({
 
             {/* CONCIERGE PROTOCOLS */}
             <Section style={protocolBox}>
-              <Text style={protocolTitle}>CONCIERGE PROTOCOL</Text>
+              <Text style={protocolTitle}>IMPORTANT INFORMATION</Text>
               <Text style={protocolText}>
-                <span style={bullet}>&#x2022;</span> In the event of a cancellation or cabin upgrade, our concierge desk will contact you immediately.<br/>
-                <span style={bullet}>&#x2022;</span> Allocations are strictly prioritized based on the chronological order of the registry.<br/>
+                <span style={bullet}>&#x2022;</span> If a cabin becomes available, we will contact you immediately.<br/>
+                <span style={bullet}>&#x2022;</span> Cabins are allocated on a first-come, first-served basis.<br/>
                 <span style={bullet}>&#x2022;</span> No payment is required to maintain your position on this waitlist.
               </Text>
             </Section>
 
             <Text style={closing}>
-              Should your plans change, or if you wish to explore alternative departure dates, please do not hesitate to reach out to our team.<br/><br/>
+              If you need to change your plans or check other dates, please feel free to reach out to us.<br/><br/>
               Warm regards,<br/>
-              <strong>The PMM Reserve Concierge</strong>
+              <strong>The PMM Booking Team</strong>
             </Text>
           </Section>
 
           {/* FOOTER */}
           <Section style={footerSection}>
             <Text style={footerText}>
-              PMM Voyage Liveaboard | Secure & Luxury Expeditions<br/>
-              Need assistance? Contact our 24/7 Harbor Master at <Link href="tel:+6281234567890" style={footerLink}>+62 812-3456-7890</Link> or reply to this email.
+              PMM Voyage | Komodo Trips<br/>
+              Need assistance? Contact our 24/7 support at <Link href="tel:+6281234567890" style={footerLink}>+62 812-3456-7890</Link> or reply to this email.
             </Text>
             <Text style={footerCopyright}>
-              &copy; {new Date().getFullYear()} PMM Reserve. All rights reserved.
+              &copy; {new Date().getFullYear()} PMM Booking. All rights reserved.
             </Text>
           </Section>
 

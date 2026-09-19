@@ -18,7 +18,7 @@ import { signOut } from 'firebase/auth';
 const menuItems = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Bookings', href: '/admin/bookings', icon: BookOpenCheck },
-  { name: 'Fleet & Voyages', href: '/admin/voyages', icon: Anchor },
+  { name: 'Trips', href: '/admin/voyages', icon: Anchor },
   { name: 'Guests', href: '/admin/guests', icon: UsersRound },
   { name: 'Vouchers', href: '/admin/vouchers', icon: TicketPercent },
 ];

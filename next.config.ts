@@ -20,6 +20,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/__/auth/:path*',
+        destination: 'https://pgi-voyage-app.firebaseapp.com/__/auth/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

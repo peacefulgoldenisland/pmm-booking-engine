@@ -20,21 +20,21 @@ export function TicketLockedState({ booking }: TicketLockedStateProps) {
            <Lock className="w-6 h-6 text-[var(--color-navy-900)]" />
          </div>
          
-         <h1 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3 relative z-10">Boarding Pass Locked</h1>
+         <h1 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3 relative z-10">Ticket Locked</h1>
          <p className="text-gray-500 text-xs font-light mb-8 leading-relaxed relative z-10">
            {booking.status === 'WAITING_VERIFICATION' 
-             ? "Your remittance is currently being verified by our Harbor Master. The official boarding pass will be decrypted upon authorization." 
-             : "This official document is securely vaulted. Please finalize your transaction to generate the boarding pass."}
+             ? "We are verifying your payment. Your ticket will be available soon." 
+             : "Please complete your payment to get your ticket."}
          </p>
          
          <div className="relative z-10">
            {booking.status === 'PENDING' ? (
              <Button onClick={() => router.push(`/payment?order_id=${booking.id}`)} className="w-full !rounded-sm !py-3.5 uppercase tracking-widest text-xs flex items-center justify-center gap-2">
-               <CreditCard className="w-4 h-4" /> Finalize Transaction
+               <CreditCard className="w-4 h-4" /> Pay Now
              </Button>
            ) : (
              <Button variant="outline" onClick={() => router.push('/dashboard')} className="w-full !rounded-sm !py-3.5 uppercase tracking-widest text-xs">
-               Return to Vault
+               Back to Dashboard
              </Button>
            )}
          </div>

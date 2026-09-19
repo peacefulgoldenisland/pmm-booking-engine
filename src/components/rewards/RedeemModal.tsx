@@ -29,7 +29,7 @@ export function RedeemModal({
   onInspectInventory 
 }: RedeemModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Privilege Authorization">
+    <Modal isOpen={isOpen} onClose={onClose} title="Redeem Voucher">
       <div className="overflow-hidden">
         <AnimatePresence mode="wait">
           
@@ -48,7 +48,7 @@ export function RedeemModal({
                 <p className="text-xs text-gray-500 mb-8 font-light leading-relaxed relative z-10">{selectedReward?.desc}</p>
                 
                 <div className="bg-white p-5 rounded-sm border border-gray-200 flex justify-between items-center shadow-sm relative z-10">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mileage Deduction</span>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Points Required</span>
                   <span className="text-xl font-serif text-red-600">-{selectedReward?.cost} Pts</span>
                 </div>
               </div>
@@ -58,7 +58,7 @@ export function RedeemModal({
                 isLoading={isRedeeming} 
                 className="w-full !py-4 uppercase tracking-widest text-xs !rounded-sm shadow-luxury"
               >
-                Authorize Deduction
+                Redeem Now
               </Button>
             </motion.div>
           )}
@@ -75,15 +75,15 @@ export function RedeemModal({
                 <CheckCircle2 className="w-10 h-10 text-green-500" />
               </div>
               <div>
-                <h3 className="text-3xl font-serif text-[var(--color-navy-900)] mb-3">Code Vaulted!</h3>
-                <p className="text-sm font-light text-gray-500 leading-relaxed px-4">The cryptographic discount code has been injected into your active inventory. You may utilize it on your next maritime checkout.</p>
+                <h3 className="text-3xl font-serif text-[var(--color-navy-900)] mb-3">Redemption Successful!</h3>
+                <p className="text-sm font-light text-gray-500 leading-relaxed px-4">Your voucher code has been added to your account. You can use it on your next booking.</p>
               </div>
               <Button 
                 onClick={onInspectInventory} 
                 variant="outline" 
                 className="w-full !py-4 !rounded-sm uppercase tracking-widest text-xs"
               >
-                Inspect Inventory
+                View My Vouchers
               </Button>
             </motion.div>
           )}
@@ -100,7 +100,7 @@ export function RedeemModal({
                 <AlertCircle className="w-10 h-10 text-red-500" />
               </div>
               <div>
-                <h3 className="text-3xl font-serif text-[var(--color-navy-900)] mb-3">Deduction Failed</h3>
+                <h3 className="text-3xl font-serif text-[var(--color-navy-900)] mb-3">Redemption Failed</h3>
                 <p className="text-sm font-light text-gray-500">{errorMessage}</p>
               </div>
               <Button 
@@ -108,7 +108,7 @@ export function RedeemModal({
                 variant="outline" 
                 className="w-full !py-4 !rounded-sm uppercase tracking-widest text-xs"
               >
-                Restart Protocol
+                Try Again
               </Button>
             </motion.div>
           )}

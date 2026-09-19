@@ -390,7 +390,7 @@ function CheckoutContent() {
           <div className="flex items-center gap-3 md:gap-6 self-center">
             <div className="flex items-center gap-2 text-[var(--color-gold-600)]">
               <div className="w-5 h-5 rounded-full bg-[var(--color-gold-500)] text-white flex items-center justify-center font-bold text-[10px]">1</div>
-              <span className="text-[10px] font-bold uppercase tracking-widest hidden md:block">Manifest</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest hidden md:block">Guest Details</span>
             </div>
             <div className="w-8 md:w-16 h-px bg-gray-300" />
             <div className="flex items-center gap-2 text-gray-400">
@@ -400,7 +400,7 @@ function CheckoutContent() {
             <div className="w-8 md:w-16 h-px bg-gray-300" />
             <div className="flex items-center gap-2 text-gray-400">
               <div className="w-5 h-5 rounded-full border border-gray-400 text-gray-400 flex items-center justify-center font-bold text-[10px]">3</div>
-              <span className="text-[10px] font-bold uppercase tracking-widest hidden md:block">Clearance</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest hidden md:block">Verification</span>
             </div>
           </div>
           <div className="hidden md:block w-32" />
@@ -410,8 +410,8 @@ function CheckoutContent() {
       <main className="max-w-7xl mx-auto px-4 md:px-6 mt-12">
         
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-serif text-[var(--color-navy-900)] mb-2">Secure Checkout</h1>
-          <p className="text-gray-500 font-light text-sm">Submit official passenger details to generate harbor clearance documents.</p>
+          <h1 className="text-3xl md:text-4xl font-serif text-[var(--color-navy-900)] mb-2">Checkout</h1>
+          <p className="text-gray-500 font-light text-sm">Please fill in your details to complete the booking.</p>
         </div>
 
         <AnimatePresence>
@@ -432,7 +432,7 @@ function CheckoutContent() {
             <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-8 md:p-10 rounded-sm shadow-sm border border-gray-200/60 relative">
               <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-gold-500)]" />
               <h2 className="text-2xl font-serif text-[var(--color-navy-900)] mb-6 flex items-center gap-3 pb-4 border-b border-gray-100">
-                Contact & Transfers
+                Contact & Pickup Details
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 <Input label="Email Address (For E-Ticket) *" type="email" placeholder="name@email.com" value={email} onChange={(e) => setEmail(e.target.value)} icon={<Mail className="w-4 h-4"/>} required />
@@ -461,7 +461,7 @@ function CheckoutContent() {
             <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
                 <h2 className="text-2xl font-serif text-[var(--color-navy-900)] flex items-center gap-3">
-                  Guest Manifest
+                  Guest Details
                 </h2>
               </div>
               
@@ -472,7 +472,7 @@ function CheckoutContent() {
                     <div className={`px-6 md:px-8 py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${idx === 0 ? 'bg-[var(--color-surface-50)]' : 'bg-white'}`}>
                       <h3 className="text-lg font-serif text-[var(--color-navy-900)] flex items-center gap-3">
                         Guest {p.id}
-                        {idx === 0 && <span className="bg-[var(--color-gold-500)]/10 text-[var(--color-gold-600)] text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-sm border border-[var(--color-gold-500)]/20 font-bold">Lead Booker</span>}
+                        {idx === 0 && <span className="bg-[var(--color-gold-500)]/10 text-[var(--color-gold-600)] text-[9px] uppercase tracking-widest px-2.5 py-1 rounded-sm border border-[var(--color-gold-500)]/20 font-bold">Primary Guest</span>}
                       </h3>
                       <div className="flex items-center gap-2">
                         <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Assigned:</span>
@@ -491,7 +491,7 @@ function CheckoutContent() {
                           Gender (Optional) 
                           <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
                           <div className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 normal-case tracking-normal">
-                            If left blank, our admin will contact you via WhatsApp to complete this detail later.
+                            If left blank, our team will contact you via WhatsApp to complete this later.
                           </div>
                         </label>
                         <div className="relative flex items-center">
@@ -511,7 +511,7 @@ function CheckoutContent() {
                             Place of Birth (Optional)
                             <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
                             <span className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 font-normal normal-case">
-                              If left blank, our admin will contact you via WhatsApp to complete this detail later.
+                              If left blank, our team will contact you via WhatsApp to complete this later.
                             </span>
                           </span>
                         } 
@@ -526,7 +526,7 @@ function CheckoutContent() {
                                 Date of Birth (Optional)
                                 <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
                                 <span className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 font-normal normal-case">
-                                  If left blank, our admin will contact you via WhatsApp to complete this detail later.
+                                  If left blank, our team will contact you via WhatsApp to complete this later.
                                 </span>
                               </span>
                             } 
@@ -544,7 +544,7 @@ function CheckoutContent() {
                             Nationality (Optional)
                             <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
                             <span className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 font-normal normal-case">
-                              If left blank, our admin will contact you via WhatsApp to complete this detail later.
+                              If left blank, our team will contact you via WhatsApp to complete this later.
                             </span>
                           </span>
                         } 
@@ -572,7 +572,7 @@ function CheckoutContent() {
                             Passport / ID Number (Optional)
                             <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
                             <span className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 font-normal normal-case">
-                              If left blank, our admin will contact you via WhatsApp to complete this detail later.
+                              If left blank, our team will contact you via WhatsApp to complete this later.
                             </span>
                           </span>
                         } 
@@ -584,7 +584,7 @@ function CheckoutContent() {
                           Upload Document (Optional)
                           <Info className="w-3 h-3 cursor-pointer text-gray-400 hover:text-[var(--color-gold-500)]" />
                           <div className="absolute hidden group-hover:block bottom-full left-0 mb-1 w-48 bg-[var(--color-navy-900)] text-white text-[9px] p-2 rounded shadow-lg z-10 normal-case tracking-normal">
-                            If skipped, our admin will contact you via WhatsApp to complete this detail later.
+                            If skipped, our team will contact you via WhatsApp to complete this later.
                           </div>
                         </label>
                         <div className="relative h-[50px]"> 
@@ -693,7 +693,7 @@ function CheckoutContent() {
               {/* VOUCHER SYSTEM */}
               <div className="border-t border-dashed border-white/20 pt-6 mb-8">
                 <h4 className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-4">
-                  Privilege Code
+                  Promo Code
                 </h4>
                 
                 <AnimatePresence mode="wait">
@@ -704,7 +704,7 @@ function CheckoutContent() {
                           <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
                           <span className="font-serif text-green-400 text-sm">{appliedVoucher.rewardName}</span>
                         </div>
-                        <p className="text-[9px] text-green-400/70 uppercase tracking-widest ml-5">Value Applied</p>
+                        <p className="text-[9px] text-green-400/70 uppercase tracking-widest ml-5">Discount Applied</p>
                       </div>
                       <button onClick={removeVoucher} className="p-1.5 bg-green-900/50 rounded-md hover:bg-green-900 transition-colors">
                         <XCircle className="w-4 h-4 text-green-300" />
@@ -731,7 +731,7 @@ function CheckoutContent() {
                       </div>
                       {!currentUser && (
                         <p className="text-[9px] text-gray-500 mt-2 flex items-center gap-1 uppercase tracking-widest">
-                          <Info className="w-3 h-3" /> Sign in to use privileges.
+                          <Info className="w-3 h-3" /> Sign in to use a promo code.
                         </p>
                       )}
                       {voucherError && <p className="text-[10px] text-red-400 mt-2 font-medium">{voucherError}</p>}
@@ -766,16 +766,16 @@ function CheckoutContent() {
                 )}
                 
                 <p className="text-[9px] text-gray-500 mt-3 text-right leading-relaxed uppercase tracking-widest">
-                  Inclusive of harbor taxes & exclusive member insurance.
+                  Includes taxes and fees.
                 </p>
               </div>
 
               <Button onClick={handleProceedToPayment} variant="secondary" className="w-full !rounded-sm !py-4 text-xs uppercase tracking-widest" isLoading={isLoading} disabled={isFetchingPrice}>
-                Initiate Transaction <ChevronRight className="w-4 h-4 ml-1" />
+                Proceed to Payment <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
 
               <div className="mt-6 flex items-center justify-center gap-2 text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-                <ShieldCheck className="w-3 h-3 text-[var(--color-gold-500)]" /> Encrypted Maritime Checkout
+                <ShieldCheck className="w-3 h-3 text-[var(--color-gold-500)]" /> Secure Checkout
               </div>
             </motion.div>
           </div>
@@ -783,18 +783,18 @@ function CheckoutContent() {
         </div>
       </main>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Verify Manifest">
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Verify Details">
         <div className="space-y-6">
           <p className="text-gray-500 text-sm font-light leading-relaxed">
-            Please verify all passenger details match official travel documents. The official boarding pass will be dispatched to <strong className="text-[var(--color-navy-900)] font-medium">{email}</strong>.
+            Please review your details before continuing. Your booking confirmation will be sent to <strong className="text-[var(--color-navy-900)] font-medium">{email}</strong>.
           </p>
           
           <div className="bg-[var(--color-surface-50)] p-5 rounded-sm border border-[var(--color-gold-300)] shadow-sm relative overflow-hidden">
             <div className="flex items-center gap-3 text-[var(--color-navy-900)] font-serif text-lg mb-2 relative z-10">
-              <CheckCircle2 className="w-5 h-5 text-[var(--color-gold-500)]" /> 1x Modification Privilege
+              <CheckCircle2 className="w-5 h-5 text-[var(--color-gold-500)]" /> Free Reschedule
             </div>
             <p className="text-gray-500 text-xs font-light leading-relaxed relative z-10">
-              As a valued guest, you retain the right to reschedule this itinerary once prior to departure, subject to cabin availability.
+              You can change your travel date once before departure, subject to availability.
             </p>
           </div>
 

@@ -19,8 +19,8 @@ const jakarta = Plus_Jakarta_Sans({
 
 // 3. Update Meta Data Enterprise
 export const metadata: Metadata = {
-  title: "PMM Voyage | Premium Private Cabin Reserve",
-  description: "Exclusive private cabin reservations for your ultimate Phinisi expedition in Labuan Bajo.",
+  title: "PMM Voyage | Booking",
+  description: "Book your private cabin for an unforgettable trip in Labuan Bajo.",
 };
 
 export default function RootLayout({

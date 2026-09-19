@@ -165,10 +165,10 @@ export default function EditProfilePage() {
                 onClick={() => router.push('/dashboard/profile')} 
                 className="text-[var(--color-navy-900)] hover:text-[var(--color-gold-500)] text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 mb-6"
             >
-                <ArrowLeft className="w-4 h-4" /> Return to Dossier
+                <ArrowLeft className="w-4 h-4" /> Back to Profile
             </button>
-            <h1 className="text-3xl md:text-4xl font-serif text-[var(--color-navy-900)]">Modify Identity</h1>
-            <p className="text-gray-500 font-light text-sm mt-2">Ensure your details match your travel documents exactly for harbor clearance.</p>
+            <h1 className="text-3xl md:text-4xl font-serif text-[var(--color-navy-900)]">Edit Profile</h1>
+            <p className="text-gray-500 font-light text-sm mt-2">Please keep your details up to date.</p>
         </div>
       </header>
 
@@ -178,9 +178,9 @@ export default function EditProfilePage() {
           {/* SECTION 1: AVATAR (SPLIT LAYOUT) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 border-b border-gray-200 pb-16">
             <div className="lg:col-span-4">
-              <h2 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Profile Portrait</h2>
+              <h2 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Profile Picture</h2>
               <p className="text-xs text-gray-500 font-light leading-relaxed">
-                Used for crew recognition during boarding and personalized concierge services on board.
+                Upload a photo to help us recognize you during your stay.
               </p>
             </div>
             <AvatarUploader 
@@ -195,7 +195,7 @@ export default function EditProfilePage() {
             <div className="lg:col-span-4">
               <h2 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Personal Details</h2>
               <p className="text-xs text-gray-500 font-light leading-relaxed">
-                Please ensure this information matches your official travel documents perfectly to avoid delays during harbor clearance.
+                Make sure your information matches your official travel documents.
               </p>
             </div>
             <div className="lg:col-span-8">
@@ -283,9 +283,9 @@ export default function EditProfilePage() {
           {/* SECTION 3: TRAVEL DOCUMENT (SPLIT LAYOUT) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 border-b border-gray-200 pb-16">
             <div className="lg:col-span-4">
-              <h2 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Clearance Document</h2>
+              <h2 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Travel Document</h2>
               <p className="text-xs text-gray-500 font-light leading-relaxed">
-                Upload a clear, legible scan or photo of your primary passport page. This file is encrypted and required by maritime law.
+                Upload a clear scan or photo of your passport or ID.
               </p>
             </div>
             <DocumentUploader 
@@ -303,9 +303,9 @@ export default function EditProfilePage() {
               className="w-full md:w-auto !rounded-sm !py-4 !px-10 text-sm uppercase tracking-widest"
             >
               {isSaving ? (
-                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving Configuration</>
+                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving Changes</>
               ) : (
-                <>Finalize Identity Profile <CheckCircle className="w-4 h-4 ml-2" /></>
+                <>Save Profile <CheckCircle className="w-4 h-4 ml-2" /></>
               )}
             </Button>
           </div>

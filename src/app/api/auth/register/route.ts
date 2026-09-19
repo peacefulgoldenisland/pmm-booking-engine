@@ -17,7 +17,13 @@ export async function POST(request: Request) {
     if (!serviceAccountKey) throw new Error("Missing FIREBASE_SERVICE_ACCOUNT_KEY");
     
     if (!getApps().length) {
-      initializeApp({ credential: cert(JSON.parse(serviceAccountKey)) });
+      try {
+        const parsedKey = JSON.parse(serviceAccountKey);
+        initializeApp({ credential: cert(parsedKey) });
+      } catch (err) {
+        console.error("Firebase Key Parse Error:", err);
+        return NextResponse.json({ error: 'Server configuration error: Invalid Firebase Service Account JSON' }, { status: 500 });
+      }
     }
 
     const auth = getAuth();

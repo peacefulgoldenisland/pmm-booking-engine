@@ -39,7 +39,7 @@ export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }
       case 'WAITING_VERIFICATION':
         return <span className="px-2.5 py-1 rounded-sm text-[9px] font-bold uppercase tracking-widest bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">Verifying</span>;
       case 'PENDING':
-        return <span className="px-2.5 py-1 rounded-sm text-[9px] font-bold uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 shadow-sm">Action Req</span>;
+        return <span className="px-2.5 py-1 rounded-sm text-[9px] font-bold uppercase tracking-widest bg-red-50 text-red-700 border border-red-200 shadow-sm">Needs Action</span>;
       default:
         return <span className="px-2.5 py-1 rounded-sm text-[9px] font-bold uppercase tracking-widest bg-[var(--color-surface-50)] text-gray-500 border border-gray-200 shadow-sm">{status}</span>;
     }
@@ -58,7 +58,7 @@ export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }
             <span className="text-[var(--color-navy-900)] text-2xl font-serif leading-tight mt-1">{dateInfo.day}</span>
           </div>
           <div>
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Itinerary</p>
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Route</p>
             <p className="text-lg md:text-xl font-serif text-[var(--color-navy-900)] flex items-center gap-2">
               Lombok <ArrowRight className="w-4 h-4 text-[var(--color-gold-500)]" /> Komodo
             </p>
@@ -67,7 +67,7 @@ export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }
 
         <div className="flex items-center gap-8 md:w-4/12 mb-6 md:mb-0 md:border-l border-gray-100 md:pl-8">
           <div>
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Assigned Quarters</p>
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Cabin Class</p>
             <p className="text-sm font-medium text-[var(--color-navy-900)] truncate max-w-[150px]">{booking.cabinClass}</p>
           </div>
           <div>
@@ -97,7 +97,7 @@ export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }
               <div className={`grid grid-cols-1 ${booking.status === 'PAID' ? 'lg:grid-cols-2' : ''} gap-10`}>
                 <div>
                   <h4 className="text-[9px] font-bold text-[var(--color-gold-600)] uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-gray-200 pb-2">
-                    <User className="w-3.5 h-3.5" /> Registered Guests
+                    <User className="w-3.5 h-3.5" /> Guests
                   </h4>
                   <div className="space-y-3">
                     {booking.passengersManifest?.map((pax: any, idx: number) => (
@@ -105,7 +105,7 @@ export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }
                         <div>
                           <p className="text-sm font-serif text-[var(--color-navy-900)] flex items-center gap-2">
                             {pax.fullName}
-                            {idx === 0 && <span className="bg-[var(--color-gold-500)] text-[var(--color-navy-900)] text-[8px] px-2 py-0.5 rounded-sm uppercase tracking-widest font-bold">Principal</span>}
+                            {idx === 0 && <span className="bg-[var(--color-gold-500)] text-[var(--color-navy-900)] text-[8px] px-2 py-0.5 rounded-sm uppercase tracking-widest font-bold">Primary</span>}
                           </p>
                           <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">
                             {pax.nationality} • {pax.gender} • ID: {pax.passportNumber}
@@ -131,23 +131,23 @@ export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }
             <div className="border-t border-gray-200/60 bg-white p-4 md:px-10 flex flex-wrap items-center justify-end gap-4">
                 {booking.status === 'PENDING' && (
                   <Button onClick={() => router.push(`/payment?order_id=${booking.id}`)} variant="primary" className="!rounded-sm !py-2.5 !px-6 !text-[10px] uppercase tracking-widest !bg-red-600 hover:!bg-red-700 !shadow-none flex items-center gap-2">
-                    <CreditCard className="w-4 h-4" /> Remit Payment
+                    <CreditCard className="w-4 h-4" /> Pay Now
                   </Button>
                 )}
                 {booking.status === 'WAITING_VERIFICATION' && (
                   <div className="bg-amber-50/50 text-amber-700 text-xs font-medium px-6 py-2.5 rounded-sm flex items-center gap-2 border border-amber-200 shadow-sm w-full md:w-auto">
-                    <Clock className="w-4 h-4" /> Harbor Master is authenticating transaction
+                    <Clock className="w-4 h-4" /> We are verifying your payment
                   </div>
                 )}
                 {booking.status === 'PAID' && (
                   <>
                     {(typeof booking.dateOfDeparture === 'string' || typeof booking.dateOfDeparture === 'number' ? new Date(booking.dateOfDeparture) : (booking.dateOfDeparture as any)?.toDate?.() || new Date()) >= new Date() && (
                       <Button onClick={() => router.push(`/dashboard/reschedule/${booking.id}`)} variant="outline" className="!rounded-sm !py-2.5 !px-6 !text-[10px] uppercase tracking-widest flex items-center gap-2 text-gray-500 hover:text-[var(--color-navy-900)]">
-                        <Calendar className="w-4 h-4" /> Modify Dates
+                        <Calendar className="w-4 h-4" /> Change Date
                       </Button>
                     )}
                     <Button onClick={() => window.open(`/ticket/${booking.id}`, '_blank')} variant="outline" className="!rounded-sm !py-2.5 !px-6 !text-[10px] uppercase tracking-widest flex items-center gap-2 border-[var(--color-navy-900)] text-[var(--color-navy-900)] hover:bg-[var(--color-surface-50)]">
-                      <Ticket className="w-4 h-4" /> Retrieve Manifest
+                      <Ticket className="w-4 h-4" /> View Ticket
                     </Button>
                   </>
                 )}

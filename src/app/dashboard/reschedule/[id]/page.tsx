@@ -90,11 +90,11 @@ export default function ReschedulePage(props: { params: Promise<{ id: string }> 
                 onClick={() => router.back()} 
                 className="text-[var(--color-navy-900)] hover:text-[var(--color-gold-500)] text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
             >
-                <ArrowLeft className="w-4 h-4" /> Return to Vault
+                <ArrowLeft className="w-4 h-4" /> Back to Dashboard
             </button>
             <div className="flex items-center gap-2">
               <Ship className="w-4 h-4 text-[var(--color-gold-500)]" />
-              <span className="text-[var(--color-navy-900)] font-bold tracking-widest uppercase text-xs">Modification Portal</span>
+              <span className="text-[var(--color-navy-900)] font-bold tracking-widest uppercase text-xs">Reschedule Booking</span>
             </div>
         </div>
       </header>
@@ -102,9 +102,9 @@ export default function ReschedulePage(props: { params: Promise<{ id: string }> 
       <main className="max-w-5xl mx-auto px-6 mt-12 md:mt-16">
         
         <div className="mb-10 text-center max-w-2xl mx-auto">
-            <h2 className="text-4xl font-serif text-[var(--color-navy-900)] mb-3">Amend Voyage Dates</h2>
+            <h2 className="text-4xl font-serif text-[var(--color-navy-900)] mb-3">Change Travel Date</h2>
             <p className="text-gray-500 font-light text-sm leading-relaxed">
-              As a valued guest, you are granted one complimentary schedule modification prior to 72 hours of departure, subject strictly to cabin availability.
+              You can change your travel date once for free up to 72 hours before departure, subject to cabin availability.
             </p>
         </div>
 
@@ -119,14 +119,14 @@ export default function ReschedulePage(props: { params: Promise<{ id: string }> 
                       <ShieldAlert className="w-6 h-6 text-red-600" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Modification Locked</h3>
+                        <h3 className="text-xl font-serif text-[var(--color-navy-900)] mb-2">Reschedule Unavailable</h3>
                         {isLockedLimit ? (
-                            <p className="text-sm text-gray-600 font-light leading-relaxed">This reservation has been previously amended. Our maritime protocol permits a maximum of one (1) complimentary modification per itinerary.</p>
+                            <p className="text-sm text-gray-600 font-light leading-relaxed">This booking has already been rescheduled once. We only allow one free date change per booking.</p>
                         ) : isLockedH3 ? (
-                            <p className="text-sm text-gray-600 font-light leading-relaxed">Date modifications are strictly prohibited within 72 hours of departure to accommodate complex maritime logistics and provision procurements.</p>
+                            <p className="text-sm text-gray-600 font-light leading-relaxed">You cannot change your travel date within 72 hours of departure.</p>
                         ) : null}
                         <Button variant="outline" onClick={() => router.back()} className="mt-5 !py-2 !px-6 !text-xs !rounded-sm">
-                            Acknowledge & Return
+                            Back
                         </Button>
                     </div>
                 </motion.div>

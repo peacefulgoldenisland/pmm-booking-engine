@@ -24,7 +24,7 @@ export function ClearanceStatusCard({ userProfile, onEditProfile }: ClearanceSta
             {userProfile?.pointsBalance || 0}
           </p>
           <div className="border-t border-white/10 pt-3">
-            <p className="text-[10px] text-gray-400 font-light leading-relaxed">Redeemable for cabin upgrades and concierge services on future voyages.</p>
+            <p className="text-[10px] text-gray-400 font-light leading-relaxed">Use your points to get discounts and upgrades on your next bookings.</p>
           </div>
         </div>
       </div>
@@ -32,7 +32,7 @@ export function ClearanceStatusCard({ userProfile, onEditProfile }: ClearanceSta
       {/* Document Status Block */}
       <div>
         <h3 className="text-sm font-serif text-[var(--color-navy-900)] mb-4 flex items-center gap-2">
-          <FileText className="w-4 h-4 text-[var(--color-gold-500)]" /> Clearance Status
+          <FileText className="w-4 h-4 text-[var(--color-gold-500)]" /> Document Status
         </h3>
         
         {userProfile?.passportFileUrl ? (
@@ -41,14 +41,14 @@ export function ClearanceStatusCard({ userProfile, onEditProfile }: ClearanceSta
               <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
               <p className="font-serif text-[var(--color-navy-900)] text-sm">Identity Verified</p>
             </div>
-            <p className="text-[11px] text-gray-500 font-light leading-relaxed mb-4">Your travel document has been vaulted and approved by harbor authority.</p>
+            <p className="text-[11px] text-gray-500 font-light leading-relaxed mb-4">Your travel document has been successfully verified.</p>
             <a 
               href={userProfile.passportFileUrl as string} 
               target="_blank" 
               rel="noopener noreferrer"
               className="block w-full bg-gray-50 border border-gray-200 hover:border-green-300 text-[var(--color-navy-900)] py-2.5 rounded-sm text-[10px] font-bold uppercase tracking-widest transition-colors text-center"
             >
-              Inspect File
+              View Document
             </a>
           </div>
         ) : (
@@ -57,7 +57,7 @@ export function ClearanceStatusCard({ userProfile, onEditProfile }: ClearanceSta
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
               <p className="font-serif text-[var(--color-navy-900)] text-sm">Action Required</p>
             </div>
-            <p className="text-[11px] text-gray-500 font-light leading-relaxed mb-4">Harbor authority strictly requires a valid passport or ID scan prior to departure.</p>
+            <p className="text-[11px] text-gray-500 font-light leading-relaxed mb-4">A valid passport or ID scan is required prior to departure.</p>
             <Button 
               onClick={onEditProfile}
               variant="primary"

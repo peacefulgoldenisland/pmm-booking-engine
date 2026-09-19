@@ -22,12 +22,12 @@ import type { GuestProfile } from '@/types/user';
 import type { RewardCatalogItem, UserReward } from '@/types/voucher';
 
 const FALLBACK_CATALOG: RewardCatalogItem[] = [
-  { id: 'VOUCHER-50K', name: 'IDR 50,000 Privilege', desc: 'A quick treat. Applicable to any booking without restrictions.', cost: 5, value: 50000, iconName: 'Ticket' },
-  { id: 'VOUCHER-100K', name: 'IDR 100,000 Privilege', desc: 'Perfect for Sharing Deck Upstair. Enjoy the ocean breeze for less.', cost: 10, value: 100000, iconName: 'Tag' },
-  { id: 'VOUCHER-150K', name: 'IDR 150,000 Privilege', desc: 'Ideal for Down Deck Cabin (1 Pax). Solo travel made sweeter.', cost: 15, value: 150000, iconName: 'Gift' },
-  { id: 'VOUCHER-250K', name: 'IDR 250,000 Privilege', desc: 'Best value for Down Deck Cabin (2 Pax). Upgrade your comfort.', cost: 25, value: 250000, iconName: 'Star' },
-  { id: 'VOUCHER-350K', name: 'IDR 350,000 Privilege', desc: 'Premium savings. Recommended for Private Cabin Standard.', cost: 35, value: 350000, iconName: 'Gem' },
-  { id: 'VOUCHER-500K', name: 'VVIP IDR 500,000 Privilege', desc: 'Maximum Limit Voucher! Highly recommended for Private Sea View.', cost: 50, value: 500000, iconName: 'Crown' },
+  { id: 'VOUCHER-50K', name: 'IDR 50,000 Discount', desc: 'A quick treat. Applicable to any booking without restrictions.', cost: 5, value: 50000, iconName: 'Ticket' },
+  { id: 'VOUCHER-100K', name: 'IDR 100,000 Discount', desc: 'Perfect for Sharing Deck Upstair. Enjoy the ocean breeze for less.', cost: 10, value: 100000, iconName: 'Tag' },
+  { id: 'VOUCHER-150K', name: 'IDR 150,000 Discount', desc: 'Ideal for Down Deck Cabin (1 Pax). Solo travel made sweeter.', cost: 15, value: 150000, iconName: 'Gift' },
+  { id: 'VOUCHER-250K', name: 'IDR 250,000 Discount', desc: 'Best value for Down Deck Cabin (2 Pax). Upgrade your comfort.', cost: 25, value: 250000, iconName: 'Star' },
+  { id: 'VOUCHER-350K', name: 'IDR 350,000 Discount', desc: 'Premium savings. Recommended for Private Cabin Standard.', cost: 35, value: 350000, iconName: 'Gem' },
+  { id: 'VOUCHER-500K', name: 'IDR 500,000 Discount', desc: 'Maximum Limit Voucher! Highly recommended for Private Sea View.', cost: 50, value: 500000, iconName: 'Crown' },
 ];
 
 export default function RewardsPage() {
@@ -162,10 +162,10 @@ export default function RewardsPage() {
           <div className="w-20 h-20 bg-[var(--color-gold-500)]/10 rounded-full border border-[var(--color-gold-500)]/20 flex items-center justify-center mx-auto mb-8 shadow-inner">
             <Crown className="w-10 h-10 text-[var(--color-gold-500)]" />
           </div>
-          <h1 className="text-3xl font-serif text-white mb-4">VVIP Guild</h1>
-          <p className="text-gray-400 mb-10 leading-relaxed font-light text-sm">Exclusive cabin privileges up to IDR 500,000. Please authenticate your session to access the guild catalog.</p>
+          <h1 className="text-3xl font-serif text-white mb-4">Rewards Member</h1>
+          <p className="text-gray-400 mb-10 leading-relaxed font-light text-sm">Get discounts up to IDR 500,000. Please log in to see the catalog.</p>
           <Button onClick={() => router.push('/login')} className="w-full !rounded-sm !py-4 uppercase tracking-widest text-xs">
-            Authenticate Session <ArrowRight className="w-4 h-4 ml-2" />
+            Log In <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </div>
@@ -184,17 +184,17 @@ export default function RewardsPage() {
         <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-[var(--color-gold-500)]/10 text-[var(--color-gold-400)] font-bold text-[10px] uppercase tracking-widest mb-4 border border-[var(--color-gold-500)]/20">
-              <Crown className="w-3.5 h-3.5" /> PMM Reserve
+              <Crown className="w-3.5 h-3.5" /> PMM Rewards
             </div>
-            <h1 className="text-4xl lg:text-5xl font-serif text-white leading-tight mb-3">Rewards Guild</h1>
+            <h1 className="text-4xl lg:text-5xl font-serif text-white leading-tight mb-3">Rewards Catalog</h1>
             <p className="text-gray-400 font-light text-sm max-w-lg leading-relaxed">
-              Exchange your accumulated voyage miles for exclusive cabin privileges. Catalog offerings are dynamically updated by the harbor master.
+              Exchange your points for exclusive discounts on your next trip.
             </p>
           </div>
           
           <div className="bg-white/5 border border-white/10 p-6 lg:p-8 backdrop-blur-md min-w-[240px] text-center md:text-right rounded-sm shadow-inner">
             <p className="text-[10px] font-bold text-[var(--color-gold-400)] uppercase tracking-widest mb-1.5 flex items-center justify-center md:justify-end gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" /> Mileage Balance
+              <Sparkles className="w-3.5 h-3.5" /> Your Points
             </p>
             {isLoadingData ? (
               <Skeleton variant="text" className="w-32 h-10 md:ml-auto mt-2 bg-white/20" />
@@ -215,14 +215,14 @@ export default function RewardsPage() {
             onClick={() => setActiveTab('catalog')} 
             className={`pb-4 flex items-center gap-2 font-medium text-sm transition-all whitespace-nowrap relative ${activeTab === 'catalog' ? 'text-[var(--color-navy-900)]' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <Gift className="w-4 h-4" /> Privilege Catalog
+            <Gift className="w-4 h-4" /> Discount Catalog
             {activeTab === 'catalog' && <motion.div layoutId="activeTabReward" className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[var(--color-navy-900)]" />}
           </button>
           <button 
             onClick={() => setActiveTab('my-vouchers')} 
             className={`pb-4 flex items-center gap-2 font-medium text-sm transition-all whitespace-nowrap relative ${activeTab === 'my-vouchers' ? 'text-[var(--color-navy-900)]' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <Ticket className="w-4 h-4" /> Active Codes
+            <Ticket className="w-4 h-4" /> My Vouchers
             {activeTab === 'my-vouchers' && <motion.div layoutId="activeTabReward" className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-[var(--color-navy-900)]" />}
           </button>
         </div>

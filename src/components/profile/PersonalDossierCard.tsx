@@ -16,9 +16,9 @@ export function PersonalDossierCard({ userProfile }: PersonalDossierCardProps) {
       </div>
 
       <div className="mb-10">
-        <h2 className="text-2xl font-serif text-[var(--color-navy-900)] mb-2">Personal Dossier</h2>
+        <h2 className="text-2xl font-serif text-[var(--color-navy-900)] mb-2">Personal Information</h2>
         <p className="text-gray-500 text-xs font-light leading-relaxed max-w-lg">
-          Maintaining accurate records ensures expedited maritime clearance and personalized concierge service during your voyage.
+          Keep your personal information up to date to ensure a smooth booking process and travel experience.
         </p>
       </div>
 
@@ -30,7 +30,7 @@ export function PersonalDossierCard({ userProfile }: PersonalDossierCardProps) {
             <User className="w-3.5 h-3.5" /> Full Name
           </p>
           <p className={`font-serif text-xl border-b border-gray-100 pb-2 ${userProfile?.fullName ? 'text-[var(--color-navy-900)]' : 'text-gray-300 italic'}`}>
-            {userProfile?.fullName || 'Pending submission'}
+            {userProfile?.fullName || 'Not provided'}
           </p>
         </div>
 
@@ -39,7 +39,7 @@ export function PersonalDossierCard({ userProfile }: PersonalDossierCardProps) {
             <Phone className="w-3.5 h-3.5" /> Contact Number
           </p>
           <p className={`font-mono text-base tracking-widest border-b border-gray-100 pb-2 ${userProfile?.phone ? 'text-[var(--color-navy-900)]' : 'text-gray-300 italic font-sans tracking-normal'}`}>
-            {userProfile?.phone || 'Pending submission'}
+            {userProfile?.phone || 'Not provided'}
           </p>
         </div>
 
@@ -48,7 +48,7 @@ export function PersonalDossierCard({ userProfile }: PersonalDossierCardProps) {
             <Globe className="w-3.5 h-3.5" /> Nationality
           </p>
           <p className={`font-serif text-xl border-b border-gray-100 pb-2 ${userProfile?.nationality ? 'text-[var(--color-navy-900)]' : 'text-gray-300 italic'}`}>
-            {userProfile?.nationality || 'Pending submission'}
+            {userProfile?.nationality || 'Not provided'}
           </p>
         </div>
 
@@ -57,7 +57,7 @@ export function PersonalDossierCard({ userProfile }: PersonalDossierCardProps) {
             <User className="w-3.5 h-3.5" /> Gender
           </p>
           <p className={`font-serif text-xl border-b border-gray-100 pb-2 ${userProfile?.gender ? 'text-[var(--color-navy-900)]' : 'text-gray-300 italic'}`}>
-            {userProfile?.gender || 'Pending submission'}
+            {userProfile?.gender || 'Not provided'}
           </p>
         </div>
 
@@ -66,7 +66,7 @@ export function PersonalDossierCard({ userProfile }: PersonalDossierCardProps) {
             <CreditCard className="w-3.5 h-3.5" /> Passport / ID Number
           </p>
           <p className={`font-mono text-base tracking-widest uppercase border-b border-gray-100 pb-2 ${userProfile?.passportNumber ? 'text-[var(--color-navy-900)]' : 'text-gray-300 italic font-sans tracking-normal'}`}>
-            {userProfile?.passportNumber || 'Pending submission'}
+            {userProfile?.passportNumber || 'Not provided'}
           </p>
         </div>
 

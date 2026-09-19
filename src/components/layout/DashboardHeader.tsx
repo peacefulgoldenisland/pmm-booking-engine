@@ -129,7 +129,7 @@ export function DashboardHeader() {
           </div>
           <span className="text-xl tracking-widest uppercase hidden md:flex items-center gap-2">
             <span className={`font-sans font-bold transition-colors ${isScrolled ? 'text-white' : 'text-[var(--color-navy-900)]'}`}>PMM</span> 
-            <span className={`font-serif italic lowercase text-2xl relative top-[2px] transition-colors ${isScrolled ? 'text-[var(--color-gold-500)]' : 'text-[var(--color-gold-600)]'}`}>Reserve</span>
+            <span className={`font-serif italic lowercase text-2xl relative top-[2px] transition-colors ${isScrolled ? 'text-[var(--color-gold-500)]' : 'text-[var(--color-gold-600)]'}`}>Booking</span>
           </span>
         </div>
 
@@ -225,7 +225,7 @@ export function DashboardHeader() {
                 >
                   <div className="px-6 py-5 border-b border-gray-100">
                     <p className="text-base font-serif text-[var(--color-navy-900)] truncate">
-                      {userProfile?.fullName || 'Esteemed Guest'}
+                      {userProfile?.fullName || 'Guest'}
                     </p>
                     <p className="text-xs text-gray-500 font-light truncate mt-1">
                       {userProfile?.email}
@@ -241,7 +241,7 @@ export function DashboardHeader() {
                       className={`w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-widest font-bold rounded-sm transition-all duration-200 ${pathname === '/dashboard' ? 'bg-[var(--color-surface-50)] text-[var(--color-gold-600)]' : 'text-gray-500 hover:bg-[var(--color-surface-50)] hover:text-[var(--color-navy-900)]'}`}
                     >
                       <LayoutDashboard className="w-4 h-4" />
-                      My Expeditions
+                      My Bookings
                     </button>
                     
                     <button 
@@ -252,7 +252,7 @@ export function DashboardHeader() {
                       className={`w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-widest font-bold rounded-sm transition-all duration-200 ${pathname.includes('/profile') ? 'bg-[var(--color-surface-50)] text-[var(--color-gold-600)]' : 'text-gray-500 hover:bg-[var(--color-surface-50)] hover:text-[var(--color-navy-900)]'}`}
                     >
                       <User className="w-4 h-4" />
-                      Member Profile
+                      My Profile
                     </button>
 
                     {/* TOMBOL REWARDS (NEW) */}
@@ -264,7 +264,7 @@ export function DashboardHeader() {
                       className={`w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-widest font-bold rounded-sm transition-all duration-200 ${pathname.includes('/rewards') ? 'bg-[var(--color-surface-50)] text-[var(--color-gold-600)]' : 'text-gray-500 hover:bg-[var(--color-surface-50)] hover:text-[var(--color-navy-900)]'}`}
                     >
                       <Crown className="w-4 h-4" />
-                      Privilege Guild
+                      Rewards
                     </button>
                   </div>
 

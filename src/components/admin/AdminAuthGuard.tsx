@@ -21,7 +21,7 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         // Not logged in
-        router.push('/login');
+        router.push('/admin/login');
         return;
       }
 

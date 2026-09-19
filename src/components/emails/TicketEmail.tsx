@@ -14,7 +14,7 @@ interface TicketEmailProps {
 
 export const TicketEmail: React.FC<TicketEmailProps> = ({
   orderId = "PMM-12345",
-  customerName = "Esteemed Guest",
+  customerName = "Guest",
   departureDate = new Date().toISOString(),
   cabinClass = "Private Sea View",
   paxCount = 2,
@@ -28,39 +28,39 @@ export const TicketEmail: React.FC<TicketEmailProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>Your PMM Reserve Boarding Pass & Itinerary</Preview>
+      <Preview>Your PMM Booking E-Ticket & Itinerary</Preview>
       <Body style={main}>
         <Container style={container}>
           
           {/* HEADER: LUXURY BRANDING */}
           <Section style={headerSection}>
             <Text style={logoText}>
-              PMM <span style={logoAccent}>RESERVE</span>
+              PMM <span style={logoAccent}>BOOKING</span>
             </Text>
-            <Text style={headerSubtitle}>OFFICIAL MARITIME MANIFEST</Text>
+            <Text style={headerSubtitle}>YOUR E-TICKET</Text>
           </Section>
 
           {/* GREETING & INTRO */}
           <Section style={contentSection}>
-            <Text style={greeting}>Esteemed {customerName},</Text>
+            <Text style={greeting}>Dear {customerName},</Text>
             <Text style={paragraph}>
-              Your remittance has been successfully verified by our Harbor Master. Your maritime expedition is now fully secured. Please present this encrypted digital document during your scheduled pickup or boarding procedure.
+              Your payment has been verified. Your trip is now confirmed. Please present this e-ticket during your scheduled pickup or when checking in.
             </Text>
 
             {/* EDITORIAL TICKET BOX */}
             <Section style={ticketWrapper}>
               <Section style={ticketHeader}>
-                <Text style={ticketHeaderText}>EXPEDITION CREDENTIALS</Text>
+                <Text style={ticketHeaderText}>BOOKING DETAILS</Text>
               </Section>
               
               <Section style={ticketBody}>
                 <Row>
                   <Column style={columnLeft}>
-                    <Text style={label}>REFERENCE CODE</Text>
+                    <Text style={label}>BOOKING ID</Text>
                     <Text style={valueMono}>{orderId}</Text>
                   </Column>
                   <Column style={columnRight}>
-                    <Text style={label}>EXPEDITION ROUTE</Text>
+                    <Text style={label}>ROUTE</Text>
                     <Text style={valueSerif}>Lombok &#x279D; Komodo</Text>
                   </Column>
                 </Row>
@@ -73,7 +73,7 @@ export const TicketEmail: React.FC<TicketEmailProps> = ({
                     <Text style={valueSerif}>{formattedDate}</Text>
                   </Column>
                   <Column style={columnRight}>
-                    <Text style={label}>ASSIGNED QUARTERS</Text>
+                    <Text style={label}>CABIN CLASS</Text>
                     <Text style={valueSerif}>{cabinClass} <span style={paxBadge}>({paxCount} PAX)</span></Text>
                   </Column>
                 </Row>
@@ -82,7 +82,7 @@ export const TicketEmail: React.FC<TicketEmailProps> = ({
 
                 <Row>
                   <Column>
-                    <Text style={label}>DESIGNATED PICKUP POINT</Text>
+                    <Text style={label}>PICKUP POINT</Text>
                     <Text style={valueSerif}>{pickupLocation}</Text>
                   </Column>
                 </Row>
@@ -91,29 +91,29 @@ export const TicketEmail: React.FC<TicketEmailProps> = ({
 
             {/* MARITIME PROTOCOLS */}
             <Section style={protocolBox}>
-              <Text style={protocolTitle}>MARITIME PROTOCOLS</Text>
+              <Text style={protocolTitle}>IMPORTANT INFORMATION</Text>
               <Text style={protocolText}>
-                <span style={bullet}>&#x2022;</span> Harbor assembly is strictly mandated <strong>2 hours</strong> prior to the scheduled departure time.<br/>
-                <span style={bullet}>&#x2022;</span> You must present this boarding pass along with your original physical travel documents (Passport/ID).<br/>
-                <span style={bullet}>&#x2022;</span> Cabin baggage allowance is restricted to 20kg per guest. Soft-shell luggage is highly advised.
+                <span style={bullet}>&#x2022;</span> Please arrive at the harbor <strong>2 hours</strong> before departure.<br/>
+                <span style={bullet}>&#x2022;</span> Please show this e-ticket and your original ID/Passport when checking in.<br/>
+                <span style={bullet}>&#x2022;</span> Baggage allowance is 20kg per guest. Soft luggage is recommended.
               </Text>
             </Section>
 
             <Text style={closing}>
-              We eagerly await your arrival on board. Prepare for an unforgettable journey across the archipelago.<br/><br/>
+              We look forward to welcoming you on board. Have a wonderful trip!<br/><br/>
               Warm regards,<br/>
-              <strong>The PMM Reserve Concierge</strong>
+              <strong>The PMM Booking Team</strong>
             </Text>
           </Section>
 
           {/* FOOTER */}
           <Section style={footerSection}>
             <Text style={footerText}>
-              PMM Voyage Liveaboard | Secure & Luxury Expeditions<br/>
-              Need assistance? Contact our 24/7 Harbor Master at <Link href="tel:+6281234567890" style={footerLink}>+62 812-3456-7890</Link> or reply to this email.
+              PMM Voyage | Komodo Trips<br/>
+              Need assistance? Contact our 24/7 support at <Link href="tel:+6281234567890" style={footerLink}>+62 812-3456-7890</Link> or reply to this email.
             </Text>
             <Text style={footerCopyright}>
-              &copy; {new Date().getFullYear()} PMM Reserve. All rights reserved.
+              &copy; {new Date().getFullYear()} PMM Booking. All rights reserved.
             </Text>
           </Section>
 

@@ -26,16 +26,16 @@ export function PastVoyagesModal({
 }: PastVoyagesModalProps) {
   
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Historical Logs" maxWidth="3xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="Past Bookings" maxWidth="3xl">
       <div className="space-y-0 pt-2">
         {pastBookings.length === 0 ? (
           <div className="bg-white rounded-sm p-16 text-center border border-gray-200/60 shadow-sm">
             <div className="w-16 h-16 bg-[var(--color-surface-50)] rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-100">
               <Anchor className="w-6 h-6 text-gray-300" />
             </div>
-            <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">Vault Empty</h3>
+            <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">No Past Bookings</h3>
             <p className="text-gray-500 text-sm mb-8 max-w-sm mx-auto font-light leading-relaxed">
-              Your historical maritime logs will appear here once you complete a journey.
+              Your past trips will appear here.
             </p>
           </div>
         ) : (
@@ -61,22 +61,22 @@ interface ConciergeServicesModalProps {
 
 export function ConciergeServicesModal({ isOpen, onClose }: ConciergeServicesModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Concierge Offerings" maxWidth="3xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="Add-ons & Services" maxWidth="3xl">
       <div className="space-y-8 pt-2">
         <div className="bg-[var(--color-navy-900)] rounded-sm p-8 text-white relative overflow-hidden border border-[var(--color-gold-500)]/20 shadow-luxury">
           <div className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1540946485063-a40da27545f8?q=80&w=2000&auto=format&fit=crop")' }} />
           <div className="absolute right-0 top-0 w-32 h-32 bg-[var(--color-gold-500)]/20 rounded-bl-full blur-xl pointer-events-none" />
           <div className="relative z-10">
-            <h2 className="text-3xl font-serif mb-2 text-[var(--color-gold-400)]">Elevate Your Journey</h2>
+            <h2 className="text-3xl font-serif mb-2 text-[var(--color-gold-400)]">Make Your Trip Special</h2>
             <p className="text-gray-300 text-sm font-light leading-relaxed max-w-lg">
-              Our master concierge is preparing exclusive bespoke additions for your upcoming voyages. Stay tuned.
+              We are preparing special add-ons for your trip. Stay tuned.
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {[
-            { title: "Private Yacht Charter", desc: "Commandeer the entire phinisi exclusively.", icon: Anchor },
+            { title: "Private Yacht Charter", desc: "Rent the entire boat for yourself.", icon: Anchor },
             { title: "Helicopter Transfer", desc: "Direct VIP flight to the departure harbor.", icon: PlaneTakeoff },
             { title: "In-Cabin Champagne", desc: "Dom Pérignon chilled upon your arrival.", icon: Wine },
             { title: "Private Dive Master", desc: "Dedicated 1-on-1 underwater instructor.", icon: Compass },

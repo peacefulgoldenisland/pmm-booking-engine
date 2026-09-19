@@ -47,7 +47,7 @@ export default function TicketPage() {
     return (
       <div className="min-h-screen bg-[var(--color-surface-50)] flex flex-col items-center justify-center font-sans">
         <Loader2 className="w-8 h-8 animate-spin text-[var(--color-gold-500)] mb-4" />
-        <p className="text-[var(--color-navy-900)] font-serif text-xl animate-pulse">Generating Boarding Pass...</p>
+        <p className="text-[var(--color-navy-900)] font-serif text-xl animate-pulse">Loading Ticket...</p>
       </div>
     );
   }
@@ -70,7 +70,7 @@ export default function TicketPage() {
           onClick={() => router.back()} 
           className="text-[var(--color-navy-900)] hover:text-[var(--color-gold-500)] text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
         >
-          <ArrowLeft className="w-4 h-4" /> Member Dashboard
+          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </button>
         <Button 
           onClick={handlePrint}

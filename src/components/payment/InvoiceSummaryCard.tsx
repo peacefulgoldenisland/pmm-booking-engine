@@ -51,14 +51,14 @@ export function InvoiceSummaryCard({ orderId, totalAmount, paymentMethod }: Invo
              <div className="flex items-start gap-4 bg-[var(--color-surface-50)] p-5 border border-gray-100 rounded-sm">
                <CircleDollarSign className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
                <p className="text-[11px] text-gray-500 font-light leading-relaxed">
-                 Invoice is held pending administrative consultation. Please proceed to contact our team via WhatsApp.
+                 Please contact our team via WhatsApp to proceed with your payment.
                </p>
              </div>
           ) : (
             <div className="flex items-start gap-4 bg-red-50/50 p-5 border border-red-100 rounded-sm">
               <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
               <p className="text-[11px] text-red-800 font-medium leading-relaxed">
-                Exact nominal transfer is strictly required. Any discrepancy will delay the automated harbor clearance verification.
+                Please transfer the exact amount shown. Different amounts will delay your payment verification.
               </p>
             </div>
           )}

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { PersonalDossierCard } from '@/components/profile/PersonalDossierCard';
 import { ClearanceStatusCard } from '@/components/profile/ClearanceStatusCard';
+import { AccountSecurityCard } from '@/components/profile/AccountSecurityCard';
 import type { GuestProfile } from '@/types/user';
 
 export default function ProfilePage() {
@@ -117,10 +118,10 @@ export default function ProfilePage() {
               <div>
                 <div className="inline-flex items-center gap-1.5 mb-2 px-3 py-1 bg-[var(--color-surface-50)] border border-gray-200 rounded-sm">
                   <Shield className="w-3 h-3 text-[var(--color-gold-600)]" />
-                  <span className="text-[9px] font-bold tracking-widest text-[var(--color-navy-900)] uppercase">Verified Member</span>
+                  <span className="text-[9px] font-bold tracking-widest text-[var(--color-navy-900)] uppercase">Verified Account</span>
                 </div>
                 <h1 className="text-3xl md:text-4xl font-serif text-[var(--color-navy-900)] leading-tight mb-1">
-                  {userProfile?.fullName || 'Esteemed Guest'}
+                  {userProfile?.fullName || 'Valued Customer'}
                 </h1>
                 <p className="text-gray-500 font-light text-sm tracking-wide">{auth.currentUser?.email}</p>
               </div>
@@ -133,7 +134,7 @@ export default function ProfilePage() {
                 variant="outline"
                 className="w-full md:w-auto !rounded-sm !py-3 !px-6 !text-xs uppercase tracking-widest"
               >
-                <Edit3 className="w-3.5 h-3.5 mr-2" /> Modify Profile
+                <Edit3 className="w-3.5 h-3.5 mr-2" /> Edit Profile
               </Button>
             </div>
           </div>
@@ -153,6 +154,10 @@ export default function ProfilePage() {
             />
 
           </div>
+
+          {/* BAWAH: Account & Security */}
+          <AccountSecurityCard />
+
         </motion.div>
 
       </main>

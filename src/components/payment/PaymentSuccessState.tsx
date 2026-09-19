@@ -26,19 +26,19 @@ export function PaymentSuccessState({ status, paymentMethod }: PaymentSuccessSta
       </div>
       
       <h1 className="text-4xl md:text-5xl font-serif text-[var(--color-navy-900)] mb-4">
-        {status === 'PAID' ? 'Authorization Secured' : 'Verifying Remittance'}
+        {status === 'PAID' ? 'Payment Successful' : 'Verifying Payment'}
       </h1>
       
       <p className="text-gray-500 text-sm font-light mb-12 leading-relaxed max-w-lg mx-auto">
         {status === 'PAID' 
-          ? "Your maritime expedition is fully secured. We have dispatched your official digital manifest to your registered email address. Prepare for an unforgettable journey." 
+          ? "Your booking is confirmed! We have sent the ticket to your email. Get ready for an unforgettable journey." 
           : paymentMethod === 'PAY_LATER'
-            ? "Your consultation request has been submitted securely. Our administrative team is reviewing your itinerary. Your boarding documents will be issued upon manual verification."
-            : "Your proof of remittance has been vaulted securely. The harbor master is executing manual verification. Your boarding documents will be issued momentarily."}
+            ? "Your booking request has been submitted. Our team is reviewing it and will issue your ticket once confirmed."
+            : "Your payment proof has been submitted securely. Our team is verifying it and will issue your ticket shortly."}
       </p>
       
       <Button onClick={() => router.push('/dashboard')} variant="primary" className="!rounded-sm !py-4 !px-10 uppercase tracking-widest text-xs mx-auto flex items-center gap-3">
-        Return to Member Vault <ArrowRight className="w-4 h-4" />
+        Back to Dashboard <ArrowRight className="w-4 h-4" />
       </Button>
     </motion.div>
   );

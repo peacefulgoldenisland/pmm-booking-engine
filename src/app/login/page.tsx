@@ -44,7 +44,7 @@ export default function LoginPage() {
         <div className="relative z-10 p-12 mt-auto">
           <Quote className="w-8 h-8 text-[var(--color-gold-500)] opacity-50 mb-4" />
           <h2 className="text-2xl font-serif text-white leading-relaxed mb-6">
-            "The pinnacle of maritime luxury. Managing my expeditions and securing priority clearance has never been more effortless."
+            "A truly seamless booking experience. Managing my trips and securing my tickets has never been easier."
           </h2>
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-[var(--color-gold-500)] flex items-center justify-center text-[var(--color-navy-900)] font-serif font-bold text-lg">
@@ -52,7 +52,7 @@ export default function LoginPage() {
             </div>
             <div>
               <p className="text-sm font-bold text-white tracking-wide">Alexander Wright</p>
-              <p className="text-[10px] uppercase tracking-widest text-[var(--color-gold-400)]">VVIP Guild Member</p>
+              <p className="text-[10px] uppercase tracking-widest text-[var(--color-gold-400)]">Verified Customer</p>
             </div>
           </div>
         </div>

@@ -1,0 +1,140 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==========================================
+    // FUNGSI HELPER (MEMPERMUDAH VALIDASI)
+    // ==========================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // 🔒 UPGRADE: Mencegah crash jika dokumen user tidak ada, atau field 'role' kosong
+    function isAdmin() {
+      return isAuthenticated() && (
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'none') in ['admin', 'superadmin']
+        )
+        || exists(/databases/$(database)/documents/admin_users/$(request.auth.uid))
+      );
+    }
+
+    // ==========================================
+    // RULES LAMA DARI PGI VOYAGE (TAHAP 1)
+    // ==========================================
+    match /blogs/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /galleries/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /settings/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /reviews/{document=**} {
+      allow read, create: if true; 
+      allow update, delete: if isAdmin(); 
+    }
+
+    match /comments/{document=**} {
+      allow read, create: if true;     
+      allow update, delete: if isAdmin();
+    }
+
+    match /subscribers/{document=**} {
+      allow read, update, delete: if isAdmin(); 
+      allow create: if true;     
+    }
+    
+    match /admin_users/{document=**} {
+      // Hanya sesama admin yang boleh lihat daftar admin
+      allow read: if isAdmin();
+      allow write: if false; // Tulis ke admin_users harus lewat Firebase Console / Admin SDK
+    }
+
+    // ==========================================
+    // RULES BARU UNTUK PMM BOOKING ENGINE & OPS
+    // ==========================================
+
+    // 1. Vessel Inventory & Cabins
+    match /vessel_inventory/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin(); 
+    }
+
+    // 2. Users (Tamu B2C & VIP) - SUPER STRICT
+    match /users/{userId} {
+      allow read: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+      allow update: if (isAuthenticated() && request.auth.uid == userId 
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                        'pointsBalance', 'role', 'isGuest'
+                    ])))
+                    || isAdmin();
+      allow create: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+      allow delete: if isAdmin(); 
+    }
+
+    // 3. Bookings (Transaksi, Reschedule, & Check-In) - ENTERPRISE LEVEL
+    match /bookings/{bookingId} {
+      // 🔒 UPGRADE: Jangan biarkan "get: if true", nanti data pelanggan bisa dicuri jika ID bocor.
+      allow read: if (isAuthenticated() && request.auth.uid == resource.data.userId) || isAdmin();
+      
+      allow update: if
+        (isAuthenticated() && request.auth.uid == resource.data.userId 
+         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dateOfDeparture', 'rescheduleCount', 'rescheduledAt', 'originalDateOfDeparture']))
+        ||
+        // Ini untuk flow admin / check-in counter
+        isAdmin();
+        
+      allow create, delete: if isAdmin(); // Create biasanya via backend API Admin SDK
+    }
+
+    // 4. Waitlists (Daftar Tunggu Baru)
+    match /waitlists/{document=**} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // 5. Rewards Catalog (Katalog Voucher)
+    match /rewards_catalog/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 6. User Rewards (Voucher Yang Dimiliki)
+    match /user_rewards/{document=**} {
+      allow read: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow write: if isAdmin(); 
+    }
+
+    // 7. Promo Codes
+    match /promo_codes/{document=**} {
+      allow read: if true; 
+      allow write: if isAdmin();
+    }
+
+    // 8. Master Cabins (Koleksi Baru Fase 1)
+    match /products/{document=**} {
+      allow read: if true; 
+      allow write: if isAdmin();
+    }
+
+    // 9. Schedules & Quotas (Koleksi Baru Fase 1)
+    match /voyages/{document=**} {
+      allow read: if true; 
+      allow write: if isAdmin();
+    }
+
+    // Blokir default untuk koleksi lain yang tidak terdaftar
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -50,7 +50,7 @@ export function AvatarUploader({ photoUrl, isUploading, onUpload }: AvatarUpload
           <h3 className="text-sm font-medium text-[var(--color-navy-900)] mb-1">Recommended Format</h3>
           <p className="text-xs text-gray-500 font-light mb-4">Square image, Max 2MB (JPG, PNG)</p>
           <label className="bg-[var(--color-surface-50)] hover:bg-[var(--color-gold-50)] border border-gray-200 hover:border-[var(--color-gold-300)] text-[var(--color-navy-900)] px-4 py-2 rounded-sm text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer inline-block">
-            {isUploading ? "Uploading..." : "Upload New Portrait"}
+            {isUploading ? "Uploading..." : "Upload New Photo"}
             <input 
               type="file" 
               accept="image/*" 

@@ -95,10 +95,10 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 mb-3">
             <Clock className="w-4 h-4 text-[var(--color-gold-500)]" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-gold-500)]">Secure Window Active</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-gold-500)]">Time Remaining</span>
           </div>
-          <h2 className="text-2xl md:text-3xl font-serif text-white mb-2 leading-tight">Complete Authorization</h2>
-          <p className="text-xs text-gray-400 font-light max-w-xs leading-relaxed">This itinerary will expire automatically upon countdown termination.</p>
+          <h2 className="text-2xl md:text-3xl font-serif text-white mb-2 leading-tight">Complete Your Payment</h2>
+          <p className="text-xs text-gray-400 font-light max-w-xs leading-relaxed">Your booking will be cancelled automatically when the timer runs out.</p>
         </div>
         
         <div className="relative z-10 text-4xl md:text-5xl font-serif text-white tracking-wider bg-white/5 border border-white/10 px-8 py-5 rounded-sm shadow-inner text-center shrink-0">
@@ -112,24 +112,24 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
         {paymentMethod === 'DIRECT_TRANSFER' && (
           <>
             <h3 className="text-xl font-serif text-[var(--color-navy-900)] flex items-center gap-3 mb-8 pb-4 border-b border-gray-100">
-              <Landmark className="w-5 h-5 text-[var(--color-gold-500)]" /> Wire Transfer Credentials
+              <Landmark className="w-5 h-5 text-[var(--color-gold-500)]" /> Bank Transfer Details
             </h3>
             
             {/* BENTO GRID FOR BANK DETAILS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
               <div className="bg-[var(--color-surface-50)] p-6 border border-gray-100 rounded-sm hover:border-[var(--color-gold-300)] transition-colors">
-                <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Receiving Institution</p>
+                <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Bank Name</p>
                 <p className="text-lg font-serif text-[var(--color-navy-900)]">Bank Central Asia (BCA)</p>
               </div>
 
               <div className="bg-[var(--color-surface-50)] p-6 border border-gray-100 rounded-sm hover:border-[var(--color-gold-300)] transition-colors">
-                <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Account Beneficiary</p>
+                <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Account Name</p>
                 <p className="text-lg font-serif text-[var(--color-navy-900)] truncate">PT. PMM Voyage Indonesia</p>
               </div>
 
               <div className="md:col-span-2 bg-[var(--color-surface-50)] p-6 md:p-8 border border-gray-100 rounded-sm hover:border-[var(--color-gold-300)] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div className="overflow-hidden">
-                  <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Destination Account Number</p>
+                  <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Account Number</p>
                   <p className="text-3xl md:text-4xl font-mono font-bold text-[var(--color-navy-900)] tracking-widest truncate">040 123 4567</p>
                 </div>
                 <Button 
@@ -145,12 +145,12 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
             {/* QRIS SECTION (Merged into DIRECT_TRANSFER) */}
             <div className="text-center mb-12">
               <h3 className="text-sm font-serif text-[var(--color-navy-900)] flex items-center justify-center gap-3 mb-6">
-                <QrCode className="w-4 h-4 text-[var(--color-gold-500)]" /> Scan to Authorize (QRIS)
+                <QrCode className="w-4 h-4 text-[var(--color-gold-500)]" /> Pay via QRIS
               </h3>
               <div className="bg-[var(--color-surface-50)] p-6 inline-block border border-gray-200 mb-4 rounded-sm shadow-inner">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QRIS PMM Voyage" className="w-48 h-48 object-contain mix-blend-multiply" />
               </div>
-              <p className="text-xs text-gray-500 font-light leading-relaxed max-w-sm mx-auto">Utilize any integrated e-wallet application (GoPay, OVO, Dana) to scan this code.</p>
+              <p className="text-xs text-gray-500 font-light leading-relaxed max-w-sm mx-auto">Scan this code using any e-wallet app (GoPay, OVO, Dana, etc).</p>
             </div>
           </>
         )}
@@ -158,10 +158,10 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
         {paymentMethod === 'PAY_LATER' && (
           <div className="text-center pb-8">
             <h3 className="text-xl font-serif text-[var(--color-navy-900)] flex items-center justify-center gap-3 mb-6">
-              <MessageCircle className="w-5 h-5 text-[var(--color-gold-500)]" /> Consultation & Authorization
+              <MessageCircle className="w-5 h-5 text-[var(--color-gold-500)]" /> Contact Us to Pay
             </h3>
             <p className="text-sm text-gray-500 font-light max-w-md mx-auto leading-relaxed mb-8">
-              Your itinerary has been secured. Please contact our administrative team via WhatsApp to coordinate payment terms or request manual verification.
+              Your booking is secured. Please contact our team via WhatsApp to coordinate your payment.
             </p>
             
             <div className="flex flex-col gap-4 max-w-sm mx-auto">
@@ -192,7 +192,7 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
             </div>
             
             <p className="text-[10px] text-gray-400 mt-6 max-w-sm mx-auto">
-              Clicking the button above will pause the expiration timer and place your booking in the administrative review queue.
+              Clicking the button above will pause the timer while our team reviews your booking.
             </p>
           </div>
         )}
@@ -205,10 +205,10 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div className="md:w-1/2">
                 <h3 className="text-2xl font-serif text-[var(--color-navy-900)] mb-3">
-                    Submit Documentation
+                    Upload Payment Proof
                 </h3>
                 <p className="text-sm text-gray-500 font-light leading-relaxed mb-6">
-                    Upon completing the remittance, please upload your transaction receipt. This initiates our automated harbor clearance verification protocol.
+                    After transferring the money, please upload your payment receipt here.
                 </p>
                 <AnimatePresence>
                     {uploadError && (
@@ -239,13 +239,13 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
                     {isUploading ? (
                     <>
                         <Loader2 className="w-8 h-8 animate-spin" /> 
-                        <span className="text-[10px] uppercase font-bold tracking-widest">Encrypting Transfer...</span>
+                        <span className="text-[10px] uppercase font-bold tracking-widest">Uploading...</span>
                     </>
                     ) : (
                     <>
                         <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-[var(--color-navy-800)] transition-colors" />
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-center mb-1.5">Select Receipt File</p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-center mb-1.5">Upload Receipt</p>
                             <p className="text-[10px] text-gray-400 font-light">JPG, PNG, PDF up to 5MB</p>
                         </div>
                     </>
