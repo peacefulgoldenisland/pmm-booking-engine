@@ -110,7 +110,7 @@ export default function NewCabinPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Add New Cabin</h1>
-          <p className="text-xs text-gray-500 mt-1">Register a new cabin type to the master fleet.</p>
+          <p className="text-xs text-gray-500 mt-1">Register a new cabin type to the fleet.</p>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ export default function NewCabinPage() {
                     className="w-4 h-4 text-[var(--color-gold-500)] border-gray-300 rounded focus:ring-[var(--color-gold-500)]"
                   />
                   <label htmlFor="popular" className="text-sm font-medium text-[var(--color-navy-900)] cursor-pointer">
-                    Mark as Popular/Signature Suite
+                    Mark as Popular
                   </label>
                 </div>
               </AdminCardContent>
@@ -248,7 +248,7 @@ export default function NewCabinPage() {
               {isSubmitting ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <><Save className="w-4 h-4 mr-2" /> Save Master Cabin</>
+                <><Save className="w-4 h-4 mr-2" /> Save Cabin</>
               )}
             </AdminButton>
           </div>

@@ -134,7 +134,7 @@ export default function EditCabinPage({ params }: { params: Promise<{ id: string
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this Master Cabin? This cannot be undone.')) return;
+    if (!confirm('Are you sure you want to delete this Cabin? This cannot be undone.')) return;
     
     setIsDeleting(true);
     try {
@@ -165,7 +165,7 @@ export default function EditCabinPage({ params }: { params: Promise<{ id: string
           </Link>
           <div>
             <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Edit Cabin Details</h1>
-            <p className="text-xs text-gray-500 mt-1">Modify product specifications and pricing.</p>
+            <p className="text-xs text-gray-500 mt-1">Modify cabin specifications and pricing.</p>
           </div>
         </div>
         
@@ -249,7 +249,7 @@ export default function EditCabinPage({ params }: { params: Promise<{ id: string
                     className="w-4 h-4 text-[var(--color-gold-500)] border-gray-300 rounded focus:ring-[var(--color-gold-500)]"
                   />
                   <label htmlFor="popular" className="text-sm font-medium text-[var(--color-navy-900)] cursor-pointer">
-                    Mark as Popular/Signature Suite
+                    Mark as Popular
                   </label>
                 </div>
               </AdminCardContent>

@@ -61,7 +61,7 @@ export default function NewSchedulePage() {
     }
 
     if (cabins.length === 0) {
-      setErrorMsg('No master cabins found. Please create cabins in the fleet first.');
+      setErrorMsg('No cabins found. Please create cabins first.');
       return;
     }
 
@@ -108,7 +108,7 @@ export default function NewSchedulePage() {
         </Link>
         <div>
           <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Generate Schedule</h1>
-          <p className="text-xs text-gray-500 mt-1">Create a new voyage departure and allocate quotas.</p>
+          <p className="text-xs text-gray-500 mt-1">Create a new trip schedule.</p>
         </div>
       </div>
 
@@ -141,7 +141,7 @@ export default function NewSchedulePage() {
               <div>
                 <label className="block text-xs font-bold text-[var(--color-navy-900)] uppercase tracking-widest mb-2 flex items-center gap-2">
                   <Ship className="w-4 h-4 text-[var(--color-gold-500)]" />
-                  Fleet / Vessel Name
+                  Fleet / Ship Name
                 </label>
                 <AdminInput 
                   name="shipName" 
@@ -155,11 +155,11 @@ export default function NewSchedulePage() {
 
             <div className="border-t border-gray-100 pt-6 mt-6">
               <label className="block text-xs font-bold text-[var(--color-navy-900)] uppercase tracking-widest mb-4">
-                Automatic Quota Allocation
+                Automatic Capacity Allocation
               </label>
               
               {isLoadingCabins ? (
-                <div className="text-sm text-gray-400">Loading master cabins...</div>
+                <div className="text-sm text-gray-400">Loading cabins...</div>
               ) : cabins.length === 0 ? (
                 <div className="text-sm text-red-500">Warning: No cabins configured in the system.</div>
               ) : (
@@ -191,7 +191,7 @@ export default function NewSchedulePage() {
             {isSubmitting ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
             ) : (
-              <><Save className="w-4 h-4 mr-2" /> Generate Voyage</>
+              <><Save className="w-4 h-4 mr-2" /> Save Schedule</>
             )}
           </AdminButton>
         </div>

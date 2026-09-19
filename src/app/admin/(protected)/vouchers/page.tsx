@@ -49,11 +49,11 @@ export default function AdminVouchersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Voucher & Promo</h1>
-          <p className="text-xs text-gray-500 mt-1">Manage discount codes and promotional campaigns.</p>
+          <p className="text-xs text-gray-500 mt-1">Manage discount codes and promotions.</p>
         </div>
         <Link href="/admin/vouchers/create">
           <AdminButton variant="primary" className="shadow-luxury">
-            <Plus className="w-4 h-4 mr-2" /> Create New Promo
+            <Plus className="w-4 h-4 mr-2" /> Create New Voucher
           </AdminButton>
         </Link>
       </div>
@@ -64,7 +64,7 @@ export default function AdminVouchersPage() {
           <AdminInput 
             leftIcon={<Search className="w-4 h-4 text-gray-400" />}
             type="text" 
-            placeholder="Search by Promo Code..." 
+            placeholder="Search by Voucher Code..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -74,14 +74,14 @@ export default function AdminVouchersPage() {
       {/* Vouchers Grid */}
       {isLoading ? (
         <div className="text-center py-20 bg-white border border-gray-200 rounded-sm">
-          <p className="text-gray-400 text-sm">Loading promotional campaigns...</p>
+          <p className="text-gray-400 text-sm">Loading vouchers...</p>
         </div>
       ) : filteredVouchers.length === 0 ? (
         <div className="text-center py-20 bg-white border border-gray-200 rounded-sm">
           <Ticket className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500 text-sm mb-4">No promotional codes active at the moment.</p>
+          <p className="text-gray-500 text-sm mb-4">No vouchers active at the moment.</p>
           <Link href="/admin/vouchers/create">
-            <AdminButton variant="outline">Create First Promo</AdminButton>
+            <AdminButton variant="outline">Create First Voucher</AdminButton>
           </Link>
         </div>
       ) : (

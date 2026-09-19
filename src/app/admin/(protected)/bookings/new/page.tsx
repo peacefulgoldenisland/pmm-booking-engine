@@ -221,7 +221,7 @@ export default function ManualRegistryPage() {
         </AdminButton>
         <div>
           <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Create Booking</h1>
-          <p className="text-gray-500 text-sm">Register offline bookings from Agents or Office Walk-ins.</p>
+          <p className="text-gray-500 text-sm">Create an offline booking.</p>
         </div>
         
         {/* DEV TOOL: SEED */}
@@ -293,13 +293,13 @@ export default function ManualRegistryPage() {
           <AdminCardHeader>
             <AdminCardTitle className="flex items-center gap-2 text-[var(--color-navy-900)]">
               <span className="w-6 h-6 rounded-full bg-[var(--color-gold-500)] text-white flex items-center justify-center text-xs font-bold">1</span>
-              Itinerary & Invoice
+              Trip & Price
             </AdminCardTitle>
           </AdminCardHeader>
           <AdminCardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col gap-2">
                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                  Voyage Schedule (Date) <span className="text-red-500">*</span>
+                  Trip Schedule (Date) <span className="text-red-500">*</span>
                </label>
                <DatePicker 
                  label="" 
@@ -414,7 +414,7 @@ export default function ManualRegistryPage() {
           <AdminCardHeader className="flex flex-row items-center justify-between">
             <AdminCardTitle className="flex items-center gap-2 text-[var(--color-navy-900)]">
               <span className="w-6 h-6 rounded-full bg-[var(--color-gold-500)] text-white flex items-center justify-center text-xs font-bold">3</span>
-              Syahbandar Manifest
+              Passenger Details
             </AdminCardTitle>
             <AdminButton type="button" variant="outline" size="sm" onClick={handleAddPassenger}>
               <Plus className="w-4 h-4 mr-2" /> Add Pax
@@ -542,7 +542,7 @@ export default function ManualRegistryPage() {
         {/* SUBMIT */}
         <div className="flex justify-end">
           <AdminButton type="submit" size="lg" isLoading={isLoading} className="w-full md:w-auto px-10 text-xs tracking-widest">
-            <Save className="w-4 h-4 mr-2" /> REGISTER MANIFEST
+            <Save className="w-4 h-4 mr-2" /> SAVE BOOKING
           </AdminButton>
         </div>
 

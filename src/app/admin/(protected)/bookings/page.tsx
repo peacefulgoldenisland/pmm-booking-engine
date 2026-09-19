@@ -92,7 +92,7 @@ export default function AdminBookingsPage() {
     "Guest Contact",
     "Sailing Date",
     "Invoice Total",
-    "Clearance Status",
+    "Status",
     "Action"
   ];
 
@@ -274,8 +274,8 @@ export default function AdminBookingsPage() {
     <div className="pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Master Registry</h1>
-          <p className="text-xs text-gray-500 mt-1">Real-time surveillance of all maritime reservations.</p>
+          <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Bookings</h1>
+          <p className="text-xs text-gray-500 mt-1">Real-time view of all bookings.</p>
         </div>
         <Link href="/admin/bookings/new">
           <AdminButton variant="primary" className="shadow-luxury">
@@ -301,7 +301,7 @@ export default function AdminBookingsPage() {
 
           {/* Status Filters */}
           <div className="flex flex-col gap-1 w-full md:w-48 shrink-0">
-            <label className="text-[9px] font-bold text-[var(--color-navy-900)] uppercase tracking-widest px-1">Clearance Status</label>
+            <label className="text-[9px] font-bold text-[var(--color-navy-900)] uppercase tracking-widest px-1">Status</label>
             <AdminSelect 
               value={filterStatus}
               onChange={(val) => setFilterStatus(val as BookingStatus | 'ALL')}

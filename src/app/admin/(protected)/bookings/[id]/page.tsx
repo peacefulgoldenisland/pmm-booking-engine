@@ -212,7 +212,7 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
         <AdminCardContent className="p-12 text-center pt-12">
           <p className="text-gray-500 mb-6">Booking reference not found.</p>
           <AdminButton variant="outline" onClick={() => router.back()}>
-            Return to Registry
+            Return to Bookings
           </AdminButton>
         </AdminCardContent>
       </AdminCard>
@@ -266,7 +266,7 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
           <AdminCard>
             <AdminCardHeader>
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                <Ship className="w-4 h-4 text-[var(--color-gold-500)]" /> Voyage Details
+                <Ship className="w-4 h-4 text-[var(--color-gold-500)]" /> Trip Details
               </h3>
             </AdminCardHeader>
             <AdminCardContent>
@@ -326,7 +326,7 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
                 </div>
 
                 <div>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Quarters</p>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Cabin</p>
                   {isEditingGlobal ? (
                     <AdminSelect 
                       value={editGlobalData.cabinClass || booking.cabinClass || ''}
@@ -360,7 +360,7 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
           <AdminCard>
             <AdminCardHeader>
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                <User className="w-4 h-4 text-[var(--color-gold-500)]" /> Passenger Manifest ({booking.paxCount} Pax)
+                <User className="w-4 h-4 text-[var(--color-gold-500)]" /> Passenger Details ({booking.paxCount} Pax)
               </h3>
             </AdminCardHeader>
             <AdminCardContent>
@@ -628,7 +628,7 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
                       isLoading={isProcessing}
                       className="w-full"
                     >
-                      <CheckCircle2 className="w-4 h-4 mr-2" /> Approve Clearance
+                      <CheckCircle2 className="w-4 h-4 mr-2" /> Approve Booking
                     </AdminButton>
                     <AdminButton 
                       variant="danger"
@@ -669,9 +669,9 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
                 <AdminCardContent className="pt-6">
                   <div className="flex items-center gap-3 mb-2">
                      <CheckCircle2 className="w-5 h-5 text-green-600" />
-                     <p className="text-sm font-bold text-green-800 uppercase tracking-widest">Clearance Approved</p>
+                     <p className="text-sm font-bold text-green-800 uppercase tracking-widest">Booking Approved</p>
                   </div>
-                  <p className="text-xs text-green-700">The reservation is secured. Guests have been authorized for boarding.</p>
+                  <p className="text-xs text-green-700">The booking is secured.</p>
                 </AdminCardContent>
              </AdminCard>
           )}

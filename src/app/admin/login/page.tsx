@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
                     <Ship className="w-6 h-6 text-[var(--color-gold-500)]" />
                     <span className="text-xl tracking-widest text-[var(--color-navy-900)] uppercase flex items-center gap-2">
                     <span className="font-bold">PMM</span> 
-                    <span className="font-serif italic text-[var(--color-gold-500)] lowercase text-2xl relative top-[1px]">Reserve</span>
+                    <span className="font-serif italic text-[var(--color-gold-500)] lowercase text-2xl relative top-[1px]">Booking</span>
                     </span>
                 </div>
             </div>

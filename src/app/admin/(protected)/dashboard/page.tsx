@@ -175,7 +175,7 @@ export default function AdminDashboardPage() {
           <Ship className="w-10 h-10 text-[var(--color-gold-500)] opacity-80" />
         </motion.div>
         <p className="mt-4 text-xs font-serif text-[var(--color-gold-600)] uppercase tracking-widest animate-pulse">
-          Initializing Command Center...
+          Initializing Dashboard...
         </p>
       </div>
     );
@@ -213,9 +213,9 @@ export default function AdminDashboardPage() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <p className="text-[var(--color-gold-400)] text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
-              <Anchor className="w-3 h-3" /> COMMAND CENTER
+              <Anchor className="w-3 h-3" /> DASHBOARD
             </p>
-            <h1 className="text-3xl md:text-4xl font-serif text-white">{greeting}, Harbor Master.</h1>
+            <h1 className="text-3xl md:text-4xl font-serif text-white">{greeting}, Admin.</h1>
             <p className="text-gray-400 text-sm mt-1">{currentDate}</p>
           </div>
           
@@ -248,12 +248,12 @@ export default function AdminDashboardPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-[var(--color-navy-900)] uppercase tracking-widest flex items-center gap-2">
-                      Clearance Required
+                      Verification Required
                       <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
                         {stats.pendingVerifications} PENDING
                       </span>
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1 font-medium">There are payments awaiting your manual verification before manifest generation.</p>
+                    <p className="text-xs text-gray-500 mt-1 font-medium">There are payments awaiting your manual verification.</p>
                   </div>
                 </div>
                 <div className="hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 group-hover:bg-amber-50 group-hover:text-amber-600 transition-colors">
@@ -282,7 +282,7 @@ export default function AdminDashboardPage() {
                     <Ship className="w-6 h-6" />
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Total Reservations</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Total Bookings</p>
                 <p className="text-3xl font-serif text-[var(--color-navy-900)]">{stats.totalBookings}</p>
               </AdminCardContent>
             </AdminCard>
@@ -420,7 +420,7 @@ export default function AdminDashboardPage() {
             <motion.div variants={itemVariants} className="flex-1">
               <AdminCard className="h-full bg-white shadow-sm hover:shadow-md transition-shadow">
                 <AdminCardContent className="p-6 h-full flex flex-col">
-                  <h3 className="text-sm font-bold text-[var(--color-navy-900)] uppercase tracking-widest mb-6">Upcoming Manifest</h3>
+                  <h3 className="text-sm font-bold text-[var(--color-navy-900)] uppercase tracking-widest mb-6">Upcoming Schedule</h3>
                   <div className="flex-1 min-h-[180px] w-full relative">
                     {stats.occupancyData && stats.occupancyData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
@@ -451,7 +451,7 @@ export default function AdminDashboardPage() {
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-300">
                         <Ship className="w-10 h-10 mb-3 opacity-20" />
-                        <p className="text-xs font-medium">No active sailings</p>
+                        <p className="text-xs font-medium">No active trips</p>
                       </div>
                     )}
                   </div>
@@ -510,7 +510,7 @@ export default function AdminDashboardPage() {
             <div className="w-8 h-8 rounded-lg bg-[var(--color-gold-100)] flex items-center justify-center">
               <Navigation className="w-4 h-4 text-[var(--color-gold-600)]" />
             </div>
-            <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-navy-900)]">Operational Hub</h3>
+            <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-navy-900)]">Quick Links</h3>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -522,8 +522,8 @@ export default function AdminDashboardPage() {
                     <Ship className="w-5 h-5 text-[var(--color-navy-900)] group-hover:text-white transition-colors" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-[var(--color-navy-900)]">Master Registry</h4>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Manage Manifests</p>
+                    <h4 className="text-sm font-bold text-[var(--color-navy-900)]">Bookings</h4>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Manage Bookings</p>
                   </div>
                 </div>
                 <div className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center group-hover:border-[var(--color-gold-400)] group-hover:bg-[var(--color-gold-50)] transition-all">

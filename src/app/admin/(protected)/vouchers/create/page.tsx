@@ -78,7 +78,7 @@ export default function CreateVoucherPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Create Promotional Code</h1>
-          <p className="text-xs text-gray-500 mt-1">Configure a new generic voucher for broad campaign use.</p>
+          <p className="text-xs text-gray-500 mt-1">Configure a new voucher.</p>
         </div>
       </div>
 
@@ -91,8 +91,8 @@ export default function CreateVoucherPage() {
               <Ticket className="w-6 h-6 text-[var(--color-gold-500)]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-[var(--color-navy-900)]">Campaign Details</h2>
-              <p className="text-xs text-gray-500">All fields below determine how the promo engine calculates the discount.</p>
+              <h2 className="text-lg font-bold text-[var(--color-navy-900)]">Voucher Details</h2>
+              <p className="text-xs text-gray-500">Fill out the fields to set up your discount.</p>
             </div>
           </div>
 
@@ -115,12 +115,12 @@ export default function CreateVoucherPage() {
               </div>
               
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Campaign Name <span className="text-red-500">*</span></label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Voucher Name <span className="text-red-500">*</span></label>
                 <AdminInput 
                   type="text" 
                   name="name"
                   required
-                  placeholder="e.g. Summer Vacation Discount 2026"
+                  placeholder="e.g. Summer Discount 2026"
                   value={formData.name}
                   onChange={handleChange}
                   className="bg-gray-50 border-gray-200 focus-visible:bg-white"
@@ -196,7 +196,7 @@ export default function CreateVoucherPage() {
                 </AdminButton>
               </Link>
               <AdminButton type="submit" variant="primary" isLoading={isSubmitting} className="px-8">
-                Launch Campaign
+                Save Voucher
               </AdminButton>
             </div>
 

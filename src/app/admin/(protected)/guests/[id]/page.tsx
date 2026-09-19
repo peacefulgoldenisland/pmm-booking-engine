@@ -120,7 +120,7 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
         <AdminCardContent className="p-12 text-center pt-12">
           <p className="text-gray-500 mb-6">Guest record not found.</p>
           <AdminButton variant="outline" onClick={() => router.back()}>
-            Return to Registry
+            Return to Guests
           </AdminButton>
         </AdminCardContent>
       </AdminCard>
@@ -262,7 +262,7 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
                   variant={pointOperation === 'ADD' ? 'gold' : 'danger'}
                   className="w-full"
                 >
-                  Execute Adjustment
+                  Update Points
                 </AdminButton>
               </div>
             </AdminCardContent>
@@ -274,13 +274,13 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
           <AdminCard className="h-full">
             <AdminCardHeader>
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                <History className="w-4 h-4 text-[var(--color-navy-900)]" /> Voyage History ({bookingHistory.length})
+                <History className="w-4 h-4 text-[var(--color-navy-900)]" /> Booking History ({bookingHistory.length})
               </h3>
             </AdminCardHeader>
             <AdminCardContent>
               {bookingHistory.length === 0 ? (
                 <div className="p-12 text-center border border-dashed border-gray-200 rounded-sm bg-[var(--color-surface-50)]">
-                  <p className="text-gray-500 text-sm">This guest has no prior sailing history.</p>
+                  <p className="text-gray-500 text-sm">This guest has no prior booking history.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -327,7 +327,7 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
                           </p>
                         </div>
                         <div>
-                          <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1">Quarters</p>
+                          <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1">Cabin</p>
                           <p className="text-xs font-bold text-[var(--color-navy-900)]">{booking.cabinClass}</p>
                         </div>
                         <div>

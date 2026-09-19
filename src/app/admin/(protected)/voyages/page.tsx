@@ -62,8 +62,8 @@ export default function AdminVoyagesPage() {
     <div className="pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Fleet & Voyages</h1>
-          <p className="text-xs text-gray-500 mt-1">Manage master cabins and generate weekly departure schedules.</p>
+          <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Trips & Schedules</h1>
+          <p className="text-xs text-gray-500 mt-1">Manage cabins and generate weekly trip schedules.</p>
         </div>
         
         {/* Dynamic Header Action Button */}
@@ -92,7 +92,7 @@ export default function AdminVoyagesPage() {
               : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'
           }`}
         >
-          <BedDouble className="w-4 h-4" /> Master Cabins
+          <BedDouble className="w-4 h-4" /> Cabins
         </button>
         <button 
           onClick={() => { setActiveTab('SCHEDULES'); setSearchQuery(''); }}
@@ -123,7 +123,7 @@ export default function AdminVoyagesPage() {
       {activeTab === 'CABINS' && (
         isLoading ? (
           <div className="text-center py-20 bg-white border border-gray-200 rounded-sm">
-            <p className="text-gray-400 text-sm">Loading master cabins...</p>
+            <p className="text-gray-400 text-sm">Loading cabins...</p>
           </div>
         ) : filteredCabins.length === 0 ? (
           <div className="text-center py-20 bg-white border border-gray-200 rounded-sm">

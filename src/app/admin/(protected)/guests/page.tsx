@@ -47,7 +47,7 @@ export default function AdminGuestsPage() {
     "Guest Identity",
     "Contact Details",
     "Loyalty Balance",
-    "Clearance Level",
+    "Role",
     "Action"
   ];
 
@@ -55,8 +55,8 @@ export default function AdminGuestsPage() {
     <div className="pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Guest Registry</h1>
-          <p className="text-xs text-gray-500 mt-1">Directory of all registered members and VIPs.</p>
+          <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Guests</h1>
+          <p className="text-xs text-gray-500 mt-1">Directory of all registered members.</p>
         </div>
       </div>
 
