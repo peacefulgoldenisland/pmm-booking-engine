@@ -37,6 +37,9 @@ export interface User {
   passportFileUrl?: string;
   
   preferences?: UserPreferences;
+  // RBAC & Audit
+  allowedMenus?: string[];
+  isSuspended?: boolean;
 
   // Metadata
   createdAt: Date | FirebaseTimestamp;

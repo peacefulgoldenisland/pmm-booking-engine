@@ -119,7 +119,7 @@ export default function AdminGuestsPage() {
               </td>
               <td className="px-6 py-4 text-right">
                 <Link 
-                  href={`/admin/guests/${g.id}`}
+                  href={`/admin/users/guests/${g.id}`}
                   className="inline-flex items-center justify-center w-8 h-8 rounded-sm bg-white border border-gray-200 text-gray-500 hover:text-[var(--color-gold-600)] hover:border-[var(--color-gold-400)] shadow-sm transition-all"
                 >
                   <Eye className="w-4 h-4" />

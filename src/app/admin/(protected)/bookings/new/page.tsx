@@ -14,6 +14,8 @@ import { db, auth } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, runTransaction } from 'firebase/firestore';
 import type { VoyageSchedule, MasterCabin } from '@/types/voyage';
 import type { Passenger, BookingSource } from '@/types/booking';
+import { logAuditTrail } from '@/lib/auditLogger';
+import { useAuthStore } from '@/store/useAuthStore';
 
 function FormGroup({ label, required, children }: { label: string, required?: boolean, children: React.ReactNode }) {
   return (
@@ -28,6 +30,7 @@ function FormGroup({ label, required, children }: { label: string, required?: bo
 
 export default function ManualRegistryPage() {
   const router = useRouter();
+  const { user: currentUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingData, setIsFetchingData] = useState(true);
 
@@ -196,6 +199,14 @@ export default function ManualRegistryPage() {
 
         const bookingRef = doc(collection(db, 'bookings'), generatedBookingId);
         transaction.set(bookingRef, bookingData);
+      });
+
+      await logAuditTrail({
+        action: 'CREATE_BOOKING',
+        module: 'Bookings',
+        targetId: generatedBookingId,
+        details: `Manually created booking for ${generatedBookingId}`,
+        actor: currentUser
       });
 
       alert(`Success! Booking ${generatedBookingId} registered.`);

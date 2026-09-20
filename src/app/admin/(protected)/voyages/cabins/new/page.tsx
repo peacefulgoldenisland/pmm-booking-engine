@@ -10,9 +10,12 @@ import Link from 'next/link';
 import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminButton } from '@/components/admin/ui/AdminButton';
 import { AdminCard, AdminCardContent } from '@/components/admin/ui/AdminCard';
+import { logAuditTrail } from '@/lib/auditLogger';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function NewCabinPage() {
   const router = useRouter();
+  const { user: currentUser } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -81,7 +84,7 @@ export default function NewCabinPage() {
     setIsSubmitting(true);
     
     try {
-      await addDoc(collection(db, 'products'), {
+      const docRef = await addDoc(collection(db, 'products'), {
         name: formData.name,
         description: formData.description,
         price: parseInt(formData.price.replace(/,/g, '')),
@@ -93,6 +96,14 @@ export default function NewCabinPage() {
         updatedAt: serverTimestamp()
       });
       
+      await logAuditTrail({
+        action: 'CREATE_CABIN',
+        module: 'Cabins',
+        targetId: docRef.id,
+        details: `Created new cabin class: ${formData.name}`,
+        actor: currentUser
+      });
+
       router.push('/admin/voyages');
     } catch (error) {
       console.error("Error adding cabin:", error);

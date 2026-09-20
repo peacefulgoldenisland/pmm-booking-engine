@@ -18,8 +18,11 @@ import { AdminButton } from '@/components/admin/ui/AdminButton';
 import { AdminSelect } from '@/components/admin/ui/AdminSelect';
 import { AdminModal } from '@/components/admin/ui/AdminModal';
 import type { Booking, BookingStatus } from '@/types/booking';
+import { logAuditTrail } from '@/lib/auditLogger';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function AdminBookingsPage() {
+  const { user: currentUser } = useAuthStore();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const getNextSaturday = () => {
@@ -268,6 +271,13 @@ export default function AdminBookingsPage() {
       ? `MANIFEST SYAHBANDAR PM88 ${formattedTanggal}.xlsx`
       : `RECAP PENUMPANG PM88 ${formattedTanggal}.xlsx`;
     saveAs(blob, filename);
+
+    await logAuditTrail({
+      action: 'EXPORT_MANIFEST',
+      module: 'Bookings',
+      details: `Exported ${type} to Excel for voyage ${formattedTanggal}`,
+      actor: currentUser
+    });
   };
 
   return (

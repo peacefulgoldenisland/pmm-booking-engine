@@ -11,10 +11,13 @@ import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminButton } from '@/components/admin/ui/AdminButton';
 import { AdminCard, AdminCardContent } from '@/components/admin/ui/AdminCard';
 import type { MasterCabin } from '@/types/voyage';
+import { logAuditTrail } from '@/lib/auditLogger';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function EditCabinPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
+  const { user: currentUser } = useAuthStore();
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -126,6 +129,14 @@ export default function EditCabinPage({ params }: { params: Promise<{ id: string
         updatedAt: serverTimestamp()
       });
       
+      await logAuditTrail({
+        action: 'UPDATE_CABIN',
+        module: 'Cabins',
+        targetId: id,
+        details: `Updated cabin specifications/pricing for: ${formData.name}`,
+        actor: currentUser
+      });
+
       router.push('/admin/voyages');
     } catch (error) {
       console.error("Error updating cabin:", error);
@@ -139,6 +150,15 @@ export default function EditCabinPage({ params }: { params: Promise<{ id: string
     setIsDeleting(true);
     try {
       await deleteDoc(doc(db, 'products', id));
+      
+      await logAuditTrail({
+        action: 'DELETE_CABIN',
+        module: 'Cabins',
+        targetId: id,
+        details: `Deleted cabin class: ${formData.name}`,
+        actor: currentUser
+      });
+
       router.push('/admin/voyages');
     } catch (error) {
       console.error("Error deleting cabin:", error);

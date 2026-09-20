@@ -16,10 +16,13 @@ import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminBadge } from '@/components/admin/ui/AdminBadge';
 import type { GuestProfile } from '@/types/user';
 import type { Booking } from '@/types/booking';
+import { logAuditTrail } from '@/lib/auditLogger';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function GuestDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const router = useRouter();
+  const { user: currentUser } = useAuthStore();
   const [guest, setGuest] = useState<GuestProfile | null>(null);
   const [bookingHistory, setBookingHistory] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,6 +91,14 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
 
       await updateDoc(userRef, {
         pointsBalance: newBalance
+      });
+
+      await logAuditTrail({
+        action: 'UPDATE_LOYALTY_POINTS',
+        module: 'Guests',
+        targetId: params.id,
+        details: `${pointOperation === 'ADD' ? 'Granted' : 'Deducted'} ${pointAmount} points. Reason: ${pointReason}`,
+        actor: currentUser
       });
 
       // Update local state

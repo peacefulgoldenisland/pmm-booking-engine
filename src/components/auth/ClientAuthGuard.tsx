@@ -9,11 +9,11 @@ import { Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import type { User } from '@/types/user';
 
-interface AdminAuthGuardProps {
+interface ClientAuthGuardProps {
   children: React.ReactNode;
 }
 
-export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
+export default function ClientAuthGuard({ children }: ClientAuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { setUser, setLoading } = useAuthStore();
@@ -24,7 +24,7 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         // Not logged in
-        router.push('/admin/login');
+        router.push('/login');
         return;
       }
 
@@ -39,25 +39,20 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
           if (userData.isSuspended) {
             console.error("Access Denied: Account is suspended.");
             auth.signOut();
-            router.push('/admin/login?error=suspended');
+            router.push('/login?error=suspended');
             return;
           }
 
-          if (userData.role === 'admin' || userData.role === 'superadmin') {
-            setUser({ ...userData, id: user.uid } as User);
-            setIsAuthorized(true);
-          } else {
-            // Logged in but not an admin
-            console.error("Access Denied: User is not an admin.");
-            router.push('/');
-          }
+          // Allow access for all valid users to the client portal
+          setUser({ ...userData, id: user.uid } as User);
+          setIsAuthorized(true);
         } else {
           // No user doc found
-          router.push('/');
+          router.push('/login');
         }
       } catch (error) {
-        console.error("Error fetching user role:", error);
-        router.push('/');
+        console.error("Error fetching user data:", error);
+        router.push('/login');
       } finally {
         setIsLoadingState(false);
         setLoading(false);
@@ -72,7 +67,7 @@ export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
       <div className="min-h-screen bg-[var(--color-surface-50)] flex flex-col items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-[var(--color-gold-500)] mb-4" />
         <p className="font-serif text-[var(--color-navy-900)] text-xl tracking-wide">
-          Verifying Clearance...
+          Loading...
         </p>
       </div>
     );

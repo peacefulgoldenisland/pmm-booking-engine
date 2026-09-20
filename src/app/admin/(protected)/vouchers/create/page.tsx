@@ -12,9 +12,12 @@ import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminSelect } from '@/components/admin/ui/AdminSelect';
 import { AdminButton } from '@/components/admin/ui/AdminButton';
 import type { DiscountType } from '@/types/voucher';
+import { logAuditTrail } from '@/lib/auditLogger';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function CreateVoucherPage() {
   const router = useRouter();
+  const { user: currentUser } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Form State
@@ -56,6 +59,14 @@ export default function CreateVoucherPage() {
         status: 'ACTIVE',
         usageCount: 0,
         createdAt: serverTimestamp()
+      });
+
+      await logAuditTrail({
+        action: 'CREATE_VOUCHER',
+        module: 'Vouchers',
+        targetId: formData.code,
+        details: `Created new promo code: ${formData.code} with ${formData.discountType} discount of ${formData.discountValue}`,
+        actor: currentUser
       });
 
       router.push('/admin/vouchers');

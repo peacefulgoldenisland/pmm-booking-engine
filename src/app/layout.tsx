@@ -32,6 +32,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${playfair.variable} ${jakarta.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
     >
       <body className="min-h-full flex flex-col font-sans bg-[var(--color-surface-50)] text-[var(--color-navy-800)] selection:bg-[var(--color-gold-500)] selection:text-white">
         {children}

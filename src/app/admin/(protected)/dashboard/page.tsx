@@ -532,7 +532,7 @@ export default function AdminDashboardPage() {
               </div>
             </Link>
 
-            <Link href="/admin/guests" className="group relative overflow-hidden bg-white border border-gray-200 p-5 rounded-2xl hover:border-[var(--color-gold-400)] hover:shadow-lg transition-all duration-300">
+            <Link href="/admin/users/guests" className="group relative overflow-hidden bg-white border border-gray-200 p-5 rounded-2xl hover:border-[var(--color-gold-400)] hover:shadow-lg transition-all duration-300">
               <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[var(--color-surface-50)] opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-4">

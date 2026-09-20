@@ -8,6 +8,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import type { User } from '@/types/user';
+import { logAuditTrail } from '@/lib/auditLogger';
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -37,6 +38,14 @@ export function AdminLoginForm() {
             setIsLoading(false);
             return;
           }
+
+          await logAuditTrail({
+            action: 'LOGIN',
+            module: 'Auth',
+            targetId: userCredential.user.uid,
+            details: 'Admin signed into the system',
+            actor: { ...userData, id: userCredential.user.uid } as User
+          });
         } else {
             await auth.signOut();
             setErrorMessage('User record not found.');

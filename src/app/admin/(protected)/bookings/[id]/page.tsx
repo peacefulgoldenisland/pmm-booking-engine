@@ -20,6 +20,8 @@ import {
   AdminCardContent 
 } from '@/components/admin/ui/AdminCard';
 import type { Booking, Passenger } from '@/types/booking';
+import { logAuditTrail } from '@/lib/auditLogger';
+import { useAuthStore } from '@/store/useAuthStore';
 
 function FormGroup({ label, children }: { label: string, children: React.ReactNode }) {
   return (
@@ -35,6 +37,7 @@ function FormGroup({ label, children }: { label: string, children: React.ReactNo
 export default function BookingDetailPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
   const router = useRouter();
+  const { user: currentUser } = useAuthStore();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -85,7 +88,16 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
         status: 'PAID',
         verifiedAt: new Date().toISOString()
       });
-      setBooking((prev) => prev ? ({ ...prev, status: 'PAID' }) : prev);
+      setBooking((prev) => prev ? ({ ...prev, status: 'PAID', verifiedAt: new Date().toISOString() }) : prev);
+      
+      await logAuditTrail({
+        action: 'VERIFY_PAYMENT',
+        module: 'Bookings',
+        targetId: params.id,
+        details: `Verified payment for booking ${params.id}`,
+        actor: currentUser
+      });
+      
     } catch (error) {
       console.error("Error approving payment:", error);
       alert("Failed to approve payment.");
@@ -116,6 +128,15 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
         rejectReason: rejectReason
       }) : prev);
       setShowRejectForm(false);
+      
+      await logAuditTrail({
+        action: 'REJECT_PAYMENT',
+        module: 'Bookings',
+        targetId: params.id,
+        details: `Rejected payment for booking ${params.id}. Reason: ${rejectReason}`,
+        actor: currentUser
+      });
+
     } catch (error) {
       console.error("Error rejecting payment:", error);
       alert("Failed to reject payment.");
@@ -163,6 +184,15 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
       setBooking({ ...booking, passengersManifest: updatedManifest });
       setEditingPaxIndex(null);
       setEditPaxData(null);
+      
+      await logAuditTrail({
+        action: 'UPDATE_PASSENGER',
+        module: 'Bookings',
+        targetId: params.id,
+        details: `Updated passenger manifest for booking ${params.id}`,
+        actor: currentUser
+      });
+
     } catch (error) {
       console.error("Error updating manifest:", error);
       alert("Failed to update passenger details.");
@@ -190,6 +220,15 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
       await updateDoc(docRef, payload);
       setBooking({ ...booking, ...payload });
       setIsEditingGlobal(false);
+      
+      await logAuditTrail({
+        action: 'UPDATE_BOOKING_MASTER',
+        module: 'Bookings',
+        targetId: params.id,
+        details: `Updated master data for booking ${params.id}`,
+        actor: currentUser
+      });
+
     } catch (error) {
       console.error("Error updating global booking data:", error);
       alert("Failed to update booking data.");
