@@ -11,7 +11,8 @@ import {
   LogOut,
   Anchor,
   ShieldCheck,
-  ChevronDown
+  ChevronDown,
+  Wrench
 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
@@ -103,7 +104,7 @@ export default function AdminSidebar() {
             >
               <UsersRound className={`w-5 h-5 shrink-0 transition-colors text-gray-400 group-hover:text-[var(--color-gold-400)]`} />
               <span className={`text-[11px] font-bold uppercase tracking-widest whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 text-gray-300 group-hover:text-white flex-1 text-left`}>
-                Data Pengguna
+                Users Directory
               </span>
               <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-300 opacity-0 group-hover/sidebar:opacity-100 ${isUsersOpen ? "rotate-180" : ""}`} />
             </button>
@@ -146,6 +147,7 @@ export default function AdminSidebar() {
 
         <NavItem href="/admin/vouchers" icon={TicketPercent} name="Vouchers" id="vouchers" isActive={pathname.startsWith('/admin/vouchers')} />
         <NavItem href="/admin/support/audit" icon={ShieldCheck} name="Audit Trail" id="audit" isActive={pathname.startsWith('/admin/support/audit')} />
+        <NavItem href="/admin/system/dev-tools" icon={Wrench} name="System Tools" id="system" isActive={pathname.startsWith('/admin/system')} />
       </nav>
 
       {/* Bottom Actions */}

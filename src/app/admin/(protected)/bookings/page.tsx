@@ -17,6 +17,7 @@ import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminButton } from '@/components/admin/ui/AdminButton';
 import { AdminSelect } from '@/components/admin/ui/AdminSelect';
 import { AdminModal } from '@/components/admin/ui/AdminModal';
+import { AdminDatePicker } from '@/components/admin/ui/AdminDatePicker';
 import type { Booking, BookingStatus } from '@/types/booking';
 import { logAuditTrail } from '@/lib/auditLogger';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -34,6 +35,7 @@ export default function AdminBookingsPage() {
   const [filterStatus, setFilterStatus] = useState<BookingStatus | 'ALL'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [voyageFilter, setVoyageFilter] = useState<string>(getNextSaturday());
+  const [sortBy, setSortBy] = useState<'DATE_DESC' | 'DATE_ASC' | 'CABIN_ASC'>('DATE_DESC');
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   // Real-time listener using onSnapshot
@@ -52,12 +54,7 @@ export default function AdminBookingsPage() {
         ...doc.data()
       })) as Booking[];
       
-      // Sort locally by createdAt desc
-      data.sort((a, b) => {
-         const timeA = typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : (a.createdAt as any)?.toMillis?.() || 0;
-         const timeB = typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : (b.createdAt as any)?.toMillis?.() || 0;
-         return timeB - timeA;
-      });
+      // We no longer sort locally here, it is done in filteredBookings
       setBookings(data);
       setIsLoading(false);
     }, (error) => {
@@ -88,6 +85,21 @@ export default function AdminBookingsPage() {
     const matchSearch = (b.bookingId || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
                         (b.contactEmail || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchStatus && matchSearch;
+  }).sort((a, b) => {
+    if (sortBy === 'DATE_DESC') {
+      const timeA = typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : (a.createdAt as any)?.toMillis?.() || 0;
+      const timeB = typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : (b.createdAt as any)?.toMillis?.() || 0;
+      return timeB - timeA;
+    } else if (sortBy === 'DATE_ASC') {
+      const timeA = typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : (a.createdAt as any)?.toMillis?.() || 0;
+      const timeB = typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : (b.createdAt as any)?.toMillis?.() || 0;
+      return timeA - timeB;
+    } else if (sortBy === 'CABIN_ASC') {
+      const cabinA = a.cabinClass || '';
+      const cabinB = b.cabinClass || '';
+      return cabinA.localeCompare(cabinB);
+    }
+    return 0;
   });
 
   const tableHeaders = [
@@ -132,19 +144,19 @@ export default function AdminBookingsPage() {
       { width: 15 },  // H: KEBANGSAAN
     ] : [
       { width: 5 },   // A: NO
-      { width: 30 },  // B: NAMA
-      { width: 3 },   // C: empty space
-      { width: 25 },  // D: KELAS
-      { width: 5 },   // E: F/M
-      { width: 14 },  // F: UMUR (THN)
-      { width: 15 },  // G: NO PASSPOR
-      { width: 15 },  // H: KEBANGSAAN
-      { width: 15 },  // I: AGENT/WEB
-      { width: 15 },  // J: AREA
-      { width: 15 },  // K: PRICE
-      { width: 5 },   // L: empty space
-      { width: 15 },  // M: LAHIR
-      { width: 10 }   // N: HARI
+      { width: 18 },  // B: TANGGAL DIBUAT
+      { width: 30 },  // C: NAMA
+      { width: 3 },   // D: empty space
+      { width: 25 },  // E: KELAS
+      { width: 5 },   // F: F/M
+      { width: 14 },  // G: UMUR (THN)
+      { width: 15 },  // H: NO PASSPOR
+      { width: 15 },  // I: KEBANGSAAN
+      { width: 15 },  // J: AGENT/WEB
+      { width: 15 },  // K: AREA
+      { width: 15 },  // L: BASE PRICE
+      { width: 12 },  // M: DISC/PAX
+      { width: 15 }   // N: NET/PAX
     ];
 
     // Build Syahbandar specific header format
@@ -152,16 +164,7 @@ export default function AdminBookingsPage() {
     worksheet.addRow(["GT", null, ": 119", null, "PELABUHAN TUJUAN", null, null, ": LABUAN BAJO"]);
     worksheet.addRow(["JUMLAH ABK", null, ": 8 ORANG", null, "TANGGAL", null, null, `: ${formattedTanggal}`]);
     
-    if (!isSyahbandar) {
-      worksheet.addRow([null, null, null, null, null, null, null, null, null, null, null, null, "BLN/TGL/THN", null]);
-      // Format "BLN/TGL/THN" explicitly to match the document styling
-      const blnTglThnCell = worksheet.getRow(4).getCell(13);
-      blnTglThnCell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-      blnTglThnCell.alignment = { horizontal: 'center', vertical: 'middle' };
-      blnTglThnCell.font = { bold: true };
-    } else {
-      worksheet.addRow([]);
-    }
+    worksheet.addRow([]);
     
     // Style Header rows 1-3 to be bold
     [1, 2, 3].forEach(rowNum => {
@@ -170,7 +173,7 @@ export default function AdminBookingsPage() {
 
     const headerFields = isSyahbandar 
       ? ["NO.", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN"]
-      : ["NO.", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN", "AGENT/WEB", "AREA", "PRICE", null, "LAHIR", "Hari "];
+      : ["NO.", "TANGGAL DIBUAT", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN", "AGENT/WEB", "AREA", "BASE PRICE", "DISC/PAX", "NET/PAX"];
 
     const headerRow = worksheet.addRow(headerFields);
     headerRow.font = { bold: true };
@@ -179,7 +182,7 @@ export default function AdminBookingsPage() {
     // Apply borders to headerRow (only columns that have text or are part of the table body)
     const columnsWithBorder = isSyahbandar 
       ? [1, 2, 4, 5, 6, 7, 8]
-      : [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14];
+      : [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
       
     columnsWithBorder.forEach(colNum => {
        const cell = headerRow.getCell(colNum);
@@ -192,22 +195,17 @@ export default function AdminBookingsPage() {
     let totalPriceSum = 0;
 
     filteredBookings.forEach((b) => {
+      const basePerPax = b.paxCount > 0 ? (b.basePrice || b.totalAmount) / b.paxCount : 0;
+      const discPerPax = b.paxCount > 0 ? (b.discountAmount || 0) / b.paxCount : 0;
       const pricePerPax = b.paxCount > 0 ? b.totalAmount / b.paxCount : 0;
+      
       const sourceLabel = b.source === 'AGENT' ? `${b.agentName || 'UNKNOWN'}` : 
                           b.source === 'OFFICE' ? 'OFFICE WALK-IN' : 'WEB';
 
       (b.passengersManifest || []).forEach((pax: any) => {
-        let dayName = '';
-        let birthDateFormatted = pax.dateOfBirth || '';
-        
-        if (pax.dateOfBirth) {
-           const d = new Date(pax.dateOfBirth);
-           if (!isNaN(d.getTime())) {
-              const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-              dayName = days[d.getDay()];
-              birthDateFormatted = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
-           }
-        }
+        const orderDate = b.createdAt 
+          ? new Date(typeof b.createdAt === 'string' || typeof b.createdAt === 'number' ? b.createdAt : (b.createdAt as any).toDate?.() || new Date()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '-';
 
         const rowData = isSyahbandar 
           ? [
@@ -222,6 +220,7 @@ export default function AdminBookingsPage() {
             ]
           : [
               paxNo++,
+              orderDate,
               pax.fullName || '',
               null,
               b.cabinClass || '',
@@ -231,10 +230,9 @@ export default function AdminBookingsPage() {
               pax.nationality || '',
               sourceLabel,
               b.pickupLocation || '',
-              pricePerPax,
-              null,
-              birthDateFormatted,
-              dayName
+              basePerPax,
+              discPerPax,
+              pricePerPax
             ];
 
         const dataRow = worksheet.addRow(rowData);
@@ -244,8 +242,7 @@ export default function AdminBookingsPage() {
            dataRow.getCell(colNum).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         });
         
-        // Center alignment for specific columns
-        const centerColumns = isSyahbandar ? [1, 4, 5, 6] : [1, 4, 5, 6, 13, 14];
+        const centerColumns = isSyahbandar ? [1, 4, 5, 6] : [1, 2, 6, 7];
         centerColumns.forEach(colNum => {
            dataRow.getCell(colNum).alignment = { horizontal: 'center' };
         });
@@ -257,11 +254,11 @@ export default function AdminBookingsPage() {
     worksheet.addRow([]); // Empty row
     
     if (!isSyahbandar) {
-      const sumRow = worksheet.addRow([null, null, null, null, null, null, null, null, null, "TOTAL", totalPriceSum, null, null, null]);
-      sumRow.getCell(10).font = { bold: true };
-      sumRow.getCell(10).alignment = { horizontal: 'right' };
+      const sumRow = worksheet.addRow([null, null, null, null, null, null, null, null, null, null, "TOTAL", null, null, totalPriceSum]);
       sumRow.getCell(11).font = { bold: true };
-      sumRow.getCell(11).alignment = { horizontal: 'center' };
+      sumRow.getCell(11).alignment = { horizontal: 'right' };
+      sumRow.getCell(14).font = { bold: true };
+      sumRow.getCell(14).alignment = { horizontal: 'center' };
       worksheet.addRow([]);
     }
 
@@ -302,10 +299,10 @@ export default function AdminBookingsPage() {
           {/* Voyage Filter */}
           <div className="flex flex-col gap-1 w-full md:w-48 shrink-0">
             <label className="text-[9px] font-bold text-[var(--color-navy-900)] uppercase tracking-widest px-1">Sailing Date (Filter)</label>
-            <AdminInput 
-              type="date"
+            <AdminDatePicker 
               value={voyageFilter}
-              onChange={(e) => setVoyageFilter(e.target.value)}
+              onChange={(val) => setVoyageFilter(val)}
+              placeholder="All Dates"
             />
           </div>
 
@@ -321,6 +318,20 @@ export default function AdminBookingsPage() {
                 { value: 'PAID', label: 'Paid / Secured' },
                 { value: 'PENDING', label: 'Pending / Awaiting Fund' },
                 { value: 'CANCELLED', label: 'Terminated' }
+              ]}
+            />
+          </div>
+
+          {/* Sorting */}
+          <div className="flex flex-col gap-1 w-full md:w-40 shrink-0">
+            <label className="text-[9px] font-bold text-[var(--color-navy-900)] uppercase tracking-widest px-1">Sort By</label>
+            <AdminSelect 
+              value={sortBy}
+              onChange={(val) => setSortBy(val as any)}
+              options={[
+                { value: 'DATE_DESC', label: 'Order Date (Newest)' },
+                { value: 'DATE_ASC', label: 'Order Date (Oldest)' },
+                { value: 'CABIN_ASC', label: 'Cabin Class' }
               ]}
             />
           </div>
@@ -376,8 +387,8 @@ export default function AdminBookingsPage() {
                     </span>
                   )}
                   
-                  <div className="text-[10px] text-gray-400">
-                    {b.createdAt 
+                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                    ORDERED: {b.createdAt 
                       ? new Date(
                           typeof b.createdAt === 'string' || typeof b.createdAt === 'number' 
                             ? b.createdAt 
@@ -433,6 +444,7 @@ export default function AdminBookingsPage() {
               <thead className="bg-gray-100 border-b-2 border-gray-300 sticky top-0">
                 <tr className="[&>th]:px-2 [&>th]:py-1 [&>th]:border-r [&>th]:border-gray-300">
                   <th>NO.</th>
+                  <th className="text-center">TANGGAL DIBUAT</th>
                   <th className="text-left">NAMA</th>
                   <th>KELAS</th>
                   <th>F/M</th>
@@ -441,19 +453,23 @@ export default function AdminBookingsPage() {
                   <th>KEBANGSAAN</th>
                   <th>AGENT/WEB</th>
                   <th>AREA</th>
-                  <th>PRICE</th>
-                  <th>LAHIR</th>
-                  <th>Hari</th>
+                  <th className="text-right">BASE PRICE</th>
+                  <th className="text-right">DISCOUNT</th>
+                  <th className="text-right">NET/PAX</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredBookings.map((b, bIdx) => {
+                  const basePerPax = b.paxCount > 0 ? (b.basePrice || b.totalAmount) / b.paxCount : 0;
+                  const discPerPax = b.paxCount > 0 ? (b.discountAmount || 0) / b.paxCount : 0;
                   const pricePerPax = b.paxCount > 0 ? b.totalAmount / b.paxCount : 0;
+                  
                   const sourceLabel = b.source === 'AGENT' ? `${b.agentName || 'UNKNOWN'}` : 
                                       b.source === 'OFFICE' ? 'OFFICE WALK-IN' : 'WEB';
                   return (b.passengersManifest || []).map((pax: any, pIdx: number) => (
                     <tr key={`${bIdx}-${pIdx}`} className="border-b border-gray-200 hover:bg-blue-50 [&>td]:px-2 [&>td]:py-1 [&>td]:border-r [&>td]:border-gray-200">
                       <td className="text-center">{pIdx + 1 + (bIdx * 10) /* Rough ID */}</td>
+                      <td className="text-center">{b.createdAt ? new Date(typeof b.createdAt === 'string' || typeof b.createdAt === 'number' ? b.createdAt : (b.createdAt as any).toDate?.() || new Date()).toLocaleDateString('id-ID') : '-'}</td>
                       <td>{pax.fullName}</td>
                       <td>{b.cabinClass}</td>
                       <td className="text-center">{pax.gender}</td>
@@ -462,20 +478,19 @@ export default function AdminBookingsPage() {
                       <td>{pax.nationality}</td>
                       <td>{sourceLabel}</td>
                       <td>{b.pickupLocation}</td>
-                      <td className="text-right">Rp {pricePerPax.toLocaleString('id-ID')}</td>
-                      <td className="text-center">{pax.dateOfBirth}</td>
-                      <td className="text-center">-</td>
+                      <td className="text-right">Rp {basePerPax.toLocaleString('id-ID')}</td>
+                      <td className="text-right text-red-600">Rp {discPerPax.toLocaleString('id-ID')}</td>
+                      <td className="text-right font-bold text-[var(--color-navy-900)]">Rp {pricePerPax.toLocaleString('id-ID')}</td>
                     </tr>
                   ));
                 })}
               </tbody>
-              <tfoot className="bg-gray-100 font-bold sticky bottom-0">
+              <tfoot className="bg-gray-100 font-bold sticky bottom-0 shadow-[0_-2px_5px_rgba(0,0,0,0.05)]">
                 <tr>
-                  <td colSpan={9} className="text-right px-4 py-2">TOTAL</td>
+                  <td colSpan={12} className="text-right px-4 py-2">TOTAL AMOUNT</td>
                   <td className="text-right px-2 py-2">
                      Rp {filteredBookings.reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString('id-ID')}
                   </td>
-                  <td colSpan={2}></td>
                 </tr>
               </tfoot>
             </table>

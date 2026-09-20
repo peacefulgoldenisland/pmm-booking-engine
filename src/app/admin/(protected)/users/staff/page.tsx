@@ -33,6 +33,7 @@ const MENU_OPTIONS = [
   { id: "vouchers",  label: "Vouchers & Promo" },
   { id: "staff",     label: "Staff Management" },
   { id: "audit",     label: "Security & Audit" },
+  { id: "system",    label: "System / Dev Tools" },
 ];
 
 export default function StaffManagementPage() {

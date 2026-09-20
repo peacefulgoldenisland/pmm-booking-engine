@@ -568,7 +568,12 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
             <AdminCardContent className="text-white pt-6">
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4">
-                  <span className="text-gray-300 font-light">Base Price</span>
+                  <div className="flex flex-col">
+                    <span className="text-gray-300 font-light">Base Price (Total)</span>
+                    <span className="text-[10px] text-gray-500">
+                      IDR {((booking.basePrice || 0) / (booking.paxCount || 1)).toLocaleString('id-ID')} / pax
+                    </span>
+                  </div>
                   {isEditingGlobal ? (
                     <div className="w-32">
                       <AdminInput 
@@ -584,7 +589,14 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
                 </div>
                 {(booking.discountAmount > 0 || isEditingGlobal) && (
                   <div className="flex justify-between items-center text-sm border-b border-white/10 pb-4 text-red-400">
-                    <span className="font-light">Discount Applied</span>
+                    <div className="flex flex-col">
+                      <span className="font-light">Discount Applied</span>
+                      {booking.discountAmount > 0 && (
+                        <span className="text-[10px] text-red-500/70">
+                          IDR {((booking.discountAmount || 0) / (booking.paxCount || 1)).toLocaleString('id-ID')} / pax
+                        </span>
+                      )}
+                    </div>
                     {isEditingGlobal ? (
                       <div className="w-32">
                         <AdminInput 

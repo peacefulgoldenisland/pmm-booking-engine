@@ -9,6 +9,7 @@ import { AdminCard, AdminCardHeader, AdminCardTitle, AdminCardContent } from '@/
 import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminButton } from '@/components/admin/ui/AdminButton';
 import { AdminSelect } from '@/components/admin/ui/AdminSelect';
+import { AdminDatePicker } from '@/components/admin/ui/AdminDatePicker';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { db, auth } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, runTransaction } from 'firebase/firestore';
@@ -38,15 +39,19 @@ export default function ManualRegistryPage() {
   const [voyages, setVoyages] = useState<VoyageSchedule[]>([]);
   const [cabins, setCabins] = useState<MasterCabin[]>([]);
 
-  // Form State - Step 1
+  // Form State - Itinerary
   const [voyageId, setVoyageId] = useState('');
   const [cabinId, setCabinId] = useState('');
   const [bookedUnits, setBookedUnits] = useState<number>(1);
-  const [totalPrice, setTotalPrice] = useState<number | ''>('');
-
-  // Form State - Step 2
+  
+  // Form State - Source & Pricing
   const [source, setSource] = useState<BookingSource>('AGENT');
   const [agentName, setAgentName] = useState('');
+  const [basePricePerPax, setBasePricePerPax] = useState<number | ''>('');
+  const [discountPerPax, setDiscountPerPax] = useState<number | ''>(900000);
+
+  // Derived Total
+  const netTotal = (Number(basePricePerPax || 0) - (source === 'AGENT' ? Number(discountPerPax || 0) : 0)) * bookedUnits;
 
   // Form State - Step 3 (Manifest)
   const [passengers, setPassengers] = useState<Passenger[]>([
@@ -95,6 +100,18 @@ export default function ManualRegistryPage() {
   const handlePassengerChange = (index: number, field: string, value: string | number) => {
     const updated = [...passengers];
     updated[index] = { ...updated[index], [field]: value };
+    
+    if (field === 'dateOfBirth' && typeof value === 'string' && value) {
+      const dob = new Date(value);
+      const today = new Date();
+      let calculatedAge = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        calculatedAge--;
+      }
+      updated[index].age = Math.max(0, calculatedAge);
+    }
+    
     setPassengers(updated);
   };
 
@@ -129,8 +146,8 @@ export default function ManualRegistryPage() {
     setIsLoading(true);
 
     try {
-      if (!voyageId || !cabinId || !totalPrice) {
-        throw new Error("Please complete Voyage, Cabin, and Price fields.");
+      if (!voyageId || !cabinId || !basePricePerPax) {
+        throw new Error("Please complete Voyage, Cabin, and Base Price fields.");
       }
       
       const adminUser = auth.currentUser;
@@ -188,9 +205,9 @@ export default function ManualRegistryPage() {
           passengersManifest: passengers,
           contactEmail: leadEmail || 'manual@offline.com',
           contactPhone: leadPhone || '-',
-          basePrice: Number(totalPrice),
-          discountAmount: 0,
-          totalAmount: Number(totalPrice),
+          basePrice: Number(basePricePerPax) * passengers.length,
+          discountAmount: (source === 'AGENT' ? Number(discountPerPax) : 0) * passengers.length,
+          totalAmount: netTotal,
           paymentMethod: 'OFFLINE',
           createdAt: new Date().toISOString(),
           verifiedAt: new Date().toISOString(),
@@ -234,67 +251,6 @@ export default function ManualRegistryPage() {
           <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Create Booking</h1>
           <p className="text-gray-500 text-sm">Create an offline booking.</p>
         </div>
-        
-        {/* DEV TOOL: SEED */}
-        <div className="ml-auto">
-           <AdminButton 
-             variant="outline" 
-             type="button"
-             onClick={async () => {
-               if(!confirm("Seed 10 individual bookings (1 pax each) for 19 Sep 2026?")) return;
-               setIsLoading(true);
-               try {
-                 const promises = [];
-                 for(let i=0; i<10; i++) {
-                   const paxManifest = [{
-                      fullName: `Test Individual Pax ${i+1}`,
-                      gender: i % 2 === 0 ? 'M' : 'F',
-                      age: 20 + i,
-                      nationality: 'INDONESIA',
-                      passportNumber: `A123456${i}`,
-                      dietaryRequirements: 'None',
-                      placeOfBirth: 'Lombok',
-                      dateOfBirth: `2000-01-0${i % 9 + 1}`,
-                      passportFileUrl: ''
-                   }];
-                   
-                   const bookingData = {
-                     bookingId: `BK-TEST-${Math.floor(Math.random()*10000)}`,
-                     dateOfDeparture: '2026-09-19',
-                     paxCount: 1,
-                     cabinClass: i % 2 === 0 ? 'CABIN SEA VIEW' : 'DOWN DECK',
-                     pickupLocation: 'Senggigi Area',
-                     source: 'WEB',
-                     agentName: '',
-                     contactEmail: `test${i}@example.com`,
-                     contactPhone: '08123456789',
-                     basePrice: 4600000,
-                     discountAmount: 0,
-                     totalAmount: 4600000,
-                     status: 'PAID',
-                     paymentMethod: 'CASH',
-                     passengersManifest: paxManifest,
-                     createdAt: new Date().toISOString(),
-                     verifiedAt: new Date().toISOString(),
-                     recordedBy: 'Admin Dev',
-                   };
-                   
-                   promises.push(setDoc(doc(collection(db, 'bookings'), bookingData.bookingId), bookingData));
-                 }
-
-                 await Promise.all(promises);
-                 alert("10 Bookings seeded successfully!");
-                 router.push('/admin/bookings');
-               } catch (e: any) {
-                 alert("Seed error: " + e.message);
-               } finally {
-                 setIsLoading(false);
-               }
-             }}
-           >
-             Seed 10 Bookings
-           </AdminButton>
-        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -304,77 +260,24 @@ export default function ManualRegistryPage() {
           <AdminCardHeader>
             <AdminCardTitle className="flex items-center gap-2 text-[var(--color-navy-900)]">
               <span className="w-6 h-6 rounded-full bg-[var(--color-gold-500)] text-white flex items-center justify-center text-xs font-bold">1</span>
-              Trip & Price
+              Source, Trip & Pricing
             </AdminCardTitle>
           </AdminCardHeader>
-          <AdminCardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex flex-col gap-2">
-               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                  Trip Schedule (Date) <span className="text-red-500">*</span>
-               </label>
-               <DatePicker 
-                 label="" 
-                 selectedDate={voyageId ? new Date(voyageId) : null} 
-                 onSelect={(date: Date | null) => {
-                   if (date) {
-                     const offset = date.getTimezoneOffset();
-                     const adjustedDate = new Date(date.getTime() - (offset*60*1000));
-                     setVoyageId(adjustedDate.toISOString().split('T')[0]);
-                   }
-                 }} 
-                 filterDate={(date: Date) => date.getDay() === 6}
-               />
-            </div>
+          <AdminCardContent className="space-y-6">
             
-            <FormGroup label="Cabin Assigned" required>
-              <AdminSelect 
-                value={cabinId} 
-                onChange={(val: string) => setCabinId(val)}
-                placeholder="Select Cabin"
-                options={cabins.map(c => ({ value: c.id, label: c.name }))}
-              />
-            </FormGroup>
-
-            <FormGroup label="Units Booked" required>
-              <AdminInput 
-                type="number" 
-                min={1}
-                value={bookedUnits} 
-                onChange={(e) => setBookedUnits(parseInt(e.target.value) || 1)} 
-                required 
-              />
-            </FormGroup>
-            
-            <FormGroup label="Total Invoice (IDR)" required>
-              <AdminInput 
-                type="number"
-                value={totalPrice}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTotalPrice(e.target.value ? Number(e.target.value) : '')}
-                placeholder="4600000"
-                leftIcon={<CircleDollarSign className="w-4 h-4 text-gray-400" />}
-                required
-              />
-            </FormGroup>
-          </AdminCardContent>
-        </AdminCard>
-
-        {/* STEP 2: SOURCE & CONTACT */}
-        <AdminCard>
-          <AdminCardHeader>
-            <AdminCardTitle className="flex items-center gap-2 text-[var(--color-navy-900)]">
-              <span className="w-6 h-6 rounded-full bg-[var(--color-gold-500)] text-white flex items-center justify-center text-xs font-bold">2</span>
-              Source & Lead Contact
-            </AdminCardTitle>
-          </AdminCardHeader>
-          <AdminCardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-sm border border-gray-100">
               <FormGroup label="Booking Source" required>
                 <AdminSelect 
                   value={source} 
-                  onChange={(val: string) => setSource(val as BookingSource)}
+                  onChange={(val: string) => {
+                    setSource(val as BookingSource);
+                    if (val !== 'AGENT') setDiscountPerPax(0);
+                    else setDiscountPerPax(900000);
+                  }}
                   options={[
                     { value: 'AGENT', label: 'Travel Agent' },
-                    { value: 'OFFICE', label: 'Internal Office (Walk-in)' }
+                    { value: 'OFFICE', label: 'Internal Office (Walk-in)' },
+                    { value: 'WEB', label: 'Web / Direct' }
                   ]}
                 />
               </FormGroup>
@@ -391,32 +294,119 @@ export default function ManualRegistryPage() {
               )}
             </div>
 
-            <div className="space-y-6">
-              <FormGroup label="Lead Contact Phone">
-                <AdminInput 
-                  value={leadPhone}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeadPhone(e.target.value)}
-                  placeholder="+62..."
-                />
-              </FormGroup>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex flex-col gap-2">
+                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                    Trip Schedule (Date) <span className="text-red-500">*</span>
+                 </label>
+                 <AdminDatePicker 
+                   value={voyageId}
+                   onChange={(val: string) => setVoyageId(val)}
+                   placeholder="Select Saturday"
+                   filterDate={(date: Date) => date.getDay() === 6}
+                 />
+              </div>
               
-              <FormGroup label="Lead Contact Email">
-                <AdminInput 
-                  value={leadEmail}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeadEmail(e.target.value)}
-                  type="email"
-                  placeholder="guest@example.com"
+              <FormGroup label="Cabin Assigned" required>
+                <AdminSelect 
+                  value={cabinId} 
+                  onChange={(val: string) => setCabinId(val)}
+                  placeholder="Select Cabin"
+                  options={cabins.map(c => ({ value: c.id, label: c.name }))}
                 />
               </FormGroup>
 
-              <FormGroup label="Pickup Location (AREA)">
+              <FormGroup label="Units Booked (Pax Count)" required>
                 <AdminInput 
-                  value={pickupLocation}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPickupLocation(e.target.value)}
-                  placeholder="e.g. SENGGIGI / BANGSAL"
+                  type="number" 
+                  min={1}
+                  value={bookedUnits} 
+                  onChange={(e) => {
+                     const units = parseInt(e.target.value) || 1;
+                     setBookedUnits(units);
+                     // Auto sync passenger manifest length
+                     if (units > passengers.length) {
+                       const diff = units - passengers.length;
+                       setPassengers([...passengers, ...Array(diff).fill({ fullName: '', gender: 'M', age: 30, passportNumber: '', nationality: '', placeOfBirth: '', dateOfBirth: '', dietaryRequirements: 'None', passportFileUrl: '' })]);
+                     } else if (units < passengers.length) {
+                       setPassengers(passengers.slice(0, units));
+                     }
+                  }} 
+                  required 
                 />
               </FormGroup>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-gray-100">
+              <FormGroup label="Base Price / Pax (IDR)" required>
+                <AdminInput 
+                  type="number"
+                  value={basePricePerPax}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBasePricePerPax(e.target.value ? Number(e.target.value) : '')}
+                  placeholder="4600000"
+                  leftIcon={<CircleDollarSign className="w-4 h-4 text-gray-400" />}
+                  required
+                />
+              </FormGroup>
+
+              {source === 'AGENT' ? (
+                <FormGroup label="Agent Discount / Pax (IDR)">
+                  <AdminInput 
+                    type="number"
+                    value={discountPerPax}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDiscountPerPax(e.target.value ? Number(e.target.value) : '')}
+                    placeholder="900000"
+                    leftIcon={<Minus className="w-4 h-4 text-gray-400" />}
+                    className="text-red-600 bg-red-50"
+                  />
+                </FormGroup>
+              ) : (
+                <div className="hidden md:block"></div>
+              )}
+
+              <FormGroup label="Net Total (IDR)">
+                <div className="flex items-center h-[42px] px-3 bg-[var(--color-navy-900)] text-white rounded-sm font-mono font-bold text-lg">
+                  Rp {netTotal.toLocaleString('id-ID')}
+                </div>
+              </FormGroup>
+            </div>
+            
+          </AdminCardContent>
+        </AdminCard>
+
+        {/* STEP 2: LEAD CONTACT */}
+        <AdminCard>
+          <AdminCardHeader>
+            <AdminCardTitle className="flex items-center gap-2 text-[var(--color-navy-900)]">
+              <span className="w-6 h-6 rounded-full bg-[var(--color-gold-500)] text-white flex items-center justify-center text-xs font-bold">2</span>
+              Lead Contact & Logistic
+            </AdminCardTitle>
+          </AdminCardHeader>
+          <AdminCardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FormGroup label="Lead Contact Phone">
+              <AdminInput 
+                value={leadPhone}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeadPhone(e.target.value)}
+                placeholder="+62..."
+              />
+            </FormGroup>
+            
+            <FormGroup label="Lead Contact Email">
+              <AdminInput 
+                value={leadEmail}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeadEmail(e.target.value)}
+                type="email"
+                placeholder="guest@example.com"
+              />
+            </FormGroup>
+
+            <FormGroup label="Pickup Location (AREA)">
+              <AdminInput 
+                value={pickupLocation}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPickupLocation(e.target.value)}
+                placeholder="e.g. SENGGIGI / BANGSAL"
+              />
+            </FormGroup>
           </AdminCardContent>
         </AdminCard>
 
@@ -472,11 +462,11 @@ export default function ManualRegistryPage() {
                   </div>
                   
                   <div>
-                    <FormGroup label="Age">
-                      <AdminInput 
-                        type="number"
-                        value={p.age}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePassengerChange(idx, 'age', Number(e.target.value))}
+                    <FormGroup label="Date of Birth">
+                      <AdminDatePicker 
+                        value={p.dateOfBirth as string || ''}
+                        onChange={(val: string) => handlePassengerChange(idx, 'dateOfBirth', val)}
+                        placeholder="Select Date"
                       />
                     </FormGroup>
                   </div>
@@ -486,16 +476,6 @@ export default function ManualRegistryPage() {
                       <AdminInput 
                         value={p.placeOfBirth as string || ''}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePassengerChange(idx, 'placeOfBirth', e.target.value)}
-                      />
-                    </FormGroup>
-                  </div>
-                  
-                  <div>
-                    <FormGroup label="Date of Birth">
-                      <AdminInput 
-                        type="date"
-                        value={p.dateOfBirth as string || ''}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePassengerChange(idx, 'dateOfBirth', e.target.value)}
                       />
                     </FormGroup>
                   </div>
@@ -525,7 +505,7 @@ export default function ManualRegistryPage() {
                     </FormGroup>
                   </div>
                   
-                  <div className="md:col-span-1 lg:col-span-2">
+                  <div className="md:col-span-1 lg:col-span-1">
                     <FormGroup label="Passport / ID Number">
                       <AdminInput 
                         value={p.passportNumber}
@@ -534,9 +514,9 @@ export default function ManualRegistryPage() {
                     </FormGroup>
                   </div>
                   
-                  <div className="md:col-span-2 lg:col-span-2">
+                  <div className="md:col-span-2 lg:col-span-4 mt-2">
                     <FormGroup label="Upload Document">
-                      <div className="relative h-10 w-full mt-1"> 
+                      <div className="relative h-[42px] w-full mt-1"> 
                         <input type="file" accept="image/*,.pdf" onChange={(e) => handleFileUpload(idx, e)} className="hidden" id={`passport-upload-${idx}`} />
                         <label htmlFor={`passport-upload-${idx}`} className={`flex items-center justify-center gap-2 h-full rounded-sm border cursor-pointer transition-all text-[10px] font-bold uppercase tracking-widest ${uploadingState[idx] ? 'border-[var(--color-gold-500)] bg-[var(--color-gold-50)] text-[var(--color-gold-600)]' : p.passportFileUrl ? 'border-green-500 bg-green-50 text-green-700 shadow-inner' : 'border-gray-300 hover:border-[var(--color-navy-800)] bg-white text-[var(--color-navy-900)]'}`}>
                           {uploadingState[idx] ? (<><Loader2 className="w-3 h-3 animate-spin" /> Uploading...</>) : p.passportFileUrl ? (<><CheckCircle2 className="w-3 h-3" /> Attached</>) : (<><UploadCloud className="w-3 h-3 text-gray-500" /> Upload File</>)}
