@@ -193,8 +193,33 @@ export default function AdminBookingsPage() {
     
     let paxNo = 1;
     let totalPriceSum = 0;
+    
+    // Aggregation objects for Summary
+    const sourceSummary: Record<string, { gross: number, net: number }> = {
+      AGENT: { gross: 0, net: 0 },
+      OFFICE: { gross: 0, net: 0 },
+      WEB: { gross: 0, net: 0 }
+    };
+    const cabinSummary: Record<string, number> = {};
 
     filteredBookings.forEach((b) => {
+      const bookingGross = b.basePrice || b.totalAmount;
+      const bookingNet = b.totalAmount;
+      
+      if (b.source === 'AGENT') {
+         sourceSummary.AGENT.gross += bookingGross;
+         sourceSummary.AGENT.net += bookingNet;
+      } else if (b.source === 'OFFICE') {
+         sourceSummary.OFFICE.gross += bookingGross;
+         sourceSummary.OFFICE.net += bookingNet;
+      } else {
+         sourceSummary.WEB.gross += bookingGross;
+         sourceSummary.WEB.net += bookingNet;
+      }
+      
+      const cabinClass = b.cabinClass || 'UNKNOWN';
+      if (!cabinSummary[cabinClass]) cabinSummary[cabinClass] = 0;
+      cabinSummary[cabinClass] += bookingGross;
       const basePerPax = b.paxCount > 0 ? (b.basePrice || b.totalAmount) / b.paxCount : 0;
       const discPerPax = b.paxCount > 0 ? (b.discountAmount || 0) / b.paxCount : 0;
       const pricePerPax = b.paxCount > 0 ? b.totalAmount / b.paxCount : 0;
@@ -259,6 +284,68 @@ export default function AdminBookingsPage() {
       sumRow.getCell(11).alignment = { horizontal: 'right' };
       sumRow.getCell(14).font = { bold: true };
       sumRow.getCell(14).alignment = { horizontal: 'center' };
+      worksheet.addRow([]);
+      worksheet.addRow([]);
+
+      // 1. REVENUE SUMMARY BY SOURCE
+      const sourceHeaderRow = worksheet.addRow([null, "REVENUE SUMMARY BY SOURCE", null, null]);
+      sourceHeaderRow.getCell(2).font = { bold: true, size: 12 };
+      sourceHeaderRow.getCell(2).alignment = { horizontal: 'left' };
+      worksheet.mergeCells(`B${sourceHeaderRow.number}:D${sourceHeaderRow.number}`);
+      
+      const sourceTableHeaderRow = worksheet.addRow([null, "SOURCE", "GROSS REVENUE (IDR)", "NET REVENUE (IDR)"]);
+      sourceTableHeaderRow.font = { bold: true };
+      sourceTableHeaderRow.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      sourceTableHeaderRow.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      sourceTableHeaderRow.getCell(4).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+
+      let totalGrossAll = 0;
+      let totalNetAll = 0;
+      ['AGENT', 'OFFICE', 'WEB'].forEach(src => {
+         const gross = sourceSummary[src].gross;
+         const net = sourceSummary[src].net;
+         totalGrossAll += gross;
+         totalNetAll += net;
+         const dataRow = worksheet.addRow([null, src, gross, net]);
+         dataRow.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+         dataRow.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+         dataRow.getCell(4).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      });
+      
+      const sourceTotalRow = worksheet.addRow([null, "TOTAL", totalGrossAll, totalNetAll]);
+      sourceTotalRow.font = { bold: true };
+      sourceTotalRow.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      sourceTotalRow.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      sourceTotalRow.getCell(4).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+
+      worksheet.addRow([]);
+      worksheet.addRow([]);
+
+      // 2. GROSS REVENUE BY CABIN CLASS
+      const cabinHeaderRow = worksheet.addRow([null, "GROSS REVENUE BY CABIN CLASS", null]);
+      cabinHeaderRow.getCell(2).font = { bold: true, size: 12 };
+      cabinHeaderRow.getCell(2).alignment = { horizontal: 'left' };
+      worksheet.mergeCells(`B${cabinHeaderRow.number}:C${cabinHeaderRow.number}`);
+
+      const cabinTableHeaderRow = worksheet.addRow([null, "CABIN CLASS", "GROSS REVENUE (IDR)"]);
+      cabinTableHeaderRow.font = { bold: true };
+      cabinTableHeaderRow.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      cabinTableHeaderRow.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+
+      let cabinGrossTotal = 0;
+      Object.keys(cabinSummary).sort().forEach(cabin => {
+         const gross = cabinSummary[cabin];
+         cabinGrossTotal += gross;
+         const dataRow = worksheet.addRow([null, cabin, gross]);
+         dataRow.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+         dataRow.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      });
+      
+      const cabinTotalRow = worksheet.addRow([null, "TOTAL", cabinGrossTotal]);
+      cabinTotalRow.font = { bold: true };
+      cabinTotalRow.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      cabinTotalRow.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+
       worksheet.addRow([]);
     }
 

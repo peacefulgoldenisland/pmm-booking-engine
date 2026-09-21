@@ -15,6 +15,7 @@ import { db, auth } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, runTransaction } from 'firebase/firestore';
 import type { VoyageSchedule, MasterCabin } from '@/types/voyage';
 import type { Passenger, BookingSource } from '@/types/booking';
+import type { TravelAgent } from '@/app/admin/(protected)/users/agents/page';
 import { logAuditTrail } from '@/lib/auditLogger';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -38,6 +39,7 @@ export default function ManualRegistryPage() {
   // Reference Data
   const [voyages, setVoyages] = useState<VoyageSchedule[]>([]);
   const [cabins, setCabins] = useState<MasterCabin[]>([]);
+  const [agents, setAgents] = useState<TravelAgent[]>([]);
 
   // Form State - Itinerary
   const [voyageId, setVoyageId] = useState('');
@@ -46,12 +48,13 @@ export default function ManualRegistryPage() {
   
   // Form State - Source & Pricing
   const [source, setSource] = useState<BookingSource>('AGENT');
+  const [selectedAgentId, setSelectedAgentId] = useState('');
   const [agentName, setAgentName] = useState('');
   const [basePricePerPax, setBasePricePerPax] = useState<number | ''>('');
   const [discountPerPax, setDiscountPerPax] = useState<number | ''>(900000);
 
   // Derived Total
-  const netTotal = (Number(basePricePerPax || 0) - (source === 'AGENT' ? Number(discountPerPax || 0) : 0)) * bookedUnits;
+  const netTotal = (Number(basePricePerPax || 0) - Number(discountPerPax || 0)) * bookedUnits;
 
   // Form State - Step 3 (Manifest)
   const [passengers, setPassengers] = useState<Passenger[]>([
@@ -68,16 +71,19 @@ export default function ManualRegistryPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [voyageSnap, cabinSnap] = await Promise.all([
+        const [voyageSnap, cabinSnap, agentSnap] = await Promise.all([
           getDocs(collection(db, 'voyages')),
-          getDocs(collection(db, 'products'))
+          getDocs(collection(db, 'products')),
+          getDocs(collection(db, 'agents'))
         ]);
         
         const fetchedVoyages = voyageSnap.docs.map(d => ({ id: d.id, ...d.data() } as VoyageSchedule));
         const fetchedCabins = cabinSnap.docs.map(d => ({ id: d.id, ...d.data() } as MasterCabin));
+        const fetchedAgents = agentSnap.docs.map(d => ({ id: d.id, ...d.data() } as TravelAgent));
         
         setVoyages(fetchedVoyages.sort((a, b) => a.id.localeCompare(b.id)));
         setCabins(fetchedCabins);
+        setAgents(fetchedAgents.sort((a, b) => a.name.localeCompare(b.name)));
       } catch (error) {
         console.error("Error fetching reference data", error);
       } finally {
@@ -206,7 +212,7 @@ export default function ManualRegistryPage() {
           contactEmail: leadEmail || 'manual@offline.com',
           contactPhone: leadPhone || '-',
           basePrice: Number(basePricePerPax) * passengers.length,
-          discountAmount: (source === 'AGENT' ? Number(discountPerPax) : 0) * passengers.length,
+          discountAmount: Number(discountPerPax) * passengers.length,
           totalAmount: netTotal,
           paymentMethod: 'OFFLINE',
           createdAt: new Date().toISOString(),
@@ -255,12 +261,12 @@ export default function ManualRegistryPage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         
-        {/* STEP 1: ITINERARY & PRICING */}
+        {/* STEP 1: BOOKING SOURCE & LEAD CONTACT */}
         <AdminCard>
           <AdminCardHeader>
             <AdminCardTitle className="flex items-center gap-2 text-[var(--color-navy-900)]">
               <span className="w-6 h-6 rounded-full bg-[var(--color-gold-500)] text-white flex items-center justify-center text-xs font-bold">1</span>
-              Source, Trip & Pricing
+              Booking Source & Lead Contact
             </AdminCardTitle>
           </AdminCardHeader>
           <AdminCardContent className="space-y-6">
@@ -271,29 +277,87 @@ export default function ManualRegistryPage() {
                   value={source} 
                   onChange={(val: string) => {
                     setSource(val as BookingSource);
-                    if (val !== 'AGENT') setDiscountPerPax(0);
-                    else setDiscountPerPax(900000);
+                    if (val === 'OFFICE') {
+                      setDiscountPerPax(0);
+                      setLeadEmail(currentUser?.email || '');
+                      setLeadPhone(currentUser?.phone || '');
+                    } else {
+                      setDiscountPerPax(900000);
+                      setLeadEmail('');
+                      setLeadPhone('');
+                      setPickupLocation('');
+                      setSelectedAgentId('');
+                      setAgentName('');
+                    }
                   }}
                   options={[
                     { value: 'AGENT', label: 'Travel Agent' },
-                    { value: 'OFFICE', label: 'Internal Office (Walk-in)' },
-                    { value: 'WEB', label: 'Web / Direct' }
+                    { value: 'OFFICE', label: 'Internal Office (Walk-in)' }
                   ]}
                 />
               </FormGroup>
-              
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {source === 'AGENT' && (
-                <FormGroup label="Agent Name" required>
-                  <AdminInput 
-                    value={agentName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgentName(e.target.value)}
-                    placeholder="e.g. AZMI / KOPANG"
-                    required
+                <FormGroup label="Select Registered Agent" required>
+                  <AdminSelect 
+                    value={selectedAgentId}
+                    onChange={(val: string) => {
+                      setSelectedAgentId(val);
+                      const agent = agents.find(a => a.id === val);
+                      if (agent) {
+                        setAgentName(agent.name);
+                        setLeadEmail(agent.email || '');
+                        setLeadPhone(agent.phone || '');
+                        setPickupLocation(agent.defaultPickupLocation || '');
+                        setDiscountPerPax(agent.defaultDiscount || 0);
+                      }
+                    }}
+                    placeholder="Choose an agent..."
+                    options={agents.map(a => ({ value: a.id, label: `${a.name} ${a.companyName ? `(${a.companyName})` : ''}` }))}
                   />
                 </FormGroup>
               )}
-            </div>
 
+              <FormGroup label="Lead Contact Phone">
+                <AdminInput 
+                  value={leadPhone}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeadPhone(e.target.value)}
+                  placeholder="+62..."
+                />
+              </FormGroup>
+              
+              <FormGroup label="Lead Contact Email">
+                <AdminInput 
+                  value={leadEmail}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeadEmail(e.target.value)}
+                  type="email"
+                  placeholder="guest@example.com"
+                />
+              </FormGroup>
+
+              <FormGroup label="Pickup Location (AREA)">
+                <AdminInput 
+                  value={pickupLocation}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPickupLocation(e.target.value)}
+                  placeholder="e.g. SENGGIGI / BANGSAL"
+                />
+              </FormGroup>
+            </div>
+          </AdminCardContent>
+        </AdminCard>
+
+        {/* STEP 2: ITINERARY & PRICING */}
+        <AdminCard>
+          <AdminCardHeader>
+            <AdminCardTitle className="flex items-center gap-2 text-[var(--color-navy-900)]">
+              <span className="w-6 h-6 rounded-full bg-[var(--color-gold-500)] text-white flex items-center justify-center text-xs font-bold">2</span>
+              Trip Itinerary & Pricing
+            </AdminCardTitle>
+          </AdminCardHeader>
+          <AdminCardContent className="space-y-6">
+            
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex flex-col gap-2">
                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
@@ -310,7 +374,13 @@ export default function ManualRegistryPage() {
               <FormGroup label="Cabin Assigned" required>
                 <AdminSelect 
                   value={cabinId} 
-                  onChange={(val: string) => setCabinId(val)}
+                  onChange={(val: string) => {
+                    setCabinId(val);
+                    const selectedCabin = cabins.find(c => c.id === val);
+                    if (selectedCabin && selectedCabin.price) {
+                      setBasePricePerPax(selectedCabin.price);
+                    }
+                  }}
                   placeholder="Select Cabin"
                   options={cabins.map(c => ({ value: c.id, label: c.name }))}
                 />
@@ -349,20 +419,16 @@ export default function ManualRegistryPage() {
                 />
               </FormGroup>
 
-              {source === 'AGENT' ? (
-                <FormGroup label="Agent Discount / Pax (IDR)">
-                  <AdminInput 
-                    type="number"
-                    value={discountPerPax}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDiscountPerPax(e.target.value ? Number(e.target.value) : '')}
-                    placeholder="900000"
-                    leftIcon={<Minus className="w-4 h-4 text-gray-400" />}
-                    className="text-red-600 bg-red-50"
-                  />
-                </FormGroup>
-              ) : (
-                <div className="hidden md:block"></div>
-              )}
+              <FormGroup label={source === 'AGENT' ? "Agent Discount / Pax (IDR)" : "Office Discount / Pax (IDR)"}>
+                <AdminInput 
+                  type="number"
+                  value={discountPerPax}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDiscountPerPax(e.target.value ? Number(e.target.value) : '')}
+                  placeholder={source === 'AGENT' ? "900000" : "0"}
+                  leftIcon={<Minus className="w-4 h-4 text-gray-400" />}
+                  className="text-red-600 bg-red-50"
+                />
+              </FormGroup>
 
               <FormGroup label="Net Total (IDR)">
                 <div className="flex items-center h-[42px] px-3 bg-[var(--color-navy-900)] text-white rounded-sm font-mono font-bold text-lg">
@@ -371,42 +437,6 @@ export default function ManualRegistryPage() {
               </FormGroup>
             </div>
             
-          </AdminCardContent>
-        </AdminCard>
-
-        {/* STEP 2: LEAD CONTACT */}
-        <AdminCard>
-          <AdminCardHeader>
-            <AdminCardTitle className="flex items-center gap-2 text-[var(--color-navy-900)]">
-              <span className="w-6 h-6 rounded-full bg-[var(--color-gold-500)] text-white flex items-center justify-center text-xs font-bold">2</span>
-              Lead Contact & Logistic
-            </AdminCardTitle>
-          </AdminCardHeader>
-          <AdminCardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FormGroup label="Lead Contact Phone">
-              <AdminInput 
-                value={leadPhone}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeadPhone(e.target.value)}
-                placeholder="+62..."
-              />
-            </FormGroup>
-            
-            <FormGroup label="Lead Contact Email">
-              <AdminInput 
-                value={leadEmail}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLeadEmail(e.target.value)}
-                type="email"
-                placeholder="guest@example.com"
-              />
-            </FormGroup>
-
-            <FormGroup label="Pickup Location (AREA)">
-              <AdminInput 
-                value={pickupLocation}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPickupLocation(e.target.value)}
-                placeholder="e.g. SENGGIGI / BANGSAL"
-              />
-            </FormGroup>
           </AdminCardContent>
         </AdminCard>
 

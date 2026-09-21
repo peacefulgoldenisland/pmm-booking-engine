@@ -130,6 +130,12 @@ service cloud.firestore {
       allow update, delete: if false; // Audit logs bersifat immutable
     }
 
+    // 11. Travel Agents
+    match /agents/{document=**} {
+      allow read: if true; 
+      allow write: if isAdmin();
+    }
+
     // Blokir default untuk koleksi lain yang tidak terdaftar
     match /{document=**} {
       allow read, write: if false;

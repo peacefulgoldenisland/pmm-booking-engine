@@ -141,6 +141,21 @@ export default function AdminSidebar() {
                 </Link>
               )}
 
+              {hasAccess('staff') && (
+                <Link 
+                  href="/admin/users/agents" 
+                  className={`flex items-center gap-3 py-2 px-3 ml-[21px] rounded-sm text-xs font-semibold transition-all relative ${
+                    pathname.startsWith('/admin/users/agents')
+                      ? "text-[var(--color-gold-500)] bg-white/5" 
+                      : "text-gray-500 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <div className={`absolute -left-[14px] w-[12px] h-[1px] bg-white/10 ${pathname.startsWith('/admin/users/agents') && "bg-[var(--color-gold-500)]"}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${pathname.startsWith('/admin/users/agents') ? "bg-[var(--color-gold-500)] shadow-[0_0_8px_var(--color-gold-500)]" : "bg-gray-600"}`} />
+                  <span className="whitespace-nowrap">Travel Agents</span>
+                </Link>
+              )}
+
             </div>
           </div>
         )}
