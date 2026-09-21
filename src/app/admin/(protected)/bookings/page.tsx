@@ -291,7 +291,7 @@ export default function AdminBookingsPage() {
       sumRow.getCell(15).font = { bold: true };
       sumRow.getCell(15).alignment = { horizontal: 'right' };
       
-      columnsWithBorder.forEach(colNum => {
+      [10, 11, 12, 13, 14, 15].forEach(colNum => {
          sumRow.getCell(colNum).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
       });
       worksheet.addRow([]);
