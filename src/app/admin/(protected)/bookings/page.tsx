@@ -136,29 +136,27 @@ export default function AdminBookingsPage() {
     worksheet.columns = isSyahbandar ? [
       { width: 5 },   // A: NO
       { width: 30 },  // B: NAMA
-      { width: 3 },   // C: empty space
+      { width: 25 },  // C: KELAS
+      { width: 5 },   // D: F/M
+      { width: 14 },  // E: UMUR (THN)
+      { width: 15 },  // F: NO PASSPOR
+      { width: 15 },  // G: KEBANGSAAN
+    ] : [
+      { width: 5 },   // A: NO
+      { width: 18 },  // B: TANGGAL DIBUAT
+      { width: 30 },  // C: NAMA
       { width: 25 },  // D: KELAS
       { width: 5 },   // E: F/M
       { width: 14 },  // F: UMUR (THN)
       { width: 15 },  // G: NO PASSPOR
       { width: 15 },  // H: KEBANGSAAN
-    ] : [
-      { width: 5 },   // A: NO
-      { width: 18 },  // B: TANGGAL DIBUAT
-      { width: 30 },  // C: NAMA
-      { width: 3 },   // D: empty space
-      { width: 25 },  // E: KELAS
-      { width: 5 },   // F: F/M
-      { width: 14 },  // G: UMUR (THN)
-      { width: 15 },  // H: NO PASSPOR
-      { width: 15 },  // I: KEBANGSAAN
-      { width: 15 },  // J: AGENT/WEB
-      { width: 15 },  // K: AREA
-      { width: 15 },  // L: BASE PRICE
-      { width: 12 },  // M: DISC/PAX
-      { width: 15 },  // N: NET/PAX (OFFICE)
-      { width: 15 },  // O: NET/PAX (AGENT)
-      { width: 15 }   // P: NET/PAX (WEB)
+      { width: 15 },  // I: AGENT/WEB
+      { width: 15 },  // J: AREA
+      { width: 15 },  // K: BASE PRICE
+      { width: 12 },  // L: DISC/PAX
+      { width: 15 },  // M: NET/PAX (OFFICE)
+      { width: 15 },  // N: NET/PAX (AGENT)
+      { width: 15 }   // O: NET/PAX (WEB)
     ];
 
     // Build Syahbandar specific header format
@@ -174,8 +172,8 @@ export default function AdminBookingsPage() {
     });
 
     const headerFields = isSyahbandar 
-      ? ["NO.", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN"]
-      : ["NO.", "TANGGAL DIBUAT", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN", "AGENT/WEB", "AREA", "BASE PRICE", "DISC/PAX", "NET/PAX (OFFICE)", "NET/PAX (AGENT)", "NET/PAX (WEB)"];
+      ? ["NO.", "NAMA ", "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN"]
+      : ["NO.", "TANGGAL DIBUAT", "NAMA ", "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN", "AGENT/WEB", "AREA", "BASE PRICE", "DISC/PAX", "NET/PAX (OFFICE)", "NET/PAX (AGENT)", "NET/PAX (WEB)"];
 
     const headerRow = worksheet.addRow(headerFields);
     headerRow.font = { bold: true };
@@ -183,8 +181,8 @@ export default function AdminBookingsPage() {
     
     // Apply borders to headerRow (only columns that have text or are part of the table body)
     const columnsWithBorder = isSyahbandar 
-      ? [1, 2, 4, 5, 6, 7, 8]
-      : [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+      ? [1, 2, 3, 4, 5, 6, 7]
+      : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
       
     columnsWithBorder.forEach(colNum => {
        const cell = headerRow.getCell(colNum);
@@ -242,7 +240,6 @@ export default function AdminBookingsPage() {
           ? [
               paxNo++,
               pax.fullName || '',
-              null,
               b.cabinClass || '',
               pax.gender || '',
               pax.age ? `${pax.age} THN` : '',
@@ -253,7 +250,6 @@ export default function AdminBookingsPage() {
               paxNo++,
               orderDate,
               pax.fullName || '',
-              null,
               b.cabinClass || '',
               pax.gender || '',
               pax.age ? `${pax.age} THN` : '',
@@ -275,7 +271,7 @@ export default function AdminBookingsPage() {
            dataRow.getCell(colNum).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         });
         
-        const centerColumns = isSyahbandar ? [1, 4, 5, 6] : [1, 2, 6, 7];
+        const centerColumns = isSyahbandar ? [1, 3, 4, 5] : [1, 2, 5, 6];
         centerColumns.forEach(colNum => {
            dataRow.getCell(colNum).alignment = { horizontal: 'center' };
         });
@@ -287,15 +283,15 @@ export default function AdminBookingsPage() {
     worksheet.addRow([]); // Empty row
     
     if (!isSyahbandar) {
-      const sumRow = worksheet.addRow([null, null, null, null, null, null, null, null, null, null, "TOTAL", null, null, sourceSummary.OFFICE.net, sourceSummary.AGENT.net, sourceSummary.WEB.net]);
-      sumRow.getCell(11).font = { bold: true };
-      sumRow.getCell(11).alignment = { horizontal: 'right' };
+      const sumRow = worksheet.addRow([null, null, null, null, null, null, null, null, null, "TOTAL", null, null, sourceSummary.OFFICE.net, sourceSummary.AGENT.net, sourceSummary.WEB.net]);
+      sumRow.getCell(10).font = { bold: true };
+      sumRow.getCell(10).alignment = { horizontal: 'right' };
+      sumRow.getCell(13).font = { bold: true };
+      sumRow.getCell(13).alignment = { horizontal: 'center' };
       sumRow.getCell(14).font = { bold: true };
       sumRow.getCell(14).alignment = { horizontal: 'center' };
       sumRow.getCell(15).font = { bold: true };
       sumRow.getCell(15).alignment = { horizontal: 'center' };
-      sumRow.getCell(16).font = { bold: true };
-      sumRow.getCell(16).alignment = { horizontal: 'center' };
       worksheet.addRow([]);
       worksheet.addRow([]);
 
