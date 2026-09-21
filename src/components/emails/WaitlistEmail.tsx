@@ -24,14 +24,14 @@ export const WaitlistEmail: React.FC<WaitlistEmailProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>Your PMM Booking Waitlist Status</Preview>
+      <Preview>Your PGI Booking Waitlist Status</Preview>
       <Body style={main}>
         <Container style={container}>
           
           {/* HEADER: LUXURY BRANDING */}
           <Section style={headerSection}>
             <Text style={logoText}>
-              PMM <span style={logoAccent}>BOOKING</span>
+              PGI <span style={logoAccent}>BOOKING</span>
             </Text>
             <Text style={headerSubtitle}>WAITLIST CONFIRMATION</Text>
           </Section>
@@ -85,18 +85,18 @@ export const WaitlistEmail: React.FC<WaitlistEmailProps> = ({
             <Text style={closing}>
               If you need to change your plans or check other dates, please feel free to reach out to us.<br/><br/>
               Warm regards,<br/>
-              <strong>The PMM Booking Team</strong>
+              <strong>The PGI Booking Team</strong>
             </Text>
           </Section>
 
           {/* FOOTER */}
           <Section style={footerSection}>
             <Text style={footerText}>
-              PMM Voyage | Komodo Trips<br/>
+              PGI Voyage | Komodo Trips<br/>
               Need assistance? Contact our 24/7 support at <Link href="tel:+6281234567890" style={footerLink}>+62 812-3456-7890</Link> or reply to this email.
             </Text>
             <Text style={footerCopyright}>
-              &copy; {new Date().getFullYear()} PMM Booking. All rights reserved.
+              &copy; {new Date().getFullYear()} PGI Booking. All rights reserved.
             </Text>
           </Section>
 

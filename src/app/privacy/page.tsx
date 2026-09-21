@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy | PMM Booking',
-  description: 'Privacy Policy and Terms of Service for PMM Booking',
+  title: 'Privacy Policy | PGI Booking',
+  description: 'Privacy Policy and Terms of Service for PGI Booking',
 };
 
 export default function PrivacyPage() {
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           <p>Last updated: {new Date().toLocaleDateString()}</p>
           
           <h2 className="text-lg font-bold text-gray-900 mt-6">1. Introduction</h2>
-          <p>Welcome to Peaceful Golden Island (PMM Booking). We respect your privacy and are committed to protecting your personal data.</p>
+          <p>Welcome to Peaceful Golden Island (PGI Booking). We respect your privacy and are committed to protecting your personal data.</p>
           
           <h2 className="text-lg font-bold text-gray-900 mt-6">2. Data We Collect</h2>
           <p>When you use Google Sign-In, we collect your basic profile information such as your name, email address, and profile picture to create and manage your account.</p>

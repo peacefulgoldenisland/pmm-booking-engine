@@ -117,7 +117,7 @@ export async function POST(request: Request) {
             currency_code: 'USD',
             value: usdAmount,
           },
-          description: `PMM Voyage - ${bookingData?.cabinClass} (${bookingData?.paxCount} Pax)`,
+          description: `PGI Voyage - ${bookingData?.cabinClass} (${bookingData?.paxCount} Pax)`,
         },
       ],
     };

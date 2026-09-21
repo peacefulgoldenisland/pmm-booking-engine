@@ -6,7 +6,7 @@ interface AdminBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 function AdminBadge({ className, variant = "default", ...props }: AdminBadgeProps) {
-  // Styling khas PMM Admin (Solid, Elegan, Pastel untuk Background)
+  // Styling khas PGI Admin (Solid, Elegan, Pastel untuk Background)
   const variants = {
     default: "bg-gray-100 text-gray-700 border-gray-200 shadow-sm",
     success: "bg-green-50 text-green-700 border-green-200 shadow-sm",

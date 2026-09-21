@@ -124,7 +124,7 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
 
               <div className="bg-[var(--color-surface-50)] p-6 border border-gray-100 rounded-sm hover:border-[var(--color-gold-300)] transition-colors">
                 <p className="text-[9px] uppercase font-bold text-gray-400 tracking-widest mb-2">Account Name</p>
-                <p className="text-lg font-serif text-[var(--color-navy-900)] truncate">PT. PMM Voyage Indonesia</p>
+                <p className="text-lg font-serif text-[var(--color-navy-900)] truncate">PT. PGI Voyage Indonesia</p>
               </div>
 
               <div className="md:col-span-2 bg-[var(--color-surface-50)] p-6 md:p-8 border border-gray-100 rounded-sm hover:border-[var(--color-gold-300)] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -148,7 +148,7 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
                 <QrCode className="w-4 h-4 text-[var(--color-gold-500)]" /> Pay via QRIS
               </h3>
               <div className="bg-[var(--color-surface-50)] p-6 inline-block border border-gray-200 mb-4 rounded-sm shadow-inner">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QRIS PMM Voyage" className="w-48 h-48 object-contain mix-blend-multiply" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QRIS PGI Voyage" className="w-48 h-48 object-contain mix-blend-multiply" />
               </div>
               <p className="text-xs text-gray-500 font-light leading-relaxed max-w-sm mx-auto">Scan this code using any e-wallet app (GoPay, OVO, Dana, etc).</p>
             </div>
@@ -166,7 +166,7 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
             
             <div className="flex flex-col gap-4 max-w-sm mx-auto">
               <a 
-                href={`https://wa.me/${adminWaNumber}?text=Hello PMM Voyage, I would like to confirm my booking with Reference: ${bookingData.bookingId}`}
+                href={`https://wa.me/${adminWaNumber}?text=Hello PGI Voyage, I would like to confirm my booking with Reference: ${bookingData.bookingId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:border-green-300 py-4 px-6 rounded-sm font-bold text-[11px] uppercase tracking-widest transition-all"

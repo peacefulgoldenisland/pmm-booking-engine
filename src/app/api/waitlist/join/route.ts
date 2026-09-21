@@ -42,9 +42,9 @@ export async function POST(request: Request) {
     // 2. Kirim Email Konfirmasi via Resend
     if (process.env.RESEND_API_KEY) {
       await resend.emails.send({
-        from: 'PMM Reserve <onboarding@resend.dev>', 
+        from: 'PGI Reserve <onboarding@resend.dev>', 
         to: email,
-        subject: `[Waitlist] PMM Reserve - ${cabinClass}`,
+        subject: `[Waitlist] PGI Reserve - ${cabinClass}`,
         react: React.createElement(WaitlistEmail, {
           customerName: name,
           departureDate: dateOfDeparture,

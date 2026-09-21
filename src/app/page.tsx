@@ -205,7 +205,7 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <Ship className="w-5 h-5 text-[var(--color-gold-500)]" />
               <span className="text-lg tracking-widest text-white flex items-center gap-2">
-                <span className="font-bold uppercase">PMM</span> 
+                <span className="font-bold uppercase">PGI</span> 
                 <span className="font-serif italic text-[var(--color-gold-500)] lowercase text-xl relative top-[1px]">Booking</span>
               </span>
             </div>

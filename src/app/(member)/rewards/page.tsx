@@ -184,7 +184,7 @@ export default function RewardsPage() {
         <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-[var(--color-gold-500)]/10 text-[var(--color-gold-400)] font-bold text-[10px] uppercase tracking-widest mb-4 border border-[var(--color-gold-500)]/20">
-              <Crown className="w-3.5 h-3.5" /> PMM Rewards
+              <Crown className="w-3.5 h-3.5" /> PGI Rewards
             </div>
             <h1 className="text-4xl lg:text-5xl font-serif text-white leading-tight mb-3">Rewards Catalog</h1>
             <p className="text-gray-400 font-light text-sm max-w-lg leading-relaxed">

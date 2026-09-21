@@ -34,7 +34,7 @@ export default function LoginPage() {
           <div onClick={() => router.push('/')} className="inline-flex items-center gap-3 cursor-pointer group">
             <Ship className="w-8 h-8 text-[var(--color-gold-500)] group-hover:scale-105 transition-transform duration-300" />
             <span className="text-2xl tracking-widest text-white uppercase flex items-center gap-2">
-              <span className="font-bold">PMM</span> 
+              <span className="font-bold">PGI</span> 
               <span className="font-serif italic text-[var(--color-gold-500)] lowercase text-3xl relative top-[2px]">Reserve</span>
             </span>
           </div>
@@ -76,7 +76,7 @@ export default function LoginPage() {
           <div className="flex lg:hidden items-center gap-2">
             <Ship className="w-5 h-5 text-[var(--color-gold-500)]" />
             <span className="text-sm tracking-widest text-[var(--color-navy-900)] uppercase font-bold">
-              PMM <span className="font-serif italic text-[var(--color-gold-600)] lowercase">Reserve</span>
+              PGI <span className="font-serif italic text-[var(--color-gold-600)] lowercase">Reserve</span>
             </span>
           </div>
         </div>

@@ -10,7 +10,7 @@ interface AdminButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
 const AdminButton = React.forwardRef<HTMLButtonElement, AdminButtonProps>(
   ({ className, variant = "primary", size = "md", isLoading, children, ...props }, ref) => {
     
-    // Base style khas PMM Admin (Solid, Elegan, Rapi)
+    // Base style khas PGI Admin (Solid, Elegan, Rapi)
     const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-sm font-bold uppercase tracking-widest transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]";
     
     const variants = {

@@ -21,7 +21,7 @@ export default function NewSchedulePage() {
   
   const [formData, setFormData] = useState({
     dateStr: '',
-    shipName: 'PMM Phinisi',
+    shipName: 'PGI Phinisi',
   });
   const [errorMsg, setErrorMsg] = useState('');
 

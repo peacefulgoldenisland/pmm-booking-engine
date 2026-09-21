@@ -2,7 +2,7 @@ import { FirebaseTimestamp } from './common';
 import type { Booking } from './booking'; // Nanti akan diimport saat booking.ts selesai dibuat
 
 /**
- * Role yang tersedia di dalam sistem PMM Booking Engine.
+ * Role yang tersedia di dalam sistem PGI Booking Engine.
  */
 export type Role = 'superadmin' | 'admin' | 'member' | 'agent';
 

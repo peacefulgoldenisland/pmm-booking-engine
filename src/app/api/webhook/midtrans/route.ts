@@ -96,9 +96,9 @@ export async function POST(request: Request) {
           } else {
             // Gunakan format destructuring { data, error } dari Resend SDK
             const { data, error } = await resend.emails.send({
-              from: 'PMM Reserve <onboarding@resend.dev>', 
+              from: 'PGI Reserve <onboarding@resend.dev>', 
               to: bookingData?.contactEmail,
-              subject: `[CONFIRMED] E-Ticket PMM Reserve - ${order_id}`,
+              subject: `[CONFIRMED] E-Ticket PGI Reserve - ${order_id}`,
               // Menggunakan React.createElement agar aman di dalam file .ts
               react: React.createElement(TicketEmail, {
                 orderId: order_id,

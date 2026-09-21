@@ -19,7 +19,7 @@ const jakarta = Plus_Jakarta_Sans({
 
 // 3. Update Meta Data Enterprise
 export const metadata: Metadata = {
-  title: "PMM Voyage | Booking",
+  title: "PGI Voyage | Booking",
   description: "Book your private cabin for an unforgettable trip in Labuan Bajo.",
 };
 

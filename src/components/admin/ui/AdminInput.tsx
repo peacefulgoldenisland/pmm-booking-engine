@@ -21,7 +21,7 @@ const AdminInput = React.forwardRef<HTMLInputElement, AdminInputProps>(
         <input
           type={type}
           className={cn(
-            // Solid Clean Styling (PMM Admin Theme)
+            // Solid Clean Styling (PGI Admin Theme)
             "flex w-full rounded-sm border border-gray-200 bg-white py-3 text-sm font-medium text-[var(--color-navy-900)] transition-all duration-200 shadow-sm",
             "placeholder:text-gray-400 placeholder:font-normal",
             

@@ -128,7 +128,7 @@ export function DashboardHeader() {
             <Ship className={`w-5 h-5 transition-colors ${isScrolled ? 'text-[var(--color-gold-500)]' : 'text-[var(--color-gold-400)]'}`} />
           </div>
           <span className="text-xl tracking-widest uppercase hidden md:flex items-center gap-2">
-            <span className={`font-sans font-bold transition-colors ${isScrolled ? 'text-white' : 'text-[var(--color-navy-900)]'}`}>PMM</span> 
+            <span className={`font-sans font-bold transition-colors ${isScrolled ? 'text-white' : 'text-[var(--color-navy-900)]'}`}>PGI</span> 
             <span className={`font-serif italic lowercase text-2xl relative top-[2px] transition-colors ${isScrolled ? 'text-[var(--color-gold-500)]' : 'text-[var(--color-gold-600)]'}`}>Booking</span>
           </span>
         </div>

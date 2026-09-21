@@ -13,7 +13,7 @@ interface TicketEmailProps {
 }
 
 export const TicketEmail: React.FC<TicketEmailProps> = ({
-  orderId = "PMM-12345",
+  orderId = "PGI-12345",
   customerName = "Guest",
   departureDate = new Date().toISOString(),
   cabinClass = "Private Sea View",
@@ -28,14 +28,14 @@ export const TicketEmail: React.FC<TicketEmailProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>Your PMM Booking E-Ticket & Itinerary</Preview>
+      <Preview>Your PGI Booking E-Ticket & Itinerary</Preview>
       <Body style={main}>
         <Container style={container}>
           
           {/* HEADER: LUXURY BRANDING */}
           <Section style={headerSection}>
             <Text style={logoText}>
-              PMM <span style={logoAccent}>BOOKING</span>
+              PGI <span style={logoAccent}>BOOKING</span>
             </Text>
             <Text style={headerSubtitle}>YOUR E-TICKET</Text>
           </Section>
@@ -102,18 +102,18 @@ export const TicketEmail: React.FC<TicketEmailProps> = ({
             <Text style={closing}>
               We look forward to welcoming you on board. Have a wonderful trip!<br/><br/>
               Warm regards,<br/>
-              <strong>The PMM Booking Team</strong>
+              <strong>The PGI Booking Team</strong>
             </Text>
           </Section>
 
           {/* FOOTER */}
           <Section style={footerSection}>
             <Text style={footerText}>
-              PMM Voyage | Komodo Trips<br/>
+              PGI Voyage | Komodo Trips<br/>
               Need assistance? Contact our 24/7 support at <Link href="tel:+6281234567890" style={footerLink}>+62 812-3456-7890</Link> or reply to this email.
             </Text>
             <Text style={footerCopyright}>
-              &copy; {new Date().getFullYear()} PMM Booking. All rights reserved.
+              &copy; {new Date().getFullYear()} PGI Booking. All rights reserved.
             </Text>
           </Section>
 

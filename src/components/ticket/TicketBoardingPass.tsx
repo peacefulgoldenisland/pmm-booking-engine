@@ -41,7 +41,7 @@ export function TicketBoardingPass({ booking }: TicketBoardingPassProps) {
               <Ship className="w-8 h-8 text-[var(--color-navy-900)]" />
             </div>
             <div>
-              <h1 className="text-3xl font-serif text-[var(--color-navy-900)] tracking-tight uppercase">PMM Booking</h1>
+              <h1 className="text-3xl font-serif text-[var(--color-navy-900)] tracking-tight uppercase">PGI Booking</h1>
               <p className="text-[9px] font-bold text-gray-500 tracking-widest uppercase mt-1">E-Ticket</p>
             </div>
           </div>

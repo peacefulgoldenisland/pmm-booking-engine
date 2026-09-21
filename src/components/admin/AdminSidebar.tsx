@@ -83,7 +83,7 @@ export default function AdminSidebar() {
             <Anchor className="w-5 h-5 text-[var(--color-gold-400)]" />
           </div>
           <div className="whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">
-            <h1 className="font-serif text-lg tracking-widest text-white leading-tight">PMM</h1>
+            <h1 className="font-serif text-lg tracking-widest text-white leading-tight">PGI</h1>
             <p className="text-[9px] uppercase tracking-widest text-[var(--color-gold-400)] font-bold">Admin Portal</p>
           </div>
         </Link>

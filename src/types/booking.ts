@@ -26,7 +26,7 @@ export interface Passenger {
  */
 export interface Booking {
   id: string; // Document ID
-  bookingId: string; // Format manusia (e.g. PMM-12345)
+  bookingId: string; // Format manusia (e.g. PGI-12345)
   userId: string; // Relasi ke dokumen User
   
   status: BookingStatus;

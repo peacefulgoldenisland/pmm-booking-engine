@@ -1,6 +1,6 @@
-# 🗺️ PMM Booking Engine - Master Roadmap
+# 🗺️ PGI Booking Engine - Master Roadmap
 
-Roadmap ini merupakan rencana kerja skala besar (*Grand Blueprint*) untuk mengembangkan sistem PMM Booking Engine dari aplikasi pemesanan statis menjadi sistem manajemen operasi penuh yang terintegrasi (Dinamis, Offline/Online tersinkronisasi, dan Analitik Visual).
+Roadmap ini merupakan rencana kerja skala besar (*Grand Blueprint*) untuk mengembangkan sistem PGI Booking Engine dari aplikasi pemesanan statis menjadi sistem manajemen operasi penuh yang terintegrasi (Dinamis, Offline/Online tersinkronisasi, dan Analitik Visual).
 
 Setiap fase di bawah ini akan dipecah menjadi **Implementation Plan** tersendiri sebelum mulai dieksekusi.
 

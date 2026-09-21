@@ -32,7 +32,7 @@ export type VoyageStatus = 'SCHEDULED' | 'DEPARTED' | 'CANCELLED';
 export interface VoyageSchedule {
   id: string; // Format YYYY-MM-DD (contoh: '2026-10-15')
   departureDate: Date | FirebaseTimestamp | string;
-  shipName: string; // Contoh: 'PMM Phinisi'
+  shipName: string; // Contoh: 'PGI Phinisi'
   status: VoyageStatus;
   
   /**

@@ -158,7 +158,7 @@ export default function ManualRegistryPage() {
       
       const adminUser = auth.currentUser;
       const cabinName = cabins.find(c => c.id === cabinId)?.name || cabinId;
-      const generatedBookingId = `PMM-${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 100)}`;
+      const generatedBookingId = `PGI-${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 100)}`;
 
       await runTransaction(db, async (transaction) => {
         const voyageRef = doc(db, 'voyages', voyageId);
@@ -175,7 +175,7 @@ export default function ManualRegistryPage() {
           const newVoyage = {
             id: voyageId,
             departureDate: voyageId,
-            shipName: 'PMM Phinisi', // Default
+            shipName: 'PGI Phinisi', // Default
             status: 'SCHEDULED',
             cabinQuotas: cabinQuotas,
             createdAt: new Date().toISOString(),

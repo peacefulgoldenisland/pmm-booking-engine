@@ -52,8 +52,8 @@ export async function POST(request: Request) {
 
     // 1. Validasi Keberadaan User (Telah ditangani oleh Firebase Auth Token)
 
-    // 2. Generate Order ID Unik (Misal: PMM-1704209123-ABCD)
-    const orderId = `PMM-${Date.now()}-${uuidv4().substring(0, 4).toUpperCase()}`;
+    // 2. Generate Order ID Unik (Misal: PGI-1704209123-ABCD)
+    const orderId = `PGI-${Date.now()}-${uuidv4().substring(0, 4).toUpperCase()}`;
     
     // 3. Validasi Metode Pembayaran (Blokir paksa jika ada yang iseng injek Midtrans dari console)
     const paymentMethod = booking.paymentMethod || 'DIRECT_TRANSFER';
