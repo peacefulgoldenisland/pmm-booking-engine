@@ -207,9 +207,9 @@ export default function Home() {
               <Image 
                 src="/images/logo-light.png" 
                 alt="PGI Reserve" 
-                width={140} 
-                height={40} 
-                className="h-8 w-auto object-contain"
+                width={200} 
+                height={60} 
+                className="h-11 w-auto object-contain"
                 priority
               />
             </div>

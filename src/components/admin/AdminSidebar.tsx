@@ -86,13 +86,13 @@ export default function AdminSidebar() {
              </div>
           </div>
           
-          <div className="absolute left-0 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 w-full px-2 flex items-center">
+          <div className="absolute left-0 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 w-full px-2 flex items-center pt-2">
             <Image 
               src="/images/logo-light.png" 
               alt="PGI Reserve" 
-              width={160} 
-              height={50} 
-              className="h-10 w-auto object-contain"
+              width={220} 
+              height={80} 
+              className="h-16 w-auto object-contain"
             />
           </div>
         </Link>
