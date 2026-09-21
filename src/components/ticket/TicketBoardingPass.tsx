@@ -3,6 +3,7 @@ import {
   Ship, MapPin, Calendar, Clock, 
   Anchor, ShieldCheck 
 } from 'lucide-react';
+import Image from 'next/image';
 import type { Booking } from '@/types/booking';
 
 interface TicketBoardingPassProps {
@@ -36,13 +37,16 @@ export function TicketBoardingPass({ booking }: TicketBoardingPassProps) {
         
         {/* HEADER: LOGO & STATUS */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-gray-300 pb-8 mb-10 break-inside-avoid">
-          <div className="flex items-center gap-6 mb-6 md:mb-0">
-            <div className="w-16 h-16 border border-[var(--color-navy-900)] rounded-sm flex items-center justify-center shrink-0">
-              <Ship className="w-8 h-8 text-[var(--color-navy-900)]" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-serif text-[var(--color-navy-900)] tracking-tight uppercase">PGI Booking</h1>
-              <p className="text-[9px] font-bold text-gray-500 tracking-widest uppercase mt-1">E-Ticket</p>
+          <div className="flex items-center gap-4 mb-6 md:mb-0">
+            <Image 
+               src="/images/logo-dark.png" 
+               alt="PGI Reserve" 
+               width={200} 
+               height={60} 
+               className="h-16 w-auto object-contain"
+            />
+            <div className="border-l border-gray-300 pl-4 py-2">
+              <p className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">E-Ticket</p>
             </div>
           </div>
           <div className="text-left md:text-right">

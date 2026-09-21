@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { 
-  Html, Head, Body, Container, Section, Text, Hr, Row, Column, Link, Preview
+  Html, Head, Body, Container, Section, Text, Hr, Row, Column, Link, Preview, Img
 } from '@react-email/components';
 
 interface TicketEmailProps {
@@ -34,9 +34,13 @@ export const TicketEmail: React.FC<TicketEmailProps> = ({
           
           {/* HEADER: LUXURY BRANDING */}
           <Section style={headerSection}>
-            <Text style={logoText}>
-              PGI <span style={logoAccent}>BOOKING</span>
-            </Text>
+            <Img
+              src="https://book.peacefulgoldenisland.com/images/logo-email.png"
+              width="200"
+              height="60"
+              alt="PGI Reserve"
+              style={logoImage}
+            />
             <Text style={headerSubtitle}>YOUR E-TICKET</Text>
           </Section>
 
@@ -211,6 +215,13 @@ const ticketHeaderText = {
   letterSpacing: '2px',
   fontWeight: 'bold',
   margin: '0',
+};
+
+const logoImage = {
+  margin: '0 auto',
+  display: 'block',
+  width: '200px',
+  height: 'auto',
 };
 
 const ticketBody = {

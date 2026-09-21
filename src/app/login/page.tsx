@@ -7,6 +7,7 @@ import { Ship, ArrowLeft, Quote } from 'lucide-react';
 
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
+import Image from 'next/image';
 
 type AuthMode = 'login' | 'register';
 
@@ -32,11 +33,14 @@ export default function LoginPage() {
         {/* Top Branding */}
         <div className="relative z-10 p-12">
           <div onClick={() => router.push('/')} className="inline-flex items-center gap-3 cursor-pointer group">
-            <Ship className="w-8 h-8 text-[var(--color-gold-500)] group-hover:scale-105 transition-transform duration-300" />
-            <span className="text-2xl tracking-widest text-white uppercase flex items-center gap-2">
-              <span className="font-bold">PGI</span> 
-              <span className="font-serif italic text-[var(--color-gold-500)] lowercase text-3xl relative top-[2px]">Reserve</span>
-            </span>
+            <Image 
+              src="/images/logo-light.png" 
+              alt="PGI Reserve" 
+              width={200} 
+              height={60} 
+              className="h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-300" 
+              priority 
+            />
           </div>
         </div>
 
@@ -74,10 +78,14 @@ export default function LoginPage() {
           
           {/* Mobile Branding (Visible only on small screens) */}
           <div className="flex lg:hidden items-center gap-2">
-            <Ship className="w-5 h-5 text-[var(--color-gold-500)]" />
-            <span className="text-sm tracking-widest text-[var(--color-navy-900)] uppercase font-bold">
-              PGI <span className="font-serif italic text-[var(--color-gold-600)] lowercase">Reserve</span>
-            </span>
+            <Image 
+              src="/images/logo-dark.png" 
+              alt="PGI Reserve" 
+              width={140} 
+              height={40} 
+              className="h-8 w-auto object-contain" 
+              priority 
+            />
           </div>
         </div>
 

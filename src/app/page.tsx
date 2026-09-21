@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { Skeleton } from '@/components/ui/Skeleton';
+import Image from 'next/image';
 import type { MasterCabin, VoyageSchedule } from '@/types/voyage';
 
 export default function Home() {
@@ -203,11 +204,14 @@ export default function Home() {
         <nav className="sticky top-0 w-full z-50 bg-[var(--color-navy-900)] border-b border-white/10 py-4 shadow-md">
           <div className="max-w-7xl mx-auto px-4 md:px-6 flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <Ship className="w-5 h-5 text-[var(--color-gold-500)]" />
-              <span className="text-lg tracking-widest text-white flex items-center gap-2">
-                <span className="font-bold uppercase">PGI</span> 
-                <span className="font-serif italic text-[var(--color-gold-500)] lowercase text-xl relative top-[1px]">Booking</span>
-              </span>
+              <Image 
+                src="/images/logo-light.png" 
+                alt="PGI Reserve" 
+                width={140} 
+                height={40} 
+                className="h-8 w-auto object-contain"
+                priority
+              />
             </div>
             <button 
               onClick={() => router.push('/login')} 

@@ -124,13 +124,22 @@ export function DashboardHeader() {
           onClick={() => router.push('/')}
           className="flex items-center gap-3 cursor-pointer group shrink-0"
         >
-          <div className="p-2 transition-transform duration-300 group-hover:scale-105">
-            <Ship className={`w-5 h-5 transition-colors ${isScrolled ? 'text-[var(--color-gold-500)]' : 'text-[var(--color-gold-400)]'}`} />
-          </div>
-          <span className="text-xl tracking-widest uppercase hidden md:flex items-center gap-2">
-            <span className={`font-sans font-bold transition-colors ${isScrolled ? 'text-white' : 'text-[var(--color-navy-900)]'}`}>PGI</span> 
-            <span className={`font-serif italic lowercase text-2xl relative top-[2px] transition-colors ${isScrolled ? 'text-[var(--color-gold-500)]' : 'text-[var(--color-gold-600)]'}`}>Booking</span>
-          </span>
+          <Image 
+             src={isScrolled ? "/images/logo-dark.png" : "/images/logo-light.png"} 
+             alt="PGI Reserve" 
+             width={180} 
+             height={60} 
+             className="h-9 w-auto object-contain hidden md:block"
+             priority 
+          />
+          <Image 
+             src={isScrolled ? "/images/logo-dark.png" : "/images/logo-light.png"} 
+             alt="PGI Reserve" 
+             width={140} 
+             height={40} 
+             className="h-7 w-auto object-contain block md:hidden"
+             priority 
+          />
         </div>
 
         {/* ======================================================== */}

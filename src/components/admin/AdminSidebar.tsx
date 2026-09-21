@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
@@ -49,7 +50,7 @@ export default function AdminSidebar() {
     }
   };
 
-  const NavItem = ({ href, icon: Icon, name, id, isActive }: any) => {
+  const NavItem = ({ href, icon: Icon, name, id, isActive }: { href: string, icon: any, name: string, id: string, isActive: boolean }) => {
     if (!hasAccess(id)) return null;
     return (
       <Link 
@@ -77,14 +78,22 @@ export default function AdminSidebar() {
     <aside className="w-20 hover:w-64 bg-[var(--color-navy-900)] text-white flex flex-col h-screen sticky top-0 border-r border-white/10 shadow-luxury hidden md:flex shrink-0 z-50 transition-all duration-300 ease-in-out group/sidebar overflow-y-auto admin-scrollbar">
       
       {/* Brand Logo */}
-      <div className="h-20 flex items-center border-b border-white/10 px-5 pt-4 shrink-0">
-        <Link href="/admin/dashboard" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-sm bg-white/5 border border-[var(--color-gold-500)]/30 flex items-center justify-center group-hover:border-[var(--color-gold-500)] transition-colors shrink-0">
-            <Anchor className="w-5 h-5 text-[var(--color-gold-400)]" />
+      <div className="h-20 flex items-center border-b border-white/10 px-4 pt-4 shrink-0">
+        <Link href="/admin/dashboard" className="flex items-center group w-full h-full overflow-hidden relative">
+          <div className="absolute left-0 transition-all duration-300 w-10 opacity-100 group-hover/sidebar:opacity-0 flex items-center justify-center">
+             <div className="w-9 h-9 rounded bg-white/5 border border-[var(--color-gold-500)]/30 flex items-center justify-center group-hover:border-[var(--color-gold-500)] transition-colors shrink-0">
+               <Anchor className="w-5 h-5 text-[var(--color-gold-400)]" />
+             </div>
           </div>
-          <div className="whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300">
-            <h1 className="font-serif text-lg tracking-widest text-white leading-tight">PGI</h1>
-            <p className="text-[9px] uppercase tracking-widest text-[var(--color-gold-400)] font-bold">Admin Portal</p>
+          
+          <div className="absolute left-0 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 w-full px-2 flex items-center">
+            <Image 
+              src="/images/logo-light.png" 
+              alt="PGI Reserve" 
+              width={160} 
+              height={50} 
+              className="h-10 w-auto object-contain"
+            />
           </div>
         </Link>
       </div>

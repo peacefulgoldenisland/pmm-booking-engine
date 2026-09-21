@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Ship, ArrowLeft } from 'lucide-react';
 import { AdminLoginForm } from '@/components/auth/AdminLoginForm';
+import Image from 'next/image';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -26,12 +27,15 @@ export default function AdminLoginPage() {
         
         <div className="relative z-10 w-full max-w-md">
             <div className="flex justify-center mb-8">
-                <div className="inline-flex items-center gap-2">
-                    <Ship className="w-6 h-6 text-[var(--color-gold-500)]" />
-                    <span className="text-xl tracking-widest text-[var(--color-navy-900)] uppercase flex items-center gap-2">
-                    <span className="font-bold">PGI</span> 
-                    <span className="font-serif italic text-[var(--color-gold-500)] lowercase text-2xl relative top-[1px]">Booking</span>
-                    </span>
+                <div className="inline-flex items-center justify-center">
+                    <Image 
+                      src="/images/logo-dark.png" 
+                      alt="PGI Reserve" 
+                      width={200} 
+                      height={80} 
+                      className="h-14 w-auto object-contain"
+                      priority
+                    />
                 </div>
             </div>
 

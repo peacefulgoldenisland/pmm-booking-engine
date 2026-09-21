@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { 
-  Html, Head, Body, Container, Section, Text, Hr, Row, Column, Link, Preview
+  Html, Head, Body, Container, Section, Text, Hr, Row, Column, Link, Preview, Img
 } from '@react-email/components';
 
 interface WaitlistEmailProps {
@@ -30,9 +30,13 @@ export const WaitlistEmail: React.FC<WaitlistEmailProps> = ({
           
           {/* HEADER: LUXURY BRANDING */}
           <Section style={headerSection}>
-            <Text style={logoText}>
-              PGI <span style={logoAccent}>BOOKING</span>
-            </Text>
+            <Img
+              src="https://book.peacefulgoldenisland.com/images/logo-email.png"
+              width="200"
+              height="60"
+              alt="PGI Reserve"
+              style={logoImage}
+            />
             <Text style={headerSubtitle}>WAITLIST CONFIRMATION</Text>
           </Section>
 
@@ -148,6 +152,13 @@ const logoAccent = {
   color: '#D4AF37',
   fontStyle: 'italic',
   textTransform: 'lowercase' as const,
+};
+
+const logoImage = {
+  margin: '0 auto',
+  display: 'block',
+  width: '200px',
+  height: 'auto',
 };
 
 const headerSubtitle = {
