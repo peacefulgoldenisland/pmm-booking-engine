@@ -30,6 +30,7 @@ const MENU_OPTIONS = [
   { id: "bookings",  label: "Bookings & Manifest" },
   { id: "voyages",   label: "Trips / Voyages" },
   { id: "guests",    label: "Guests Directory" },
+  { id: "agents",    label: "Travel Agents" },
   { id: "vouchers",  label: "Vouchers & Promo" },
   { id: "staff",     label: "Staff Management" },
   { id: "audit",     label: "Security & Audit" },

@@ -71,7 +71,7 @@ export default function AdminSidebar() {
     );
   };
 
-  const hasUsersAccess = hasAccess('guests') || hasAccess('staff');
+  const hasUsersAccess = hasAccess('guests') || hasAccess('staff') || hasAccess('agents');
 
   return (
     <aside className="w-20 hover:w-64 bg-[var(--color-navy-900)] text-white flex flex-col h-screen sticky top-0 border-r border-white/10 shadow-luxury hidden md:flex shrink-0 z-50 transition-all duration-300 ease-in-out group/sidebar overflow-y-auto admin-scrollbar">
@@ -141,7 +141,7 @@ export default function AdminSidebar() {
                 </Link>
               )}
 
-              {hasAccess('staff') && (
+              {hasAccess('agents') && (
                 <Link 
                   href="/admin/users/agents" 
                   className={`flex items-center gap-3 py-2 px-3 ml-[21px] rounded-sm text-xs font-semibold transition-all relative ${
