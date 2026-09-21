@@ -302,21 +302,30 @@ export default function AdminBookingsPage() {
       // 1. REVENUE SUMMARY
       let totalGrossAll = sourceSummary.OFFICE.gross + sourceSummary.AGENT.gross + sourceSummary.WEB.gross;
       
+      const titleRow = worksheet.addRow([]);
+      worksheet.mergeCells(`L${titleRow.number}:N${titleRow.number}`);
+      titleRow.getCell(12).value = "REVENUE SUMMARY";
+      titleRow.getCell(12).font = { bold: true, size: 12 };
+      titleRow.getCell(12).alignment = { horizontal: 'center' };
+      
       const addSummaryRow = (label: string, value: number) => {
-         const r = worksheet.addRow([null, label, value]);
-         r.getCell(2).font = { bold: true };
-         r.getCell(2).alignment = { horizontal: 'left' };
-         r.getCell(3).font = { bold: true };
-         r.getCell(3).alignment = { horizontal: 'right' };
-         r.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-         r.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+         const r = worksheet.addRow([]);
+         worksheet.mergeCells(`L${r.number}:M${r.number}`);
+         r.getCell(12).value = label;
+         r.getCell(12).font = { bold: true };
+         r.getCell(12).alignment = { horizontal: 'right' };
+         r.getCell(12).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+         r.getCell(14).value = value;
+         r.getCell(14).font = { bold: true };
+         r.getCell(14).alignment = { horizontal: 'right' };
+         r.getCell(14).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
       };
 
-      addSummaryRow("TOTAL PENDAPATAN KOTOR (GROSS)", totalGrossAll);
-      addSummaryRow("TOTAL PENDAPATAN AGENT", sourceSummary.AGENT.net);
-      addSummaryRow("TOTAL PENDAPATAN WEB", sourceSummary.WEB.net);
-      addSummaryRow("TOTAL PENDAPATAN OFFICE", sourceSummary.OFFICE.net);
-      addSummaryRow("TOTAL PENDAPATAN OFFICE + WEB", sourceSummary.OFFICE.net + sourceSummary.WEB.net);
+      addSummaryRow("KOTOR (GROSS)", totalGrossAll);
+      addSummaryRow("AGENT", sourceSummary.AGENT.net);
+      addSummaryRow("WEB", sourceSummary.WEB.net);
+      addSummaryRow("OFFICE", sourceSummary.OFFICE.net);
+      addSummaryRow("OFFICE + WEB", sourceSummary.OFFICE.net + sourceSummary.WEB.net);
 
       worksheet.addRow([]);
       worksheet.addRow([]);
