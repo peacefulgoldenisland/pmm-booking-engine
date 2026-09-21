@@ -203,9 +203,12 @@ export default function ManualRegistryPage() {
           userId: 'MANUAL_ENTRY_ADMIN',
           status: 'PAID', // Asumsi dari agent/walk-in sudah dibayar
           source: source,
+          bookingSource: source, // Standardize with web bookings
           agentName: source === 'AGENT' ? agentName : '',
           dateOfDeparture: voyageId,
+          voyageScheduleId: voyageId,
           cabinClass: cabinName,
+          cart: { [cabinId]: bookedUnits },
           pickupLocation: pickupLocation || 'Not Specified',
           paxCount: passengers.length,
           passengersManifest: passengers,
