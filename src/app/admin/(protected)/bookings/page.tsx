@@ -156,7 +156,9 @@ export default function AdminBookingsPage() {
       { width: 15 },  // K: AREA
       { width: 15 },  // L: BASE PRICE
       { width: 12 },  // M: DISC/PAX
-      { width: 15 }   // N: NET/PAX
+      { width: 15 },  // N: NET/PAX (OFFICE)
+      { width: 15 },  // O: NET/PAX (AGENT)
+      { width: 15 }   // P: NET/PAX (WEB)
     ];
 
     // Build Syahbandar specific header format
@@ -173,7 +175,7 @@ export default function AdminBookingsPage() {
 
     const headerFields = isSyahbandar 
       ? ["NO.", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN"]
-      : ["NO.", "TANGGAL DIBUAT", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN", "AGENT/WEB", "AREA", "BASE PRICE", "DISC/PAX", "NET/PAX"];
+      : ["NO.", "TANGGAL DIBUAT", "NAMA ", null, "KELAS", "F/M", "UMUR (THN)", "NO. PASSPOR", "KEBANGSAAN", "AGENT/WEB", "AREA", "BASE PRICE", "DISC/PAX", "NET/PAX (OFFICE)", "NET/PAX (AGENT)", "NET/PAX (WEB)"];
 
     const headerRow = worksheet.addRow(headerFields);
     headerRow.font = { bold: true };
@@ -182,7 +184,7 @@ export default function AdminBookingsPage() {
     // Apply borders to headerRow (only columns that have text or are part of the table body)
     const columnsWithBorder = isSyahbandar 
       ? [1, 2, 4, 5, 6, 7, 8]
-      : [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+      : [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
       
     columnsWithBorder.forEach(colNum => {
        const cell = headerRow.getCell(colNum);
@@ -224,6 +226,10 @@ export default function AdminBookingsPage() {
       const discPerPax = b.paxCount > 0 ? (b.discountAmount || 0) / b.paxCount : 0;
       const pricePerPax = b.paxCount > 0 ? b.totalAmount / b.paxCount : 0;
       
+      const netOffice = b.source === 'OFFICE' ? pricePerPax : null;
+      const netAgent = b.source === 'AGENT' ? pricePerPax : null;
+      const netWeb = (b.source !== 'OFFICE' && b.source !== 'AGENT') ? pricePerPax : null;
+      
       const sourceLabel = b.source === 'AGENT' ? `${b.agentName || 'UNKNOWN'}` : 
                           b.source === 'OFFICE' ? 'OFFICE WALK-IN' : 'WEB';
 
@@ -257,7 +263,9 @@ export default function AdminBookingsPage() {
               b.pickupLocation || '',
               basePerPax,
               discPerPax,
-              pricePerPax
+              netOffice,
+              netAgent,
+              netWeb
             ];
 
         const dataRow = worksheet.addRow(rowData);
@@ -279,44 +287,36 @@ export default function AdminBookingsPage() {
     worksheet.addRow([]); // Empty row
     
     if (!isSyahbandar) {
-      const sumRow = worksheet.addRow([null, null, null, null, null, null, null, null, null, null, "TOTAL", null, null, totalPriceSum]);
+      const sumRow = worksheet.addRow([null, null, null, null, null, null, null, null, null, null, "TOTAL", null, null, sourceSummary.OFFICE.net, sourceSummary.AGENT.net, sourceSummary.WEB.net]);
       sumRow.getCell(11).font = { bold: true };
       sumRow.getCell(11).alignment = { horizontal: 'right' };
       sumRow.getCell(14).font = { bold: true };
       sumRow.getCell(14).alignment = { horizontal: 'center' };
+      sumRow.getCell(15).font = { bold: true };
+      sumRow.getCell(15).alignment = { horizontal: 'center' };
+      sumRow.getCell(16).font = { bold: true };
+      sumRow.getCell(16).alignment = { horizontal: 'center' };
       worksheet.addRow([]);
       worksheet.addRow([]);
 
-      // 1. REVENUE SUMMARY BY SOURCE
-      const sourceHeaderRow = worksheet.addRow([null, "REVENUE SUMMARY BY SOURCE", null, null]);
-      sourceHeaderRow.getCell(2).font = { bold: true, size: 12 };
-      sourceHeaderRow.getCell(2).alignment = { horizontal: 'left' };
-      worksheet.mergeCells(`B${sourceHeaderRow.number}:D${sourceHeaderRow.number}`);
+      // 1. REVENUE SUMMARY
+      let totalGrossAll = sourceSummary.OFFICE.gross + sourceSummary.AGENT.gross + sourceSummary.WEB.gross;
       
-      const sourceTableHeaderRow = worksheet.addRow([null, "SOURCE", "GROSS REVENUE (IDR)", "NET REVENUE (IDR)"]);
-      sourceTableHeaderRow.font = { bold: true };
-      sourceTableHeaderRow.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-      sourceTableHeaderRow.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-      sourceTableHeaderRow.getCell(4).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      const addSummaryRow = (label: string, value: number) => {
+         const r = worksheet.addRow([null, label, value]);
+         r.getCell(2).font = { bold: true };
+         r.getCell(2).alignment = { horizontal: 'left' };
+         r.getCell(3).font = { bold: true };
+         r.getCell(3).alignment = { horizontal: 'right' };
+         r.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+         r.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      };
 
-      let totalGrossAll = 0;
-      let totalNetAll = 0;
-      ['AGENT', 'OFFICE', 'WEB'].forEach(src => {
-         const gross = sourceSummary[src].gross;
-         const net = sourceSummary[src].net;
-         totalGrossAll += gross;
-         totalNetAll += net;
-         const dataRow = worksheet.addRow([null, src, gross, net]);
-         dataRow.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-         dataRow.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-         dataRow.getCell(4).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-      });
-      
-      const sourceTotalRow = worksheet.addRow([null, "TOTAL", totalGrossAll, totalNetAll]);
-      sourceTotalRow.font = { bold: true };
-      sourceTotalRow.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-      sourceTotalRow.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-      sourceTotalRow.getCell(4).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      addSummaryRow("TOTAL PENDAPATAN KOTOR (GROSS)", totalGrossAll);
+      addSummaryRow("TOTAL PENDAPATAN AGENT", sourceSummary.AGENT.net);
+      addSummaryRow("TOTAL PENDAPATAN WEB", sourceSummary.WEB.net);
+      addSummaryRow("TOTAL PENDAPATAN OFFICE", sourceSummary.OFFICE.net);
+      addSummaryRow("TOTAL PENDAPATAN OFFICE + WEB", sourceSummary.OFFICE.net + sourceSummary.WEB.net);
 
       worksheet.addRow([]);
       worksheet.addRow([]);
@@ -542,7 +542,9 @@ export default function AdminBookingsPage() {
                   <th>AREA</th>
                   <th className="text-right">BASE PRICE</th>
                   <th className="text-right">DISCOUNT</th>
-                  <th className="text-right">NET/PAX</th>
+                  <th className="text-right">NET/PAX (OFFICE)</th>
+                  <th className="text-right">NET/PAX (AGENT)</th>
+                  <th className="text-right">NET/PAX (WEB)</th>
                 </tr>
               </thead>
               <tbody>
@@ -550,6 +552,10 @@ export default function AdminBookingsPage() {
                   const basePerPax = b.paxCount > 0 ? (b.basePrice || b.totalAmount) / b.paxCount : 0;
                   const discPerPax = b.paxCount > 0 ? (b.discountAmount || 0) / b.paxCount : 0;
                   const pricePerPax = b.paxCount > 0 ? b.totalAmount / b.paxCount : 0;
+                  
+                  const netOffice = b.source === 'OFFICE' ? pricePerPax : 0;
+                  const netAgent = b.source === 'AGENT' ? pricePerPax : 0;
+                  const netWeb = (b.source !== 'OFFICE' && b.source !== 'AGENT') ? pricePerPax : 0;
                   
                   const sourceLabel = b.source === 'AGENT' ? `${b.agentName || 'UNKNOWN'}` : 
                                       b.source === 'OFFICE' ? 'OFFICE WALK-IN' : 'WEB';
@@ -567,16 +573,34 @@ export default function AdminBookingsPage() {
                       <td>{b.pickupLocation}</td>
                       <td className="text-right">Rp {basePerPax.toLocaleString('id-ID')}</td>
                       <td className="text-right text-red-600">Rp {discPerPax.toLocaleString('id-ID')}</td>
-                      <td className="text-right font-bold text-[var(--color-navy-900)]">Rp {pricePerPax.toLocaleString('id-ID')}</td>
+                      <td className="text-right text-blue-600">{netOffice > 0 ? `Rp ${netOffice.toLocaleString('id-ID')}` : '-'}</td>
+                      <td className="text-right text-emerald-600">{netAgent > 0 ? `Rp ${netAgent.toLocaleString('id-ID')}` : '-'}</td>
+                      <td className="text-right font-bold text-[var(--color-navy-900)]">{netWeb > 0 ? `Rp ${netWeb.toLocaleString('id-ID')}` : '-'}</td>
                     </tr>
                   ));
                 })}
               </tbody>
-              <tfoot className="bg-gray-100 font-bold sticky bottom-0 shadow-[0_-2px_5px_rgba(0,0,0,0.05)]">
+              <tfoot className="bg-gray-100 font-bold sticky bottom-0 shadow-[0_-2px_5px_rgba(0,0,0,0.05)] text-right">
                 <tr>
-                  <td colSpan={12} className="text-right px-4 py-2">TOTAL AMOUNT</td>
-                  <td className="text-right px-2 py-2">
-                     Rp {filteredBookings.reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString('id-ID')}
+                  <td colSpan={10} className="px-4 py-2">TOTAL SUMMARY</td>
+                  <td className="px-2 py-2 text-gray-500 text-xs font-normal">
+                     (Gross) Rp {filteredBookings.reduce((sum, b) => sum + (b.basePrice || b.totalAmount), 0).toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-2 py-2"></td>
+                  <td className="px-2 py-2 text-blue-600">
+                     Rp {filteredBookings.filter(b => b.source === 'OFFICE').reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-2 py-2 text-emerald-600">
+                     Rp {filteredBookings.filter(b => b.source === 'AGENT').reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-2 py-2 text-[var(--color-navy-900)]">
+                     Rp {filteredBookings.filter(b => b.source !== 'OFFICE' && b.source !== 'AGENT').reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString('id-ID')}
+                  </td>
+                </tr>
+                <tr className="bg-white">
+                  <td colSpan={14} className="px-4 py-2 border-t border-gray-300">TOTAL PENDAPATAN OFFICE + WEB:</td>
+                  <td className="px-2 py-2 border-t border-gray-300 text-[var(--color-navy-900)]">
+                     Rp {filteredBookings.filter(b => b.source !== 'AGENT').reduce((sum, b) => sum + b.totalAmount, 0).toLocaleString('id-ID')}
                   </td>
                 </tr>
               </tfoot>
