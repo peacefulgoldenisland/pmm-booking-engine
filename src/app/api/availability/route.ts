@@ -1,4 +1,3 @@
-// src/app/api/availability/route.ts
 import { NextResponse } from 'next/server';
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -20,33 +19,58 @@ export async function GET(request: Request) {
 
     if (!date) return NextResponse.json({ error: 'Date is required' }, { status: 400 });
 
-    const scheduleDoc = await db.collection('voyages').doc(date).get();
-
-    // Jika schedule belum digenerate admin (tidak ada), tolak request
-    // RescheduleForm akan menganggap ini isAvailable = false
-    if (!scheduleDoc.exists) {
-      return NextResponse.json({ error: 'Voyage schedule not found for this date' }, { status: 404 });
-    }
-
-    const scheduleData = scheduleDoc.data();
-    const quotas = scheduleData?.cabinQuotas || {};
-    const booked: Record<string, number> = {};
-    
+    // 1. Get all products (cabins)
     const productsSnap = await db.collection('products').get();
-    
-    // Hitung mundur (Booked = Max - Available) agar RescheduleForm tetap berjalan tanpa perlu diubah
-    productsSnap.forEach(doc => {
-      const data = doc.data();
-      const cabinId = doc.id;
-      const cabinName = data.name;
-      const maxCapacity = data.maxCapacity || 0;
-      
-      const available = quotas[cabinId] !== undefined ? quotas[cabinId] : 0;
-      
-      booked[cabinName] = Math.max(0, maxCapacity - available);
+    const products = productsSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+
+    // 2. Query bookings for this date to get REAL booked units
+    const bookingsSnap = await db.collection('bookings')
+      .where('departureDate', '==', date)
+      .where('status', 'in', ['WAITING_VERIFICATION', 'PAID', 'PENDING'])
+      .get();
+
+    const bookedUnits: Record<string, number> = {};
+    bookingsSnap.forEach(doc => {
+      const b = doc.data();
+      const cId = b.cabinId;
+      const qty = b.guests ? b.guests.length : (b.totalGuests || 1);
+      if (cId) {
+        bookedUnits[cId] = (bookedUnits[cId] || 0) + qty;
+      }
     });
 
-    return NextResponse.json({ booked });
+    // 3. Compute real availability
+    const realAvailability: Record<string, number> = {};
+    const bookedByName: Record<string, number> = {}; // For backward compatibility with RescheduleForm
+    
+    products.forEach(p => {
+       const total = p.totalUnits || 0;
+       const booked = bookedUnits[p.id] || 0;
+       realAvailability[p.id] = Math.max(0, total - booked);
+       bookedByName[p.name] = booked; 
+    });
+
+    // 4. Auto-heal the voyage document
+    const scheduleRef = db.collection('voyages').doc(date);
+    const scheduleDoc = await scheduleRef.get();
+    
+    if (scheduleDoc.exists) {
+      const currentQuotas = scheduleDoc.data()?.cabinQuotas || {};
+      let outOfSync = false;
+      for (const [key, val] of Object.entries(realAvailability)) {
+         if (currentQuotas[key] !== val) outOfSync = true;
+      }
+      if (outOfSync) {
+         await scheduleRef.update({ cabinQuotas: realAvailability });
+      }
+    } else {
+      await scheduleRef.set({ departureDate: date, cabinQuotas: realAvailability });
+    }
+
+    return NextResponse.json({ 
+      booked: bookedByName,
+      availableSeats: realAvailability
+    });
   } catch (error) {
     console.error("Availability API Error:", error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

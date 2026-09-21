@@ -30,6 +30,10 @@ export default function AdminDashboardPage() {
   const [greeting, setGreeting] = useState('');
   const [currentDate, setCurrentDate] = useState('');
 
+  const [dateRange, setDateRange] = useState<'this_week' | '30d'>('this_week');
+  const [rawBookings, setRawBookings] = useState<any[]>([]);
+  const [staticStats, setStaticStats] = useState<any>({ totalBookings: 0, totalGuests: 0, activeVouchers: 0, occupancyData: [] });
+
   useEffect(() => {
     // Set time-based greeting and date
     const hour = new Date().getHours();
@@ -41,75 +45,20 @@ export default function AdminDashboardPage() {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
     }));
 
-    async function fetchStats() {
+    async function fetchInitialData() {
       try {
-        // Calculate 30 days ago
+        // Calculate 30 days ago (fetch max window)
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
 
-        // Fetch Bookings (Only last 30 days for charts to save read quotas)
+        // Fetch Bookings
         const bookingsRef = collection(db, 'bookings');
         const recentBookingsQuery = query(bookingsRef, where('createdAt', '>=', thirtyDaysAgoStr));
         const bookingsSnap = await getDocs(recentBookingsQuery);
         
-        let pending = 0;
-        let totalRev30Days = 0;
-        
-        const revenueMap: Record<string, { display: string; value: number }> = {};
-        let sourceAgent = 0;
-        let sourceWeb = 0;
-        let sourceOffice = 0;
-
-        bookingsSnap.forEach(doc => {
-          const data = doc.data();
-          if (data.status === 'WAITING_VERIFICATION') pending++;
-          
-          if (data.status === 'PAID') {
-            const amt = data.totalAmount || 0;
-            totalRev30Days += amt;
-            
-            if (data.createdAt) {
-              const d = new Date(data.createdAt);
-              const sortKey = d.toISOString().split('T')[0];
-              const display = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-              
-              if (!revenueMap[sortKey]) {
-                revenueMap[sortKey] = { display, value: 0 };
-              }
-              revenueMap[sortKey].value += amt;
-            }
-          }
-
-          const src = data.source || data.bookingSource || 'WEB';
-          if (src === 'AGENT') sourceAgent++;
-          else if (src === 'OFFICE') sourceOffice++;
-          else sourceWeb++;
-        });
-
-        // Fill in missing days so the chart doesn't look broken
-        for (let i = 29; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          const sortKey = d.toISOString().split('T')[0];
-          const display = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          if (!revenueMap[sortKey]) {
-            revenueMap[sortKey] = { display, value: 0 };
-          }
-        }
-
-        // Sort revenue by date
-        const sortedDates = Object.keys(revenueMap).sort();
-        const revenueTrend = sortedDates.map(key => ({
-          label: revenueMap[key].display,
-          value: revenueMap[key].value
-        }));
-
-        const bookingSources = [
-          { name: 'Travel Agent', value: sourceAgent },
-          { name: 'App / Web', value: sourceWeb },
-          { name: 'Office Walk-in', value: sourceOffice },
-        ].filter(s => s.value > 0);
+        const fetchedBookings = bookingsSnap.docs.map(doc => doc.data());
+        setRawBookings(fetchedBookings);
 
         // Get Grand Totals using getCountFromServer
         const totalBookingsSnap = await getCountFromServer(collection(db, 'bookings'));
@@ -144,14 +93,10 @@ export default function AdminDashboardPage() {
            });
         }
 
-        setStats({
-          pendingVerifications: pending,
+        setStaticStats({
           totalBookings: totalBookingsSnap.data().count,
           totalGuests: totalUsersSnap.data().count,
           activeVouchers: vouchersSnap.size,
-          revenue: totalRev30Days,
-          revenueTrend,
-          bookingSources,
           occupancyData
         });
 
@@ -162,8 +107,125 @@ export default function AdminDashboardPage() {
       }
     }
     
-    fetchStats();
+    fetchInitialData();
   }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+    
+    let cutoffStr = '';
+    let endStr = '';
+    let daysToFill = 7;
+    let startDateObj = new Date();
+    
+    if (dateRange === 'this_week') {
+       const now = new Date();
+       const dayOfWeek = now.getDay(); // 0 is Sunday
+       const lastSunday = new Date(now);
+       lastSunday.setDate(now.getDate() - dayOfWeek);
+       lastSunday.setHours(0, 0, 0, 0);
+       
+       const nextSaturday = new Date(lastSunday);
+       nextSaturday.setDate(lastSunday.getDate() + 6);
+       nextSaturday.setHours(23, 59, 59, 999);
+
+       cutoffStr = lastSunday.toISOString();
+       endStr = nextSaturday.toISOString();
+       daysToFill = 7;
+       startDateObj = lastSunday;
+    } else {
+       // 30 days
+       const d = new Date();
+       d.setDate(d.getDate() - 30);
+       cutoffStr = d.toISOString();
+       endStr = new Date().toISOString();
+       daysToFill = 30;
+       startDateObj = d;
+    }
+
+    let pending = 0;
+    let totalRev = 0;
+    
+    const revenueMap: Record<string, { display: string; value: number }> = {};
+    let sourceAgent = 0, sourceWeb = 0, sourceOffice = 0;
+    let revKotor = 0, revAgent = 0, revWeb = 0, revOffice = 0;
+    let revByCabin: Record<string, number> = {};
+
+    rawBookings.forEach(data => {
+      if (!data.createdAt || data.createdAt < cutoffStr || data.createdAt > endStr) return;
+
+      if (data.status === 'WAITING_VERIFICATION') pending++;
+      
+      const src = data.source || data.bookingSource || 'WEB';
+      if (src === 'AGENT') sourceAgent++;
+      else if (src === 'OFFICE') sourceOffice++;
+      else sourceWeb++;
+
+      if (data.status === 'PAID') {
+        const amt = data.totalAmount || 0;
+        const gross = data.basePrice || data.totalAmount || 0;
+        
+        totalRev += amt;
+        revKotor += gross;
+        
+        if (src === 'AGENT') revAgent += amt;
+        else if (src === 'OFFICE') revOffice += amt;
+        else revWeb += amt;
+
+        const cabin = data.cabinClass || 'UNKNOWN';
+        if (!revByCabin[cabin]) revByCabin[cabin] = 0;
+        revByCabin[cabin] += gross;
+        
+        const d = new Date(data.createdAt);
+        const sortKey = d.toISOString().split('T')[0];
+        const display = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        if (!revenueMap[sortKey]) revenueMap[sortKey] = { display, value: 0 };
+        revenueMap[sortKey].value += amt;
+      }
+    });
+
+    for (let i = 0; i < daysToFill; i++) {
+      const d = new Date(startDateObj);
+      d.setDate(d.getDate() + i);
+      const sortKey = d.toISOString().split('T')[0];
+      const display = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (!revenueMap[sortKey]) {
+        revenueMap[sortKey] = { display, value: 0 };
+      }
+    }
+
+    const sortedDates = Object.keys(revenueMap).sort();
+    const revenueTrend = sortedDates.map(key => ({
+      label: revenueMap[key].display,
+      value: revenueMap[key].value
+    }));
+
+    const bookingSources = [
+      { name: 'Travel Agent', value: sourceAgent },
+      { name: 'App / Web', value: sourceWeb },
+      { name: 'Office Walk-in', value: sourceOffice },
+    ].filter(s => s.value > 0);
+
+    setStats({
+      pendingVerifications: pending,
+      totalBookings: staticStats.totalBookings,
+      totalGuests: staticStats.totalGuests,
+      activeVouchers: staticStats.activeVouchers,
+      occupancyData: staticStats.occupancyData,
+      revenue: totalRev,
+      revenueTrend,
+      bookingSources,
+      revenueSummary: {
+        gross: revKotor,
+        agent: revAgent,
+        web: revWeb,
+        office: revOffice,
+        officeAndWeb: revOffice + revWeb
+      },
+      revenueByCabin: revByCabin
+    });
+  }, [rawBookings, dateRange, staticStats, isLoading]);
 
   if (isLoading) {
     return (
@@ -219,9 +281,26 @@ export default function AdminDashboardPage() {
             <p className="text-gray-400 text-sm mt-1">{currentDate}</p>
           </div>
           
-          <div className="flex items-center gap-2 bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-             <span className="text-xs text-white font-medium tracking-wide">All Systems Operational</span>
+          <div className="flex flex-col md:items-end gap-3">
+            <div className="flex items-center gap-2 bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+               <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+               <span className="text-xs text-white font-medium tracking-wide">All Systems Operational</span>
+            </div>
+            
+            <div className="flex bg-black/20 backdrop-blur-md p-1 rounded-full border border-white/10">
+               <button 
+                 onClick={() => setDateRange('this_week')}
+                 className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 ${dateRange === 'this_week' ? 'bg-[var(--color-gold-500)] text-[var(--color-navy-900)]' : 'text-gray-400 hover:text-white'}`}
+               >
+                 This Week
+               </button>
+               <button 
+                 onClick={() => setDateRange('30d')}
+                 className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 ${dateRange === '30d' ? 'bg-[var(--color-gold-500)] text-[var(--color-navy-900)]' : 'text-gray-400 hover:text-white'}`}
+               >
+                 Last 30 Days
+               </button>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -502,6 +581,72 @@ export default function AdminDashboardPage() {
             </motion.div>
 
           </div>
+        </div>
+
+        {/* 4.5 Revenue Breakdown Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          
+          {/* Revenue Summary */}
+          <motion.div variants={itemVariants}>
+             <AdminCard className="h-full bg-white shadow-sm hover:shadow-md transition-shadow">
+               <AdminCardContent className="p-6 h-full flex flex-col">
+                 <h3 className="text-sm font-bold text-[var(--color-navy-900)] uppercase tracking-widest mb-6">Revenue Summary</h3>
+                 <div className="space-y-4 flex-1 flex flex-col justify-center">
+                    <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                      <span className="text-sm font-medium text-gray-500">KOTOR (GROSS)</span>
+                      <span className="text-sm font-bold text-[var(--color-navy-900)]">Rp {stats.revenueSummary?.gross.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                      <span className="text-sm font-medium text-gray-500">AGENT</span>
+                      <span className="text-sm font-bold text-emerald-600">Rp {stats.revenueSummary?.agent.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                      <span className="text-sm font-medium text-gray-500">WEB</span>
+                      <span className="text-sm font-bold text-blue-600">Rp {stats.revenueSummary?.web.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                      <span className="text-sm font-medium text-gray-500">OFFICE</span>
+                      <span className="text-sm font-bold text-[var(--color-navy-900)]">Rp {stats.revenueSummary?.office.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2">
+                      <span className="text-sm font-bold text-[var(--color-navy-900)]">OFFICE + WEB</span>
+                      <span className="text-sm font-bold text-[var(--color-gold-600)] bg-[var(--color-gold-50)] px-3 py-1 rounded-full border border-[var(--color-gold-200)]">Rp {stats.revenueSummary?.officeAndWeb.toLocaleString('id-ID')}</span>
+                    </div>
+                 </div>
+               </AdminCardContent>
+             </AdminCard>
+          </motion.div>
+
+          {/* Cabin Class Summary */}
+          <motion.div variants={itemVariants}>
+             <AdminCard className="h-full bg-white shadow-sm hover:shadow-md transition-shadow">
+               <AdminCardContent className="p-6 h-full flex flex-col">
+                 <h3 className="text-sm font-bold text-[var(--color-navy-900)] uppercase tracking-widest mb-6">Gross Revenue By Cabin Class</h3>
+                 <div className="space-y-4 flex-1 flex flex-col justify-center">
+                   {stats.revenueByCabin && Object.entries(stats.revenueByCabin).length > 0 ? (
+                     <>
+                       {Object.entries(stats.revenueByCabin).map(([cabin, rev]) => (
+                         <div key={cabin} className="flex justify-between items-center pb-3 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-600">{cabin}</span>
+                            <span className="text-sm font-bold text-[var(--color-navy-900)]">Rp {rev.toLocaleString('id-ID')}</span>
+                         </div>
+                       ))}
+                       <div className="flex justify-between items-center pt-2 mt-auto">
+                         <span className="text-sm font-bold text-[var(--color-navy-900)]">TOTAL</span>
+                         <span className="text-sm font-bold text-[var(--color-gold-600)] bg-[var(--color-gold-50)] px-3 py-1 rounded-full border border-[var(--color-gold-200)]">Rp {stats.revenueSummary?.gross.toLocaleString('id-ID')}</span>
+                       </div>
+                     </>
+                   ) : (
+                      <div className="flex flex-col items-center justify-center text-gray-300 py-10">
+                        <CreditCard className="w-10 h-10 mb-3 opacity-20" />
+                        <p className="text-xs font-medium">No cabin revenue data</p>
+                      </div>
+                   )}
+                 </div>
+               </AdminCardContent>
+             </AdminCard>
+          </motion.div>
+
         </div>
 
         {/* 5. Quick Feature Hub */}

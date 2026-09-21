@@ -14,6 +14,14 @@ export interface DashboardStats {
   revenueTrend?: ChartData[];
   bookingSources?: { name: string; value: number }[];
   occupancyData?: { name: string; capacity: number; sold: number; remaining: number }[];
+  revenueSummary?: {
+    gross: number;
+    agent: number;
+    web: number;
+    office: number;
+    officeAndWeb: number;
+  };
+  revenueByCabin?: Record<string, number>;
 }
 
 /**

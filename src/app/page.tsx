@@ -83,27 +83,32 @@ export default function Home() {
     setSelectedDateStr(localDate.toISOString().split('T')[0]);
   };
 
-  // Fetch Availability for the selected date from Firestore directly
+  // Fetch Availability for the selected date from API
   useEffect(() => {
-    if (!selectedDateStr) return;
+    if (!selectedDateStr || cabins.length === 0) return;
     setIsFetchingData(true);
     setSelectedCabins({});
     
-    const docRef = doc(db, 'voyages', selectedDateStr);
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const voyage = docSnap.data() as VoyageSchedule;
-        setAvailableSeats(voyage.cabinQuotas || {});
-      } else {
-        // If the schedule doesn't exist, we auto-assume FULL capacity. 
-        // The API route will auto-create the schedule on checkout.
-        setAvailableSeats(null);
+    const fetchAvailability = async () => {
+      try {
+        const res = await fetch(`/api/availability?date=${selectedDateStr}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableSeats(data.availableSeats || {});
+        } else {
+          setAvailableSeats({});
+        }
+      } catch (err) {
+        console.error("Error fetching availability:", err);
+        setAvailableSeats({});
+      } finally {
+        setTimeout(() => setIsFetchingData(false), 300);
       }
-      setTimeout(() => setIsFetchingData(false), 600);
-    });
+    };
+
+    fetchAvailability();
     
-    return () => unsubscribe();
-  }, [selectedDateStr]);
+  }, [selectedDateStr, cabins]);
 
   const getAvailabilityInfo = (cabinId: string, totalUnits: number) => {
     let available = totalUnits; // default if null
