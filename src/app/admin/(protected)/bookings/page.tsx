@@ -303,22 +303,21 @@ export default function AdminBookingsPage() {
       let totalGrossAll = sourceSummary.OFFICE.gross + sourceSummary.AGENT.gross + sourceSummary.WEB.gross;
       
       const titleRow = worksheet.addRow([]);
-      worksheet.mergeCells(`L${titleRow.number}:N${titleRow.number}`);
-      titleRow.getCell(12).value = "REVENUE SUMMARY";
-      titleRow.getCell(12).font = { bold: true, size: 12 };
-      titleRow.getCell(12).alignment = { horizontal: 'center' };
+      worksheet.mergeCells(`B${titleRow.number}:C${titleRow.number}`);
+      titleRow.getCell(2).value = "REVENUE SUMMARY";
+      titleRow.getCell(2).font = { bold: true, size: 12 };
+      titleRow.getCell(2).alignment = { horizontal: 'center' };
       
       const addSummaryRow = (label: string, value: number) => {
          const r = worksheet.addRow([]);
-         worksheet.mergeCells(`L${r.number}:M${r.number}`);
-         r.getCell(12).value = label;
-         r.getCell(12).font = { bold: true };
-         r.getCell(12).alignment = { horizontal: 'right' };
-         r.getCell(12).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
-         r.getCell(14).value = value;
-         r.getCell(14).font = { bold: true };
-         r.getCell(14).alignment = { horizontal: 'right' };
-         r.getCell(14).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+         r.getCell(2).value = label;
+         r.getCell(2).font = { bold: true };
+         r.getCell(2).alignment = { horizontal: 'left' };
+         r.getCell(2).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+         r.getCell(3).value = value;
+         r.getCell(3).font = { bold: true };
+         r.getCell(3).alignment = { horizontal: 'right' };
+         r.getCell(3).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
       };
 
       addSummaryRow("KOTOR (GROSS)", totalGrossAll);
