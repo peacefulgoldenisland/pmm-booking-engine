@@ -192,7 +192,7 @@ export default function AdminDashboardPage() {
         revByCabin[cabin] += gross;
         
         const d = new Date(data.createdAt);
-        const sortKey = d.toISOString().split('T')[0];
+        const sortKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const display = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         
         if (!revenueMap[sortKey]) revenueMap[sortKey] = { display, value: 0 };
@@ -203,7 +203,7 @@ export default function AdminDashboardPage() {
     for (let i = 0; i < daysToFill; i++) {
       const d = new Date(startDateObj);
       d.setDate(d.getDate() + i);
-      const sortKey = d.toISOString().split('T')[0];
+      const sortKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const display = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       if (!revenueMap[sortKey]) {
         revenueMap[sortKey] = { display, value: 0 };
@@ -538,8 +538,8 @@ export default function AdminDashboardPage() {
                               boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                             }}
                           />
-                          <Bar dataKey="sold" name="Allocated" stackId="a" fill="var(--color-navy-900)" radius={[0, 0, 0, 0]} barSize={16} />
-                          <Bar dataKey="remaining" name="Available" stackId="a" fill="var(--color-gold-300)" radius={[0, 4, 4, 0]} barSize={16} />
+                          <Bar dataKey="sold" name="Allocated" stackId="a" fill="var(--color-gold-500)" radius={[0, 0, 0, 0]} barSize={16} />
+                          <Bar dataKey="remaining" name="Available" stackId="a" fill="#e5e7eb" radius={[0, 4, 4, 0]} barSize={16} />
                         </BarChart>
                       </ResponsiveContainer>
                     ) : (
