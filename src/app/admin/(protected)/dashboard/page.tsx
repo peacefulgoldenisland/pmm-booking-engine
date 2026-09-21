@@ -79,11 +79,26 @@ export default function AdminDashboardPage() {
            upcoming.sort((a, b) => a.departureDate.localeCompare(b.departureDate));
            const closest = upcoming[0];
            
+           let remainingSeats: Record<string, number> | null = null;
+           try {
+             const res = await fetch(`/api/availability?date=${closest.departureDate}`);
+             if (res.ok) {
+               const data = await res.json();
+               remainingSeats = data.availableSeats || null;
+             }
+           } catch (e) {
+             console.error("Error fetching real availability for dashboard", e);
+           }
+           
            const productsSnap = await getDocs(collection(db, 'products'));
            occupancyData = productsSnap.docs.map(doc => {
               const cabin = doc.data();
               const capacity = cabin.totalUnits || 0;
-              const remaining = closest.cabinQuotas?.[cabin.id] ?? capacity;
+              
+              const remaining = remainingSeats 
+                  ? (remainingSeats[doc.id] ?? capacity)
+                  : (closest.cabinQuotas?.[doc.id] ?? capacity);
+                  
               return {
                  name: cabin.name,
                  capacity,
