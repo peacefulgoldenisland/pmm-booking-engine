@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 
     // 2. Query bookings for this date to get REAL booked units
     const bookingsSnap = await db.collection('bookings')
-      .where('departureDate', '==', date)
+      .where('dateOfDeparture', '==', date)
       .where('status', 'in', ['WAITING_VERIFICATION', 'PAID', 'PENDING'])
       .get();
 
