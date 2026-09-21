@@ -280,18 +280,20 @@ export default function AdminBookingsPage() {
       });
     });
 
-    worksheet.addRow([]); // Empty row
-    
     if (!isSyahbandar) {
       const sumRow = worksheet.addRow([null, null, null, null, null, null, null, null, null, "TOTAL", null, null, sourceSummary.OFFICE.net, sourceSummary.AGENT.net, sourceSummary.WEB.net]);
       sumRow.getCell(10).font = { bold: true };
       sumRow.getCell(10).alignment = { horizontal: 'right' };
       sumRow.getCell(13).font = { bold: true };
-      sumRow.getCell(13).alignment = { horizontal: 'center' };
+      sumRow.getCell(13).alignment = { horizontal: 'right' };
       sumRow.getCell(14).font = { bold: true };
-      sumRow.getCell(14).alignment = { horizontal: 'center' };
+      sumRow.getCell(14).alignment = { horizontal: 'right' };
       sumRow.getCell(15).font = { bold: true };
-      sumRow.getCell(15).alignment = { horizontal: 'center' };
+      sumRow.getCell(15).alignment = { horizontal: 'right' };
+      
+      columnsWithBorder.forEach(colNum => {
+         sumRow.getCell(colNum).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+      });
       worksheet.addRow([]);
       worksheet.addRow([]);
 
