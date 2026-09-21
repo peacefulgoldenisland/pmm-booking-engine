@@ -32,10 +32,24 @@ export async function GET(request: Request) {
     const bookedUnits: Record<string, number> = {};
     bookingsSnap.forEach(doc => {
       const b = doc.data();
-      const cId = b.cabinId;
-      const qty = b.guests ? b.guests.length : (b.totalGuests || 1);
-      if (cId) {
-        bookedUnits[cId] = (bookedUnits[cId] || 0) + qty;
+      
+      if (b.cart && typeof b.cart === 'object') {
+        // Web bookings have a cart with cabinId -> qty
+        for (const [cId, qty] of Object.entries(b.cart)) {
+          bookedUnits[cId] = (bookedUnits[cId] || 0) + (qty as number);
+        }
+      } else {
+        // Admin bookings or old bookings might just have cabinClass (name) and paxCount
+        const cabinName = b.cabinClass;
+        const qty = b.paxCount || b.totalGuests || (b.guests ? b.guests.length : 1);
+        if (cabinName) {
+           const product = products.find(p => p.name === cabinName);
+           if (product) {
+              bookedUnits[product.id] = (bookedUnits[product.id] || 0) + qty;
+           }
+        } else if (b.cabinId) {
+           bookedUnits[b.cabinId] = (bookedUnits[b.cabinId] || 0) + qty;
+        }
       }
     });
 
