@@ -160,6 +160,7 @@ export default function AdminDashboardPage() {
 
     let pending = 0;
     let totalRev = 0;
+    let periodBookingsCount = 0;
     
     const revenueMap: Record<string, { display: string; value: number }> = {};
     let sourceAgent = 0, sourceWeb = 0, sourceOffice = 0;
@@ -168,6 +169,8 @@ export default function AdminDashboardPage() {
 
     rawBookings.forEach(data => {
       if (!data.createdAt || data.createdAt < cutoffStr || data.createdAt > endStr) return;
+
+      periodBookingsCount++;
 
       if (data.status === 'WAITING_VERIFICATION') pending++;
       
@@ -224,7 +227,7 @@ export default function AdminDashboardPage() {
 
     setStats({
       pendingVerifications: pending,
-      totalBookings: staticStats.totalBookings,
+      totalBookings: periodBookingsCount,
       totalGuests: staticStats.totalGuests,
       activeVouchers: staticStats.activeVouchers,
       occupancyData: staticStats.occupancyData,
