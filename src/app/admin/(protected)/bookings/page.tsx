@@ -68,7 +68,7 @@ export default function AdminBookingsPage() {
   const getStatusBadge = (status: BookingStatus) => {
     switch (status) {
       case 'PAID':
-        return <AdminBadge variant="success" className="gap-1"><CheckCircle2 className="w-3 h-3" /> Secured</AdminBadge>;
+        return <AdminBadge variant="success" className="gap-1"><CheckCircle2 className="w-3 h-3" /> Approved</AdminBadge>;
       case 'WAITING_VERIFICATION':
         return <AdminBadge variant="warning" className="gap-1 animate-pulse"><AlertCircle className="w-3 h-3" /> Verify Remittance</AdminBadge>;
       case 'PENDING':
@@ -408,7 +408,7 @@ export default function AdminBookingsPage() {
               options={[
                 { value: 'ALL', label: 'All Statuses' },
                 { value: 'WAITING_VERIFICATION', label: 'Waiting Verification' },
-                { value: 'PAID', label: 'Paid / Secured' },
+                { value: 'PAID', label: 'Paid / Approved' },
                 { value: 'PENDING', label: 'Pending / Awaiting Fund' },
                 { value: 'CANCELLED', label: 'Terminated' }
               ]}

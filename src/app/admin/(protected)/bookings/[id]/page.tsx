@@ -370,7 +370,7 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
                       onChange={(val) => setEditGlobalData({...editGlobalData, status: val as any})}
                       options={[
                         { value: 'WAITING_VERIFICATION', label: 'Waiting Verification' },
-                        { value: 'PAID', label: 'Paid / Secured' },
+                        { value: 'PAID', label: 'Paid / Approved' },
                         { value: 'PENDING', label: 'Pending' },
                         { value: 'CANCELLED', label: 'Cancelled' }
                       ]}
@@ -774,7 +774,7 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
                      <CheckCircle2 className="w-5 h-5 text-green-600" />
                      <p className="text-sm font-bold text-green-800 uppercase tracking-widest">Booking Approved</p>
                   </div>
-                  <p className="text-xs text-green-700">The booking is secured.</p>
+                  <p className="text-xs text-green-700">The booking is approved.</p>
                 </AdminCardContent>
              </AdminCard>
           )}

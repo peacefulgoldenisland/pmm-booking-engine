@@ -35,7 +35,7 @@ export function BookingCard({ booking, isExpanded, onToggleExpand, userProfile }
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PAID':
-        return <span className="px-2.5 py-1 rounded-sm text-[9px] font-bold uppercase tracking-widest bg-green-50 text-green-700 border border-green-200 shadow-sm">Secured</span>;
+        return <span className="px-2.5 py-1 rounded-sm text-[9px] font-bold uppercase tracking-widest bg-green-50 text-green-700 border border-green-200 shadow-sm">Approved</span>;
       case 'WAITING_VERIFICATION':
         return <span className="px-2.5 py-1 rounded-sm text-[9px] font-bold uppercase tracking-widest bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">Verifying</span>;
       case 'PENDING':

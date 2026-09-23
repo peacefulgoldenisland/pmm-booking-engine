@@ -161,7 +161,7 @@ export function PaymentInstructions({ bookingData, timeLeft, isExpired, setError
               <MessageCircle className="w-5 h-5 text-[var(--color-gold-500)]" /> Contact Us to Pay
             </h3>
             <p className="text-sm text-gray-500 font-light max-w-md mx-auto leading-relaxed mb-8">
-              Your booking is secured. Please contact our team via WhatsApp to coordinate your payment.
+              Your booking is approved. Please contact our team via WhatsApp to coordinate your payment.
             </p>
             
             <div className="flex flex-col gap-4 max-w-sm mx-auto">
