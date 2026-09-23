@@ -249,10 +249,10 @@ export default function AdminDashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh]">
         <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         >
-          <Ship className="w-10 h-10 text-[var(--color-gold-500)] opacity-80" />
+          <Ship className="w-10 h-10 text-[var(--color-gold-500)]" />
         </motion.div>
         <p className="mt-4 text-xs font-serif text-[var(--color-gold-600)] uppercase tracking-widest animate-pulse">
           Initializing Dashboard...
