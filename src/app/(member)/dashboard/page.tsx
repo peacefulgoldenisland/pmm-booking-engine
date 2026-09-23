@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { 
   Award, User, Shield, Plus, Anchor, 
-  History, ArrowRight, ConciergeBell
+  History, ArrowRight, ConciergeBell, Clock
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -217,6 +217,16 @@ export default function DashboardPage() {
           )}
         </div>
         
+        {upcomingBookings.some(b => b.status === 'PENDING' || b.status === 'WAITING_VERIFICATION') && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-sm flex items-start gap-3 shadow-sm mb-6">
+            <Clock className="w-5 h-5 shrink-0 mt-0.5 text-yellow-600" />
+            <div className="text-sm leading-relaxed">
+              <strong className="block mb-1 font-bold text-yellow-900">Verification in Progress</strong>
+              Your recent bookings are currently being reviewed. Please allow a maximum of <strong>1x24 hours</strong> for our admin team to verify your payment and issue your E-Ticket. We will notify you via email once verified.
+            </div>
+          </div>
+        )}
+
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-0">
           {upcomingBookings.length === 0 ? (
             <div className="bg-white rounded-sm p-16 text-center border border-gray-200/60 shadow-sm">

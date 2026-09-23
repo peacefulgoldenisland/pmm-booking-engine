@@ -70,6 +70,7 @@ function CheckoutContent() {
   const [phone, setPhone] = useState('');
   const [pickupArea, setPickupArea] = useState('');
   const [pickupLocation, setPickupLocation] = useState('');
+  const [specialRequests, setSpecialRequests] = useState('');
   
   const [passengers, setPassengers] = useState<PassengerDetail[]>([]);
   const [uploadingState, setUploadingState] = useState<{ [key: number]: boolean }>({});
@@ -317,7 +318,7 @@ function CheckoutContent() {
           bookingSource: "B2C_MEMBER",
           paymentMethod: paymentMethod 
         },
-        contact: { email, phone, pickupArea, pickupLocation },
+        contact: { email, phone, pickupArea, pickupLocation, specialRequests },
         passengers 
       };
 
@@ -429,6 +430,14 @@ function CheckoutContent() {
           <div className="lg:col-span-8 space-y-10">
             
             {/* CONTACT & TRANSFER SECTION */}
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-sm flex items-start gap-3 shadow-sm mb-6">
+              <Info className="w-5 h-5 shrink-0 mt-0.5 text-yellow-600" />
+              <div className="text-sm leading-relaxed">
+                <strong className="block mb-1 font-bold text-yellow-900">Cabin Assignment Note</strong>
+                If you are booking multiple beds in a Private or Sharing cabin, please let us know in the <strong>Notes / Special Requests</strong> below if you prefer to be grouped in the same room. Our team will do our best to accommodate your requests based on availability.
+              </div>
+            </div>
+
             <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-8 md:p-10 rounded-sm shadow-sm border border-gray-200/60 relative">
               <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-gold-500)]" />
               <h2 className="text-2xl font-serif text-[var(--color-navy-900)] mb-6 flex items-center gap-3 pb-4 border-b border-gray-100">
@@ -454,6 +463,17 @@ function CheckoutContent() {
                 </div>
                 
                 <Input label="Hotel Name / Detail Address *" placeholder={pickupArea ? `Where exactly in ${pickupArea}?` : "Select area first"} value={pickupLocation} onChange={(e) => setPickupLocation(e.target.value)} disabled={!pickupArea} icon={<MapPin className="w-4 h-4"/>} required />
+                
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest block">Notes / Special Requests</label>
+                  <textarea 
+                    rows={3} 
+                    placeholder="e.g., We booked 2 beds, please put us in the same cabin." 
+                    value={specialRequests} 
+                    onChange={(e) => setSpecialRequests(e.target.value)} 
+                    className="w-full bg-[var(--color-surface-50)] border border-gray-200 text-[var(--color-navy-900)] p-4 rounded-xl outline-none hover:border-[var(--color-gold-400)] focus:border-[var(--color-gold-500)] focus:ring-4 focus:ring-[var(--color-gold-500)]/15 transition-all text-sm font-medium resize-y"
+                  />
+                </div>
               </div>
             </motion.section>
 

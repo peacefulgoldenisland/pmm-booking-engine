@@ -38,6 +38,7 @@ export interface Booking {
   dateOfDeparture: Date | FirebaseTimestamp | string;
   cabinClass: string;
   pickupLocation?: string;
+  specialRequests?: string;
   paxCount: number;
   
   passengersManifest: Passenger[];

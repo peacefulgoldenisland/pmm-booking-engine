@@ -131,6 +131,7 @@ export async function POST(request: Request) {
         paxCount: booking.pax,
         pickupLocation: contact.pickupLocation,
         pickupArea: contact.pickupArea,
+        specialRequests: contact.specialRequests || '',
         passengersManifest: passengers,
         contactEmail: contact.email,
         contactPhone: contact.phone,

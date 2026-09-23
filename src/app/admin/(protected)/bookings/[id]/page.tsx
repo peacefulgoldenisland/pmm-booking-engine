@@ -3,11 +3,11 @@
 import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, getDocs, runTransaction } from 'firebase/firestore';
 import { 
   ArrowLeft, CheckCircle2, AlertCircle, 
   CreditCard, User, Ship, Calendar, 
-  MapPin, Phone, Mail, FileCheck, Loader2, Edit3, UploadCloud
+  MapPin, Phone, Mail, FileCheck, Loader2, Edit3, UploadCloud, Trash2
 } from 'lucide-react';
 
 import { AdminButton } from '@/components/admin/ui/AdminButton';
@@ -237,6 +237,51 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
     }
   };
 
+  const handleDeleteAdminBooking = async () => {
+    if (!booking) return;
+    if (booking.userId !== 'MANUAL_ENTRY_ADMIN') {
+      alert("Only bookings created by Admin can be deleted.");
+      return;
+    }
+
+    if (!confirm("Are you sure you want to completely delete this booking? This will restore the cabin quotas and cannot be undone.")) {
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      await runTransaction(db, async (transaction) => {
+        // 1. Restore Quota
+        const voyageId = typeof booking.voyageScheduleId === 'string' ? booking.voyageScheduleId : (typeof booking.dateOfDeparture === 'string' ? booking.dateOfDeparture : '');
+        if (voyageId && booking.cart) {
+          const voyageRef = doc(db, 'voyages', voyageId);
+          const voyageDoc = await transaction.get(voyageRef);
+          if (voyageDoc.exists()) {
+            const voyageData = voyageDoc.data();
+            const quotas = voyageData.cabinQuotas || {};
+            
+            for (const [cabinId, qty] of Object.entries(booking.cart)) {
+              quotas[cabinId] = (quotas[cabinId] || 0) + (qty as number);
+            }
+            transaction.update(voyageRef, { cabinQuotas: quotas });
+          }
+        }
+        
+        // 2. Delete Booking
+        const bookingRef = doc(db, 'bookings', params.id);
+        transaction.delete(bookingRef);
+      });
+
+      alert("Booking successfully deleted and quota restored.");
+      router.push('/admin/bookings');
+
+    } catch (error) {
+      console.error("Error deleting booking:", error);
+      alert("Failed to delete booking.");
+      setIsProcessing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -286,12 +331,19 @@ export default function BookingDetailPage(props: { params: Promise<{ id: string 
               </AdminButton>
             </>
           ) : (
-            <AdminButton variant="outline" onClick={() => {
-              setEditGlobalData(booking);
-              setIsEditingGlobal(true);
-            }}>
-              <Edit3 className="w-4 h-4 mr-2" /> Edit Master Data
-            </AdminButton>
+            <>
+              {booking.userId === 'MANUAL_ENTRY_ADMIN' && (
+                <AdminButton variant="danger" onClick={handleDeleteAdminBooking} isLoading={isProcessing}>
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete Booking
+                </AdminButton>
+              )}
+              <AdminButton variant="outline" onClick={() => {
+                setEditGlobalData(booking);
+                setIsEditingGlobal(true);
+              }}>
+                <Edit3 className="w-4 h-4 mr-2" /> Edit Master Data
+              </AdminButton>
+            </>
           )}
         </div>
       </div>
