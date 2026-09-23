@@ -111,16 +111,22 @@ export default function Home() {
     
   }, [selectedDateStr, cabins]);
 
-  const getAvailabilityInfo = (cabinId: string, totalUnits: number) => {
+  const getAvailabilityInfo = (cabin: MasterCabin, totalUnits: number) => {
     let available = totalUnits; // default if null
     
     if (availableSeats !== null) {
-      available = availableSeats[cabinId] ?? 0;
+      available = availableSeats[cabin.id] ?? 0;
     }
     
-    if (available === 0) return { text: "Fully Booked", isLow: true, availableUnits: 0, totalUnits: totalUnits };
-    if (available <= 5 && available < totalUnits) return { text: `Almost Sold Out - ${available} Left`, isLow: true, availableUnits: available, totalUnits: totalUnits };
-    return { text: "Available", isLow: false, availableUnits: available, totalUnits: totalUnits };
+    // Khusus Sharing Cabin, kita kurangi 2 seat dari kalkulasi (karena 2 seat direserve khusus Admin)
+    const effectiveTotalUnits = cabin.name === 'Sharing Cabin' ? Math.max(0, totalUnits - 2) : totalUnits;
+    if (cabin.name === 'Sharing Cabin') {
+       available = Math.max(0, available - 2);
+    }
+    
+    if (available === 0) return { text: "Fully Booked", isLow: true, availableUnits: 0, totalUnits: effectiveTotalUnits };
+    if (available <= 5 && available < effectiveTotalUnits) return { text: `Almost Sold Out - ${available} Left`, isLow: true, availableUnits: available, totalUnits: effectiveTotalUnits };
+    return { text: "Available", isLow: false, availableUnits: available, totalUnits: effectiveTotalUnits };
   };
 
   const handleAddPax = (cabinId: string, availablePax: number) => {
@@ -268,7 +274,7 @@ export default function Home() {
                 ))
               ) : (
                 cabins.map((cabin, idx) => {
-                  const availability = getAvailabilityInfo(cabin.id, cabin.totalUnits || 0);
+                  const availability = getAvailabilityInfo(cabin, cabin.totalUnits || 0);
                   const paxInCabin = selectedCabins[cabin.id] || 0;
                   const isSelected = paxInCabin > 0;
                   const isFullyBooked = availability.availableUnits === 0;

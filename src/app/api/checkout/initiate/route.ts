@@ -93,7 +93,13 @@ export async function POST(request: Request) {
       
       // Validasi kuota
       for (const [cabinId, qty] of Object.entries(cart)) {
-        const available = cabinQuotas[cabinId] || 0;
+        let available = cabinQuotas[cabinId] || 0;
+        
+        // Khusus Sharing Cabin (Web Only), kurangi 2 seat untuk admin reserve
+        if (cabinId === 'j1vQ2DKmNRsXwR4AM17U') {
+           available = Math.max(0, available - 2);
+        }
+
         if (available < (qty as number)) {
           throw new Error(`Insufficient quota for ${cabinId}. Available: ${available}`);
         }
