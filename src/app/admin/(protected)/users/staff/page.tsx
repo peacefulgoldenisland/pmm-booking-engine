@@ -199,8 +199,26 @@ export default function StaffManagementPage() {
   return (
     <div className="space-y-6">
       
-      {/* HEADER HERO SECTION */}
-      <div className="bg-[var(--color-navy-900)] p-6 md:p-8 rounded-sm shadow-luxury flex flex-col md:flex-row justify-between md:items-center gap-6 relative overflow-hidden">
+      {/* Mobile Floating Action Button */}
+      <div className="md:hidden fixed bottom-[80px] right-4 z-40">
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center justify-center w-14 h-14 bg-[var(--color-gold-500)] text-[var(--color-navy-900)] rounded-sm shadow-[0_8px_16px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95 transition-transform"
+        >
+          <UserPlus className="w-6 h-6" />
+        </button>
+      </div>
+
+      {/* Mobile Page Header */}
+      <div className="md:hidden mb-4 mt-2">
+        <h1 className="text-3xl font-serif text-[var(--color-navy-900)] mb-1">Staff Access</h1>
+        <p className="text-xs text-gray-500">
+          Showing {processedData.length} {processedData.length === 1 ? 'member' : 'members'}.
+        </p>
+      </div>
+
+      {/* HEADER HERO SECTION (Desktop Only) */}
+      <div className="hidden md:flex bg-[var(--color-navy-900)] p-6 md:p-8 rounded-sm shadow-luxury flex-col md:flex-row justify-between md:items-center gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--color-gold-500)]/10 rounded-full blur-[80px] pointer-events-none" />
         
         <div className="relative z-10">
@@ -229,17 +247,19 @@ export default function StaffManagementPage() {
         </div>
       </div>
 
-      {/* FILTER & SEARCH */}
-      <AdminCard className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white/60">
-        <div className="relative w-full sm:max-w-md">
-          <AdminInput 
-            placeholder="Search name or email..." 
+      {/* Control Panel (Search & Filter) */}
+      <div className="md:static md:bg-white md:p-4 md:rounded-sm md:border md:border-gray-200/60 md:shadow-sm py-3 md:py-0 mb-6 flex flex-row items-center justify-between md:justify-end gap-2 md:gap-3 -mx-4 px-4 md:mx-0 md:px-0 md:shadow-none bg-transparent">
+        <div className="flex-1 md:w-96 relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="Search staff..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            leftIcon={<Search className="w-4 h-4 text-gray-400" />}
+            className="w-full bg-white border border-gray-200/80 md:border-none rounded-sm pl-9 pr-3 py-3 md:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-400)] shadow-sm font-medium text-[var(--color-navy-900)] placeholder:text-gray-400 transition-shadow"
           />
         </div>
-        <div className="w-full sm:w-auto">
+        <div className="w-[120px] md:w-auto shrink-0">
           <AdminSelect 
             value={filterRole} 
             onChange={(val) => setFilterRole(val)}
@@ -250,10 +270,11 @@ export default function StaffManagementPage() {
             ]}
           />
         </div>
-      </AdminCard>
+      </div>
 
-      {/* TABLE */}
-      <AdminCard className="overflow-hidden">
+      {/* TABLE (Desktop) & CARDS (Mobile) */}
+      <div className="hidden md:block">
+        <AdminCard className="overflow-hidden">
         <AdminTable 
           headers={["Staff Info", "Role & Access", "Status", "Actions"]} 
           isLoading={isLoading} 
@@ -328,8 +349,74 @@ export default function StaffManagementPage() {
               </tr>
             ))
           )}
-        </AdminTable>
-      </AdminCard>
+          </AdminTable>
+        </AdminCard>
+      </div>
+
+      {/* Mobile Cards View */}
+      <div className="md:hidden flex flex-col gap-3">
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-sm border border-gray-200 p-4 animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+              <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          ))
+        ) : processedData.length === 0 ? (
+          <div className="bg-white rounded-sm border border-gray-200 p-8 text-center text-gray-500 text-sm">
+            <p>No staff found.</p>
+          </div>
+        ) : (
+          processedData.map((staff) => (
+            <div key={staff.id} className="bg-white rounded-sm border border-gray-200 p-4 shadow-sm relative overflow-hidden">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="font-bold text-[var(--color-navy-900)] text-sm">{staff.fullName}</p>
+                  <p className="text-xs text-gray-500 truncate mb-1">{staff.email}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AdminButton 
+                    variant="outline" 
+                    size="sm" 
+                    className="p-1.5 h-auto rounded-sm text-blue-600 border-blue-200 hover:bg-blue-50"
+                    onClick={() => handleEditClick(staff)}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </AdminButton>
+                  <AdminButton 
+                    variant="outline" 
+                    size="sm" 
+                    className={`p-1.5 h-auto rounded-sm ${staff.isSuspended ? 'text-emerald-600 border-emerald-200 hover:bg-emerald-50' : 'text-red-600 border-red-200 hover:bg-red-50'}`}
+                    onClick={() => handleToggleSuspend(staff)}
+                  >
+                    {staff.isSuspended ? <ShieldCheck className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
+                  </AdminButton>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                <div className="flex flex-col items-start gap-1">
+                  <AdminBadge variant={ROLE_MAP[staff.role]?.color || "default"}>
+                    {ROLE_MAP[staff.role]?.label || staff.role}
+                  </AdminBadge>
+                </div>
+                
+                {staff.isSuspended ? (
+                  <div className="flex items-center gap-1.5 text-red-600 bg-red-50 px-2 py-1 rounded-sm">
+                    <Lock className="w-3.5 h-3.5" />
+                    <span className="text-[9px] font-bold uppercase tracking-widest">Suspended</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-1 rounded-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="text-[9px] font-bold uppercase tracking-widest">Active</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
 
       {/* CREATE STAFF MODAL */}
       <AdminModal

@@ -11,6 +11,7 @@ import { AdminCard, AdminCardContent } from '@/components/admin/ui/AdminCard';
 import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminSelect } from '@/components/admin/ui/AdminSelect';
 import { AdminButton } from '@/components/admin/ui/AdminButton';
+import { AdminDatePicker } from '@/components/admin/ui/AdminDatePicker';
 import type { DiscountType } from '@/types/voucher';
 import { logAuditTrail } from '@/lib/auditLogger';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -79,23 +80,27 @@ export default function CreateVoucherPage() {
 
   return (
     <div className="pb-24 max-w-4xl mx-auto">
-      {/* Header Area */}
-      <div className="flex items-center gap-4 mb-8">
-        <Link 
-          href="/admin/vouchers"
-          className="w-10 h-10 rounded-sm bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[var(--color-navy-900)] hover:border-[var(--color-gold-400)] transition-all shadow-sm"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Create Promotional Code</h1>
-          <p className="text-xs text-gray-500 mt-1">Configure a new voucher.</p>
+      {/* Unified Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8 sticky top-0 z-50 bg-[var(--color-surface-50)]/90 backdrop-blur-md pt-4 pb-4 -mx-4 px-4 md:static md:bg-transparent md:p-0 md:mx-0 md:backdrop-blur-none border-b border-gray-200 md:border-none shadow-sm md:shadow-none">
+        <div className="flex items-center gap-4">
+          <button 
+            type="button"
+            onClick={() => router.back()} 
+            className="w-10 h-10 rounded-sm bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[var(--color-navy-900)] hover:border-[var(--color-gold-400)] transition-all shadow-sm shrink-0"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-xl md:text-2xl font-serif text-[var(--color-navy-900)] flex items-center gap-3">
+              New Promo Code
+            </h1>
+          </div>
         </div>
       </div>
 
-      <AdminCard className="overflow-hidden">
-        <div className="h-2 w-full bg-[var(--color-gold-500)]" />
-        <AdminCardContent className="p-8 md:p-12">
+      <AdminCard className="mb-6 md:mb-0">
+        <div className="h-2 w-full bg-[var(--color-gold-500)] rounded-t-[inherit]" />
+        <AdminCardContent className="p-5 md:p-12">
           
           <div className="flex items-center gap-4 mb-8 pb-8 border-b border-gray-100">
             <div className="w-14 h-14 bg-[var(--color-surface-50)] rounded-full flex items-center justify-center">
@@ -187,26 +192,27 @@ export default function CreateVoucherPage() {
 
                <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">Expiration Date <span className="text-red-500">*</span></label>
-                <AdminInput 
-                  type="date" 
-                  name="validUntil"
-                  required
-                  min={new Date().toISOString().split('T')[0]}
+                <AdminDatePicker 
                   value={formData.validUntil}
-                  onChange={handleChange}
-                  className="bg-gray-50 border-gray-200 focus-visible:bg-white text-gray-500 focus-visible:text-[var(--color-navy-900)]"
+                  onChange={(val) => setFormData(prev => ({ ...prev, validUntil: val }))}
+                  filterDate={(date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return date >= today;
+                  }}
+                  className="bg-gray-50 border-gray-200"
                 />
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-8 border-t border-gray-100 flex items-center justify-end gap-4">
-              <Link href="/admin/vouchers">
-                <AdminButton variant="ghost" type="button" className="px-8">
+            <div className="fixed bottom-0 pb-[calc(1rem+env(safe-area-inset-bottom))] left-0 right-0 p-4 bg-white border-t border-gray-200 z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] flex items-center justify-end gap-2 md:static md:bg-transparent md:border-none md:p-0 md:pt-8 md:border-t md:border-gray-100 md:shadow-none md:gap-4">
+              <Link href="/admin/vouchers" className="flex-1 md:flex-none">
+                <AdminButton variant="ghost" type="button" className="w-full px-8">
                   Cancel
                 </AdminButton>
               </Link>
-              <AdminButton type="submit" variant="primary" isLoading={isSubmitting} className="px-8">
+              <AdminButton type="submit" variant="primary" isLoading={isSubmitting} className="flex-1 md:flex-none px-8">
                 Save Voucher
               </AdminButton>
             </div>

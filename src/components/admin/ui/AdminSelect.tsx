@@ -1,6 +1,7 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface SelectOption {
@@ -27,8 +28,18 @@ export function AdminSelect({
 }: AdminSelectProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
 
   const selectedOption = options.find((opt) => opt.value === value);
+
+  React.useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -40,6 +51,13 @@ export function AdminSelect({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Prevent background scroll when mobile bottom sheet is open
+  React.useEffect(() => {
+    if (isOpen && isMobile) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "unset";
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isOpen, isMobile]);
 
   return (
     <div className={cn("relative w-full font-sans", className)} ref={containerRef}>
@@ -59,7 +77,7 @@ export function AdminSelect({
       </button>
 
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && !isMobile && (
           <motion.div
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
@@ -85,6 +103,58 @@ export function AdminSelect({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mobile Bottom Sheet Portal */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {isOpen && isMobile && (
+            <div className="fixed inset-0 z-[10000] flex items-end justify-center">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setIsOpen(false)}
+                className="absolute inset-0 bg-[var(--color-navy-900)]/60 backdrop-blur-sm"
+              />
+
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="relative w-full max-w-md bg-white rounded-t-3xl shadow-luxury overflow-hidden flex flex-col pb-8 pt-3 max-h-[85vh]"
+              >
+                <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 shrink-0" />
+                <div className="px-6 pb-4 border-b border-gray-100 flex items-center justify-between">
+                   <h3 className="font-bold text-[var(--color-navy-900)] text-sm uppercase tracking-widest">{placeholder}</h3>
+                   <button onClick={() => setIsOpen(false)} className="p-2 bg-gray-50 rounded-full active:bg-gray-200 text-gray-500"><X className="w-4 h-4"/></button>
+                </div>
+                
+                <div className="overflow-y-auto px-4 py-2 admin-scrollbar">
+                  {options.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        onChange(option.value);
+                        setIsOpen(false);
+                      }}
+                      className={cn(
+                        "flex w-full items-center justify-between px-4 py-4 text-sm text-left transition-colors border-b border-gray-100 last:border-b-0",
+                        value === option.value ? "font-bold text-[var(--color-navy-900)]" : "text-gray-700 font-medium"
+                      )}
+                    >
+                      <span className="truncate">{option.label}</span>
+                      {value === option.value && <Check className="h-5 w-5 shrink-0 text-[var(--color-gold-500)]" />}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

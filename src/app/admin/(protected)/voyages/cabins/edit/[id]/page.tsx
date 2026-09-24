@@ -188,15 +188,6 @@ export default function EditCabinPage({ params }: { params: Promise<{ id: string
             <p className="text-xs text-gray-500 mt-1">Modify cabin specifications and pricing.</p>
           </div>
         </div>
-        
-        <button 
-          type="button"
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-sm transition-colors disabled:opacity-50"
-        >
-          {isDeleting ? 'Deleting...' : <><Trash2 className="w-4 h-4" /> Delete Cabin</>}
-        </button>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -319,18 +310,30 @@ export default function EditCabinPage({ params }: { params: Promise<{ id: string
               </AdminCardContent>
             </AdminCard>
 
-            <AdminButton 
-              type="submit" 
-              variant="primary" 
-              className="w-full shadow-luxury !py-4"
-              disabled={isSubmitting || isUploading}
-            >
-              {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <><Save className="w-4 h-4 mr-2" /> Save Changes</>
-              )}
-            </AdminButton>
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:shadow-none md:relative md:bottom-auto md:bg-transparent md:border-none md:p-0 pb-[calc(1rem+env(safe-area-inset-bottom))] flex gap-3">
+              <button 
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting || isSubmitting || isUploading}
+                className="flex items-center justify-center w-14 h-[56px] shrink-0 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-50"
+                title="Delete Cabin"
+              >
+                {isDeleting ? <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" /> : <Trash2 className="w-5 h-5" />}
+              </button>
+
+              <AdminButton 
+                type="submit" 
+                variant="primary" 
+                className="flex-1 shadow-luxury !py-4 rounded-xl"
+                disabled={isSubmitting || isUploading || isDeleting}
+              >
+                {isSubmitting ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+                ) : (
+                  <><Save className="w-4 h-4 mr-2" /> Save Changes</>
+                )}
+              </AdminButton>
+            </div>
           </div>
 
         </div>

@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<AuthMode>('login');
 
   return (
-    <div className="min-h-screen h-screen flex overflow-hidden bg-[var(--color-surface-50)] font-sans">
+    <div className="min-h-[100dvh] h-[100dvh] flex overflow-hidden bg-[var(--color-surface-50)] font-sans">
       
       {/* ======================================================== */}
       {/* LEFT COLUMN: EDITORIAL VISUAL COVER (5/12 Width)         */}
@@ -71,7 +71,7 @@ export default function LoginPage() {
         <div className="p-6 md:p-10 flex items-center justify-between shrink-0">
           <button 
             onClick={() => router.push('/')} 
-            className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-[var(--color-navy-900)] transition-colors uppercase tracking-widest group"
+            className="flex items-center gap-2 text-[10px] font-bold text-gray-400 hover:text-[var(--color-navy-900)] transition-colors uppercase tracking-widest group p-2 -ml-2"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Return to Homepage
           </button>

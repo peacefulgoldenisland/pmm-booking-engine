@@ -139,33 +139,33 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
   }
 
   return (
-    <div className="pb-24">
+    <div className="pb-8">
       {/* Header Area */}
-      <div className="flex items-center gap-4 mb-8">
+      <div className="flex items-center gap-4 mb-6 md:mb-8 sticky top-0 z-10 bg-[var(--color-surface-50)]/90 backdrop-blur-md pt-4 pb-4 -mx-4 px-4 md:static md:bg-transparent md:p-0 md:mx-0 md:backdrop-blur-none">
         <button 
           onClick={() => router.back()} 
-          className="w-10 h-10 rounded-sm bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[var(--color-navy-900)] hover:border-[var(--color-gold-400)] transition-all shadow-sm"
+          className="w-10 h-10 rounded-sm bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[var(--color-navy-900)] hover:border-[var(--color-gold-400)] transition-all shadow-sm shrink-0"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-serif text-[var(--color-navy-900)] flex items-center gap-3">
+          <h1 className="text-xl md:text-2xl font-serif text-[var(--color-navy-900)] flex items-center gap-3">
             Guest Profile 
           </h1>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
         
         {/* LEFT COLUMN: Profile & Point Manager */}
-        <div className="xl:col-span-1 space-y-8">
+        <div className="xl:col-span-1 space-y-6 md:space-y-8">
           
           {/* Identity Card */}
-          <AdminCard className="text-center relative overflow-hidden">
+          <AdminCard className="text-center relative overflow-hidden shadow-sm md:shadow-md">
             <div className="absolute top-0 left-0 w-full h-24 bg-[var(--color-navy-900)]" />
             
             <AdminCardContent className="pt-8">
-              <div className="w-24 h-24 bg-white rounded-full mx-auto relative z-10 border-4 border-white shadow-md flex items-center justify-center mb-4">
+              <div className="w-24 h-24 bg-white rounded-full mx-auto relative z-10 border-4 border-white shadow-sm flex items-center justify-center mb-4">
                 <UserCircle className="w-16 h-16 text-gray-300" />
               </div>
               
@@ -212,7 +212,7 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
 
           {/* Loyalty Point Manager */}
           <AdminCard className="bg-[var(--color-navy-900)] border-[var(--color-gold-500)]/20 shadow-luxury">
-            <AdminCardHeader className="border-b-0 pb-0">
+            <AdminCardHeader className="border-b-0 pb-0 pt-6">
               <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--color-gold-400)] flex items-center gap-2">
                 <Sparkles className="w-4 h-4" /> Loyalty Point Manager
               </h3>
@@ -281,22 +281,22 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
         </div>
 
         {/* RIGHT COLUMN: Booking History */}
-        <div className="xl:col-span-2 space-y-8">
-          <AdminCard className="h-full">
-            <AdminCardHeader>
+        <div className="xl:col-span-2 space-y-6 md:space-y-8">
+          <AdminCard className="h-full shadow-sm md:shadow-md">
+            <AdminCardHeader className="pt-6">
               <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
                 <History className="w-4 h-4 text-[var(--color-navy-900)]" /> Booking History ({bookingHistory.length})
               </h3>
             </AdminCardHeader>
             <AdminCardContent>
               {bookingHistory.length === 0 ? (
-                <div className="p-12 text-center border border-dashed border-gray-200 rounded-sm bg-[var(--color-surface-50)]">
+                <div className="p-8 md:p-12 text-center border border-dashed border-gray-200 rounded-sm bg-[var(--color-surface-50)] mb-6">
                   <p className="text-gray-500 text-sm">This guest has no prior booking history.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 md:space-y-4 mb-6">
                   {bookingHistory.map((booking) => (
-                    <div key={booking.id} className="border border-gray-200 rounded-sm p-5 hover:border-[var(--color-gold-300)] transition-colors group">
+                    <div key={booking.id} className="border border-gray-200 md:border-gray-200 rounded-sm p-4 md:p-5 hover:border-[var(--color-gold-300)] transition-colors group bg-white shadow-sm md:shadow-none">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-4 border-b border-gray-100">
                         <div>
                           <p className="font-mono text-sm font-bold text-[var(--color-navy-900)]">{booking.bookingId}</p>
@@ -317,14 +317,14 @@ export default function GuestDetailPage(props: { params: Promise<{ id: string }>
                             booking.status === 'WAITING_VERIFICATION' ? 'warning' :
                             booking.status === 'PENDING' ? 'default' : 'danger'
                           }
-                          className="gap-1"
+                          className="gap-1 self-start md:self-auto shrink-0"
                         >
                           {booking.status === 'PAID' && <CheckCircle2 className="w-3 h-3" />}
                           {booking.status.replace('_', ' ')}
                         </AdminBadge>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
                         <div>
                           <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1">Departure</p>
                           <p className="text-xs font-bold text-[var(--color-navy-900)]">

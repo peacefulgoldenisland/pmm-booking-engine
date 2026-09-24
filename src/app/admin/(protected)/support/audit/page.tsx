@@ -123,8 +123,20 @@ export default function AdminAuditPage() {
   return (
     <div className="space-y-6 pb-12">
       
-      {/* HEADER HERO SECTION */}
-      <div className="bg-[var(--color-navy-900)] p-6 md:p-8 rounded-sm shadow-luxury flex flex-col md:flex-row justify-between md:items-center gap-6 relative overflow-hidden">
+      {/* Mobile Page Header */}
+      <div className="md:hidden mb-4 mt-2">
+        <div className="flex items-center gap-2 mb-2">
+           <ShieldCheck className="w-5 h-5 text-[var(--color-gold-500)]" />
+           <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Security</span>
+        </div>
+        <h1 className="text-3xl font-serif text-[var(--color-navy-900)] mb-1">Audit Trail</h1>
+        <p className="text-xs text-gray-500">
+          {logs.length.toLocaleString('en-US')} immutable system events.
+        </p>
+      </div>
+
+      {/* HEADER HERO SECTION (Desktop Only) */}
+      <div className="hidden md:flex bg-[var(--color-navy-900)] p-6 md:p-8 rounded-sm shadow-luxury flex-col md:flex-row justify-between md:items-center gap-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--color-gold-500)]/10 rounded-full blur-[80px] pointer-events-none" />
         
         <div className="relative z-10 w-full md:w-auto">
@@ -159,19 +171,20 @@ export default function AdminAuditPage() {
 
       <div className="flex flex-col gap-6">
         
-        {/* TOOLBAR FILTER & SEARCH */}
-        <AdminCard className="p-4 flex flex-col sm:flex-row gap-4 justify-between items-center relative z-20">
-          <div className="relative w-full sm:max-w-md">
-            <AdminInput 
+        {/* Control Panel (Search & Filter) */}
+        <div className="md:static md:bg-white md:p-4 md:rounded-sm md:border md:border-gray-200/60 md:shadow-sm py-3 md:py-0 mb-6 flex flex-row items-center justify-between md:justify-end gap-2 md:gap-3 -mx-4 px-4 md:mx-0 md:px-0 md:shadow-none bg-transparent relative z-20">
+          <div className="flex-1 md:w-96 relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input 
               type="text" 
-              placeholder="Search email, ID, or action..." 
+              placeholder="Search email or ID..." 
               value={searchQuery} 
               onChange={(e) => setSearchQuery(e.target.value)} 
-              leftIcon={<Search className="w-4 h-4 text-gray-400" />}
+              className="w-full bg-white border border-gray-200/80 md:border-none rounded-sm pl-9 pr-3 py-3 md:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-400)] shadow-sm font-medium text-[var(--color-navy-900)] placeholder:text-gray-400 transition-shadow"
             />
           </div>
           
-          <div className="w-full sm:w-auto min-w-[200px]">
+          <div className="w-[120px] md:w-auto shrink-0">
             <AdminSelect 
               value={filterModule} 
               onChange={(val) => setFilterModule(val)} 
@@ -181,10 +194,11 @@ export default function AdminAuditPage() {
               ]}
             />
           </div>
-        </AdminCard>
+        </div>
 
-        {/* LIST LOG AKTIVITAS (TABLE) */}
-        <AdminCard className="overflow-hidden">
+        {/* LIST LOG AKTIVITAS (TABLE) & CARDS (Mobile) */}
+        <div className="hidden md:block">
+          <AdminCard className="overflow-hidden">
           <AdminTable 
             headers={["Timestamp", "Actor", "Module & Target", "Activity Details", "Action"]} 
             isLoading={isLoading} 
@@ -252,8 +266,71 @@ export default function AdminAuditPage() {
                 )
               })
             )}
-          </AdminTable>
-        </AdminCard>
+            </AdminTable>
+          </AdminCard>
+        </div>
+
+        {/* Mobile Cards View */}
+        <div className="md:hidden flex flex-col gap-3">
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-sm border border-gray-200 p-4 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+                <div className="h-3 bg-gray-200 rounded w-2/3 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ))
+          ) : currentData.length === 0 ? (
+            <div className="bg-white rounded-sm border border-gray-200 p-8 text-center text-gray-500">
+              <ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-20 text-gray-400" />
+              <p className="font-bold text-sm">No Audit Logs Found</p>
+            </div>
+          ) : (
+            currentData.map((log) => {
+              const { date, time } = formatTime(log.timestamp);
+              const badgeVariant = getActionTheme(log.action);
+              
+              return (
+                <div key={log.id} className="bg-white rounded-sm border border-gray-200 p-4 shadow-sm relative overflow-hidden">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="bg-gray-100 rounded px-2 py-1 flex items-center gap-2">
+                      <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">{date}</span>
+                      <span className="text-xs font-mono font-bold text-[var(--color-navy-900)] tracking-tight leading-none">{time}</span>
+                    </div>
+                    <AdminBadge variant={badgeVariant as any}>
+                      {log.action}
+                    </AdminBadge>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-3">
+                    <Key className="w-3 h-3 text-gray-400" />
+                    <p className="font-bold text-[var(--color-navy-900)] text-xs truncate max-w-[200px]" title={log.adminEmail}>
+                      {log.adminEmail}
+                    </p>
+                  </div>
+
+                  <div className="bg-[var(--color-surface-50)] p-2.5 rounded-sm mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[9px] uppercase font-bold tracking-widest text-gray-500">{log.module}</span>
+                      {log.targetId && (
+                        <span className="text-[10px] font-mono text-gray-400 truncate max-w-[120px]">ID: {log.targetId}</span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      {log.details || "-"}
+                    </p>
+                  </div>
+
+                  {log.ipAddress && (
+                    <p className="text-[9px] text-gray-400 font-mono flex items-center gap-1 border-t border-gray-100 pt-2">
+                      <Globe className="w-2.5 h-2.5"/> {log.ipAddress}
+                    </p>
+                  )}
+                </div>
+              )
+            })
+          )}
+        </div>
 
         {/* PAGINATION CONTROLS */}
         {totalPages > 1 && (

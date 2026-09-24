@@ -2,6 +2,7 @@ import React from 'react';
 import AdminAuthGuard from '@/components/admin/AdminAuthGuard';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
+import AdminBottomNav from '@/components/admin/AdminBottomNav';
 import { AdminToastProvider } from '@/components/admin/ui/AdminToast';
 
 export default function AdminLayout({
@@ -21,12 +22,15 @@ export default function AdminLayout({
           <AdminHeader />
           
           {/* Main Scrollable Content */}
-          <main className="flex-1 overflow-y-auto p-4 md:p-8">
+          <main className="flex-1 overflow-y-auto p-4 pb-24 md:p-8" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div className="max-w-7xl mx-auto">
               {children}
             </div>
           </main>
         </div>
+        
+        {/* Mobile Bottom Navigation */}
+        <AdminBottomNav />
       </div>
       <AdminToastProvider />
     </AdminAuthGuard>

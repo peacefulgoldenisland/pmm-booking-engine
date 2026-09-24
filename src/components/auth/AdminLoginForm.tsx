@@ -73,14 +73,14 @@ export function AdminLoginForm() {
       initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }} 
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="bg-white p-8 rounded-sm shadow-luxury border border-gray-200 w-full max-w-md mx-auto"
+      className="md:bg-white p-0 md:p-8 md:rounded-sm md:shadow-luxury md:border md:border-gray-200 w-full max-w-md mx-auto"
     >
-      <div className="mb-8 text-center">
+      <div className="mb-10 md:mb-8 text-center">
         <div className="w-16 h-16 mx-auto bg-[var(--color-navy-900)] rounded-full flex items-center justify-center mb-4">
             <ShieldAlert className="w-8 h-8 text-[var(--color-gold-500)]" />
         </div>
-        <h1 className="text-2xl font-serif text-[var(--color-navy-900)] mb-2">Admin Portal</h1>
-        <p className="text-xs font-light text-gray-500">Secure access for staff and administrators</p>
+        <h1 className="text-3xl md:text-2xl font-serif text-[var(--color-navy-900)] mb-2">Admin Portal</h1>
+        <p className="text-sm md:text-xs font-light text-gray-500">Secure access for staff and administrators</p>
       </div>
 
       {errorMessage && (
@@ -89,7 +89,7 @@ export function AdminLoginForm() {
         </motion.div>
       )}
 
-      <form onSubmit={handleLogin} className="space-y-4">
+      <form onSubmit={handleLogin} className="space-y-5 md:space-y-4">
         <Input 
           label="Admin Email" 
           type="email" 
@@ -113,7 +113,7 @@ export function AdminLoginForm() {
         <Button 
           type="submit" 
           isLoading={isLoading} 
-          className="w-full mt-6 !rounded-sm !py-3 uppercase tracking-widest text-xs !bg-[var(--color-navy-900)] hover:!bg-[var(--color-navy-800)]"
+          className="w-full mt-8 md:mt-6 !rounded-sm !py-3.5 md:!py-3 uppercase tracking-widest text-xs font-bold !bg-[var(--color-navy-900)] hover:!bg-[var(--color-navy-800)] shadow-md md:shadow-none"
         >
           Sign In
         </Button>

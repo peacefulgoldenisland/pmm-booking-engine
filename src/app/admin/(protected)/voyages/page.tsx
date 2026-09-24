@@ -8,6 +8,7 @@ import {
   Plus, CalendarDays, BedDouble, Search, Anchor, 
   Edit, Info
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 import { AdminInput } from '@/components/admin/ui/AdminInput';
 import { AdminButton } from '@/components/admin/ui/AdminButton';
@@ -59,63 +60,85 @@ export default function AdminVoyagesPage() {
   const filteredSchedules = schedules.filter(s => s.id?.includes(searchQuery));
 
   return (
-    <div className="pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="pb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 md:mb-8">
         <div>
           <h1 className="text-2xl font-serif text-[var(--color-navy-900)]">Trips & Schedules</h1>
           <p className="text-xs text-gray-500 mt-1">Manage cabins and generate weekly trip schedules.</p>
         </div>
         
-        {/* Dynamic Header Action Button */}
-        {activeTab === 'CABINS' ? (
-          <Link href="/admin/voyages/cabins/new">
-            <AdminButton variant="primary" className="shadow-luxury">
-              <Plus className="w-4 h-4 mr-2" /> Add New Cabin
-            </AdminButton>
-          </Link>
-        ) : (
-          <Link href="/admin/voyages/schedules/new">
-            <AdminButton variant="primary" className="shadow-luxury">
-              <Plus className="w-4 h-4 mr-2" /> Generate Schedule
-            </AdminButton>
-          </Link>
-        )}
+        {/* Header Action Button (Desktop Only) */}
+        <div className="hidden md:block w-full md:w-auto mt-2 md:mt-0">
+          {activeTab === 'CABINS' ? (
+            <Link href="/admin/voyages/cabins/new" className="block w-full">
+              <AdminButton variant="primary" className="shadow-luxury w-full md:w-auto py-3 md:py-2">
+                <Plus className="w-4 h-4 mr-2" /> Add New Cabin
+              </AdminButton>
+            </Link>
+          ) : (
+            <Link href="/admin/voyages/schedules/new" className="block w-full">
+              <AdminButton variant="primary" className="shadow-luxury w-full md:w-auto py-3 md:py-2">
+                <Plus className="w-4 h-4 mr-2" /> Generate Schedule
+              </AdminButton>
+            </Link>
+          )}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-gray-200 mb-6">
-        <button 
-          onClick={() => { setActiveTab('CABINS'); setSearchQuery(''); }}
-          className={`flex items-center gap-2 px-6 py-4 border-b-2 font-bold text-xs uppercase tracking-widest transition-colors ${
-            activeTab === 'CABINS' 
-              ? 'border-[var(--color-gold-500)] text-[var(--color-navy-900)]' 
-              : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'
-          }`}
+      {/* Mobile Floating Action Button */}
+      <div className="md:hidden fixed bottom-[80px] right-4 z-40">
+        <Link 
+          href={activeTab === 'CABINS' ? "/admin/voyages/cabins/new" : "/admin/voyages/schedules/new"} 
+          className="flex items-center justify-center w-14 h-14 bg-[var(--color-gold-500)] text-[var(--color-navy-900)] rounded-sm shadow-[0_8px_16px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95 transition-transform"
         >
-          <BedDouble className="w-4 h-4" /> Cabins
-        </button>
-        <button 
-          onClick={() => { setActiveTab('SCHEDULES'); setSearchQuery(''); }}
-          className={`flex items-center gap-2 px-6 py-4 border-b-2 font-bold text-xs uppercase tracking-widest transition-colors ${
-            activeTab === 'SCHEDULES' 
-              ? 'border-[var(--color-gold-500)] text-[var(--color-navy-900)]' 
-              : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'
-          }`}
-        >
-          <CalendarDays className="w-4 h-4" /> Schedules
-        </button>
+          <Plus className="w-6 h-6" />
+        </Link>
       </div>
 
-      {/* Control Panel */}
-      <div className="bg-white p-4 rounded-sm border border-gray-200/60 shadow-sm mb-6 flex items-center justify-end">
-        <div className="w-full md:w-96">
-          <AdminInput 
-            leftIcon={<Search className="w-4 h-4 text-gray-400" />}
-            type="text" 
-            placeholder={activeTab === 'CABINS' ? "Search cabin name..." : "Search by Date (YYYY-MM-DD)..."} 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      {/* Mobile Control Bar (Tabs + Search) */}
+      <div className="md:static -mx-4 md:mx-0 px-4 md:px-0 py-2 md:py-0 bg-white/90 md:bg-transparent md:backdrop-blur-none border-b border-gray-100 md:border-none mb-6">
+        {/* Native Mobile Segmented Control for Tabs */}
+        <div className="flex bg-gray-100 p-1 rounded-sm mb-4 md:bg-transparent md:p-0 md:rounded-none md:border-b md:border-gray-200 md:mb-6">
+          <button 
+            onClick={() => { setActiveTab('CABINS'); setSearchQuery(''); }}
+            className={cn(
+              "flex-1 flex justify-center items-center gap-2 py-2.5 md:py-4 text-xs font-bold uppercase tracking-widest transition-all rounded-md md:rounded-none md:border-b-2",
+              activeTab === 'CABINS' 
+                ? "bg-white text-[var(--color-navy-900)] shadow-sm md:bg-transparent md:shadow-none md:border-[var(--color-gold-500)]" 
+                : "text-gray-500 md:text-gray-400 hover:text-gray-700 md:border-transparent md:hover:border-gray-300"
+            )}
+          >
+            <BedDouble className="w-4 h-4" /> Cabins
+          </button>
+          <button 
+            onClick={() => { setActiveTab('SCHEDULES'); setSearchQuery(''); }}
+            className={cn(
+              "flex-1 flex justify-center items-center gap-2 py-2.5 md:py-4 text-xs font-bold uppercase tracking-widest transition-all rounded-md md:rounded-none md:border-b-2",
+              activeTab === 'SCHEDULES' 
+                ? "bg-white text-[var(--color-navy-900)] shadow-sm md:bg-transparent md:shadow-none md:border-[var(--color-gold-500)]" 
+                : "text-gray-500 md:text-gray-400 hover:text-gray-700 md:border-transparent md:hover:border-gray-300"
+            )}
+          >
+            <CalendarDays className="w-4 h-4" /> Schedules
+          </button>
+        </div>
+
+        {/* Control Panel / Search Bar */}
+        <div className="bg-white md:p-4 md:rounded-sm md:border md:border-gray-200/60 md:shadow-sm flex items-center justify-end">
+          <div className="w-full md:w-96">
+            <div className="relative">
+              <div className="absolute left-3.5 top-0 bottom-0 flex items-center justify-center text-gray-400 pointer-events-none">
+                <Search className="w-4 h-4" />
+              </div>
+              <input 
+                type="text" 
+                placeholder={activeTab === 'CABINS' ? "Search cabin name..." : "Search by Date (YYYY-MM-DD)..."} 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 md:bg-white border-transparent md:border-gray-200 focus:border-[var(--color-navy-900)] focus:bg-white focus:ring-0 rounded-sm text-sm font-medium outline-none transition-all"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -131,9 +154,9 @@ export default function AdminVoyagesPage() {
             <p className="text-gray-500 text-sm mb-4">No cabins defined in the fleet yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-6">
             {filteredCabins.map(cabin => (
-              <AdminCard key={cabin.id} className="p-0 overflow-hidden flex flex-col md:flex-row group hover:shadow-md transition-shadow">
+              <div key={cabin.id} className="bg-white border border-gray-200 rounded-sm overflow-hidden flex flex-col md:flex-row group shadow-sm hover:shadow-md transition-shadow">
                 <div className="w-full md:w-48 h-48 md:h-full bg-gray-100 shrink-0 relative">
                   {cabin.images && cabin.images.length > 0 ? (
                     <img src={cabin.images[0]} alt={cabin.name} className="w-full h-full object-cover" />
@@ -146,7 +169,7 @@ export default function AdminVoyagesPage() {
                     </div>
                   )}
                 </div>
-                <AdminCardContent className="p-6 flex-1 flex flex-col justify-between">
+                <div className="p-4 md:p-6 flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="text-lg font-serif text-[var(--color-navy-900)] group-hover:text-[var(--color-gold-600)] transition-colors line-clamp-1">{cabin.name}</h3>
                     <p className="text-xs text-gray-500 mt-1 line-clamp-2">{cabin.description}</p>
@@ -163,12 +186,12 @@ export default function AdminVoyagesPage() {
                     </div>
                   </div>
                   <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
-                    <Link href={`/admin/voyages/cabins/edit/${cabin.id}`}>
-                      <AdminButton variant="outline" className="text-xs py-1.5"><Edit className="w-3 h-3 mr-1" /> Edit</AdminButton>
+                    <Link href={`/admin/voyages/cabins/edit/${cabin.id}`} className="w-full md:w-auto">
+                      <AdminButton variant="outline" className="w-full text-xs py-2 md:py-1.5"><Edit className="w-3 h-3 mr-1" /> Edit Cabin</AdminButton>
                     </Link>
                   </div>
-                </AdminCardContent>
-              </AdminCard>
+                </div>
+              </div>
             ))}
           </div>
         )
@@ -186,48 +209,101 @@ export default function AdminVoyagesPage() {
             <p className="text-gray-500 text-sm mb-4">No schedules generated yet.</p>
           </div>
         ) : (
-          <div className="bg-white border border-gray-200 rounded-sm overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[var(--color-surface-50)] border-b border-gray-200">
-                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Departure Date</th>
-                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ship Name</th>
-                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Available Cabins</th>
-                  <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredSchedules.map((schedule) => {
-                  const totalCabins = Object.values(schedule.cabinQuotas || {}).reduce((sum, current) => sum + current, 0);
-                  const isPast = new Date(schedule.id) < new Date();
-                  
-                  return (
-                    <tr key={schedule.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                      <td className="p-4">
-                        <div className="font-mono text-sm font-bold text-[var(--color-navy-900)]">{schedule.id}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(schedule.id).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white border border-gray-200 rounded-sm overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[var(--color-surface-50)] border-b border-gray-200">
+                    <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Departure Date</th>
+                    <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ship Name</th>
+                    <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Available Cabins</th>
+                    <th className="p-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSchedules.map((schedule) => {
+                    const totalCabins = Object.values(schedule.cabinQuotas || {}).reduce((sum, current) => sum + current, 0);
+                    const isPast = new Date(schedule.id) < new Date();
+                    
+                    return (
+                      <tr key={schedule.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="p-4">
+                          <div className="font-mono text-sm font-bold text-[var(--color-navy-900)]">{schedule.id}</div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {new Date(schedule.id).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm font-medium text-gray-700 flex items-center gap-2">
+                          <Anchor className="w-4 h-4 text-gray-400" /> {schedule.shipName}
+                        </td>
+                        <td className="p-4 text-sm font-medium text-gray-700">
+                          {totalCabins} Available
+                        </td>
+                        <td className="p-4">
+                          <AdminBadge variant={schedule.status === 'SCHEDULED' && !isPast ? 'success' : schedule.status === 'CANCELLED' ? 'danger' : 'default'}>
+                            {isPast ? 'COMPLETED' : schedule.status}
+                          </AdminBadge>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards View */}
+            <div className="md:hidden flex flex-col gap-3 min-h-[50vh]">
+              {filteredSchedules.map((schedule) => {
+                const totalCabins = Object.values(schedule.cabinQuotas || {}).reduce((sum, current) => sum + current, 0);
+                const isPast = new Date(schedule.id) < new Date();
+                
+                return (
+                  <div key={schedule.id} className="bg-white rounded-sm border border-gray-200 p-4 shadow-sm relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="font-mono text-[11px] font-bold text-[var(--color-navy-900)] bg-gray-200/50 px-1.5 py-0.5 rounded-sm inline-block mb-1.5">{schedule.id}</div>
+                        <div className="text-xs text-gray-500 font-medium">
+                          {new Date(schedule.id).toLocaleDateString('id-ID', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                         </div>
-                      </td>
-                      <td className="p-4 text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <Anchor className="w-4 h-4 text-gray-400" /> {schedule.shipName}
-                      </td>
-                      <td className="p-4 text-sm font-medium text-gray-700">
-                        {totalCabins} Available
-                      </td>
-                      <td className="p-4">
+                      </div>
+                      <div className="scale-90 origin-top-right">
                         <AdminBadge variant={schedule.status === 'SCHEDULED' && !isPast ? 'success' : schedule.status === 'CANCELLED' ? 'danger' : 'default'}>
                           {isPast ? 'COMPLETED' : schedule.status}
                         </AdminBadge>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mb-3 text-[13px] font-bold text-[var(--color-navy-900)]">
+                      <Anchor className="w-3.5 h-3.5 text-[var(--color-gold-500)]" /> {schedule.shipName}
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-200/50 flex justify-between items-end">
+                      <div>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Available Quota</p>
+                        <p className="text-sm font-bold text-[var(--color-navy-900)]">{totalCabins} Cabins</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )
       )}
+
+      {/* Mobile Floating Action Button */}
+      <div className="md:hidden fixed bottom-[80px] right-4 z-40">
+        {activeTab === 'CABINS' ? (
+          <Link href="/admin/voyages/cabins/new" className="flex items-center justify-center w-14 h-14 bg-[var(--color-gold-500)] text-[var(--color-navy-900)] rounded-full shadow-[0_8px_16px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95 transition-transform">
+            <Plus className="w-6 h-6" />
+          </Link>
+        ) : (
+          <Link href="/admin/voyages/schedules/new" className="flex items-center justify-center w-14 h-14 bg-[var(--color-gold-500)] text-[var(--color-navy-900)] rounded-full shadow-[0_8px_16px_rgba(212,175,55,0.4)] hover:scale-105 active:scale-95 transition-transform">
+            <Plus className="w-6 h-6" />
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

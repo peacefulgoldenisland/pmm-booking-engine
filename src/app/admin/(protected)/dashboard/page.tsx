@@ -278,43 +278,43 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="pb-24 min-h-screen bg-gray-50/30">
+    <div className="pb-24 min-h-screen bg-gray-50/30 overflow-x-hidden">
       {/* 1. Dynamic Welcome Header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative mb-8 p-8 rounded-2xl overflow-hidden bg-[var(--color-navy-900)] shadow-luxury"
+        className="relative mb-6 md:mb-8 p-6 md:p-8 rounded-sm overflow-hidden bg-[var(--color-navy-900)] shadow-luxury"
       >
         {/* Abstract Background Elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--color-gold-500)] opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4"></div>
         
-        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-4">
           <div>
-            <p className="text-[var(--color-gold-400)] text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
+            <p className="text-[var(--color-gold-400)] text-[10px] md:text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
               <Anchor className="w-3 h-3" /> DASHBOARD
             </p>
-            <h1 className="text-3xl md:text-4xl font-serif text-white">{greeting}, Admin.</h1>
-            <p className="text-gray-400 text-sm mt-1">{currentDate}</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif text-white leading-tight">{greeting}, Admin.</h1>
+            <p className="text-gray-400 text-xs md:text-sm mt-1 md:mt-2">{currentDate}</p>
           </div>
           
-          <div className="flex flex-col md:items-end gap-3">
-            <div className="flex items-center gap-2 bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-               <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-               <span className="text-xs text-white font-medium tracking-wide">All Systems Operational</span>
+          <div className="flex flex-col items-start md:items-end gap-3 mt-2 md:mt-0">
+            <div className="flex items-center gap-2 bg-black/20 backdrop-blur-md px-3 py-1.5 md:px-4 md:py-2 rounded-full border border-white/10 w-fit">
+               <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-400 animate-pulse"></div>
+               <span className="text-[10px] md:text-xs text-white font-medium tracking-wide">Systems Operational</span>
             </div>
             
-            <div className="flex bg-black/20 backdrop-blur-md p-1 rounded-full border border-white/10">
+            <div className="flex bg-black/20 backdrop-blur-md p-1 rounded-full border border-white/10 w-fit">
                <button 
                  onClick={() => setDateRange('this_week')}
-                 className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 ${dateRange === 'this_week' ? 'bg-[var(--color-gold-500)] text-[var(--color-navy-900)]' : 'text-gray-400 hover:text-white'}`}
+                 className={`px-3 py-1.5 md:px-4 md:py-1.5 rounded-full text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 ${dateRange === 'this_week' ? 'bg-[var(--color-gold-500)] text-[var(--color-navy-900)]' : 'text-gray-400 hover:text-white'}`}
                >
                  This Week
                </button>
                <button 
                  onClick={() => setDateRange('30d')}
-                 className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 ${dateRange === '30d' ? 'bg-[var(--color-gold-500)] text-[var(--color-navy-900)]' : 'text-gray-400 hover:text-white'}`}
+                 className={`px-3 py-1.5 md:px-4 md:py-1.5 rounded-full text-[9px] md:text-xs font-bold uppercase tracking-wider transition-all duration-300 ${dateRange === '30d' ? 'bg-[var(--color-gold-500)] text-[var(--color-navy-900)]' : 'text-gray-400 hover:text-white'}`}
                >
                  Last 30 Days
                </button>
@@ -333,9 +333,9 @@ export default function AdminDashboardPage() {
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             className="mb-8"
           >
-            <Link href="/admin/bookings" className="block relative group overflow-hidden rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 p-[1px] shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300">
+            <Link href="/admin/bookings" className="block relative group overflow-hidden rounded-sm bg-gradient-to-r from-amber-500 to-orange-500 p-[1px] shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 transition-all duration-300">
               <div className="absolute inset-0 bg-white/20 group-hover:bg-white/0 transition-colors duration-300"></div>
-              <div className="relative flex items-center justify-between bg-white rounded-[11px] p-5">
+              <div className="relative flex items-center justify-between bg-white rounded-sm p-5">
                 <div className="flex items-center gap-5">
                   <div className="relative w-12 h-12 flex items-center justify-center">
                     <div className="absolute inset-0 bg-amber-100 rounded-full animate-ping opacity-75"></div>
@@ -368,70 +368,78 @@ export default function AdminDashboardPage() {
         animate="show"
       >
         {/* 3. KPI Metrics Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
           
           <motion.div variants={itemVariants}>
-            <AdminCard className="relative overflow-hidden group hover:border-[var(--color-gold-400)] transition-colors duration-500 bg-white shadow-sm hover:shadow-md">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500"></div>
-              <AdminCardContent className="p-6 relative z-10">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
-                    <Ship className="w-6 h-6" />
+            <AdminCard className="relative overflow-hidden group hover:border-[var(--color-gold-400)] transition-colors duration-500 bg-white shadow-sm hover:shadow-md h-full">
+              <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-blue-50 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500"></div>
+              <AdminCardContent className="p-4 md:p-6 relative z-10 flex flex-col h-full justify-between">
+                <div className="flex justify-between items-start mb-4 md:mb-6">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-sm bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                    <Ship className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Total Bookings</p>
-                <p className="text-3xl font-serif text-[var(--color-navy-900)]">{stats.totalBookings}</p>
+                <div>
+                  <p className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Total Bookings</p>
+                  <p className="text-xl md:text-3xl font-serif text-[var(--color-navy-900)]">{stats.totalBookings}</p>
+                </div>
               </AdminCardContent>
             </AdminCard>
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <AdminCard className="relative overflow-hidden group hover:border-[var(--color-gold-400)] transition-colors duration-500 bg-white shadow-sm hover:shadow-md">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500"></div>
-              <AdminCardContent className="p-6 relative z-10">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
-                    <UsersRound className="w-6 h-6" />
+            <AdminCard className="relative overflow-hidden group hover:border-[var(--color-gold-400)] transition-colors duration-500 bg-white shadow-sm hover:shadow-md h-full">
+              <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-emerald-50 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500"></div>
+              <AdminCardContent className="p-4 md:p-6 relative z-10 flex flex-col h-full justify-between">
+                <div className="flex justify-between items-start mb-4 md:mb-6">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-sm bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                    <UsersRound className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Registered Guests</p>
-                <p className="text-3xl font-serif text-[var(--color-navy-900)]">{stats.totalGuests}</p>
+                <div>
+                  <p className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Registered Guests</p>
+                  <p className="text-xl md:text-3xl font-serif text-[var(--color-navy-900)]">{stats.totalGuests}</p>
+                </div>
               </AdminCardContent>
             </AdminCard>
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <AdminCard className="relative overflow-hidden group hover:border-[var(--color-gold-400)] transition-colors duration-500 bg-white shadow-sm hover:shadow-md">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500"></div>
-              <AdminCardContent className="p-6 relative z-10">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
-                    <TicketPercent className="w-6 h-6" />
+            <AdminCard className="relative overflow-hidden group hover:border-[var(--color-gold-400)] transition-colors duration-500 bg-white shadow-sm hover:shadow-md h-full">
+              <div className="absolute top-0 right-0 w-16 h-16 md:w-24 md:h-24 bg-purple-50 rounded-bl-full -z-10 group-hover:scale-110 transition-transform duration-500"></div>
+              <AdminCardContent className="p-4 md:p-6 relative z-10 flex flex-col h-full justify-between">
+                <div className="flex justify-between items-start mb-4 md:mb-6">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-sm bg-purple-50 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
+                    <TicketPercent className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Active Promos</p>
-                <p className="text-3xl font-serif text-[var(--color-navy-900)]">{stats.activeVouchers}</p>
+                <div>
+                  <p className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">Active Promos</p>
+                  <p className="text-xl md:text-3xl font-serif text-[var(--color-navy-900)]">{stats.activeVouchers}</p>
+                </div>
               </AdminCardContent>
             </AdminCard>
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <AdminCard className="relative overflow-hidden group border-[var(--color-gold-400)] bg-gradient-to-br from-[var(--color-navy-900)] to-[var(--color-navy-800)] shadow-luxury">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-gold-500)] opacity-10 rounded-bl-full -z-10 group-hover:scale-125 transition-transform duration-700"></div>
-              <AdminCardContent className="p-6 relative z-10">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-[var(--color-gold-400)] border border-white/10 group-hover:scale-110 transition-transform duration-300">
-                    <CreditCard className="w-6 h-6" />
+            <AdminCard className="relative overflow-hidden group border-[var(--color-gold-400)] bg-gradient-to-br from-[var(--color-navy-900)] to-[var(--color-navy-800)] shadow-luxury h-full">
+              <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-[var(--color-gold-500)] opacity-10 rounded-bl-full -z-10 group-hover:scale-125 transition-transform duration-700"></div>
+              <AdminCardContent className="p-4 md:p-6 relative z-10 flex flex-col h-full justify-between">
+                <div className="flex justify-between items-start mb-4 md:mb-6">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-sm bg-white/10 backdrop-blur-md flex items-center justify-center text-[var(--color-gold-400)] border border-white/10 group-hover:scale-110 transition-transform duration-300">
+                    <CreditCard className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
-                  <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full border border-white/10">
+                  <div className="hidden md:flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full border border-white/10">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
                     <span className="text-[9px] text-white font-medium">Last 30 Days</span>
                   </div>
                 </div>
-                <p className="text-[10px] text-[var(--color-gold-400)] uppercase tracking-widest font-bold mb-1">Total Revenue</p>
-                <div className="flex items-end gap-1.5">
-                  <span className="text-sm text-gray-400 mb-1.5 font-medium">IDR</span>
-                  <p className="text-3xl font-serif text-white">{stats.revenue.toLocaleString('id-ID')}</p>
+                <div>
+                  <p className="text-[9px] md:text-[10px] text-[var(--color-gold-400)] uppercase tracking-widest font-bold mb-1">Total Revenue</p>
+                  <div className="flex flex-col md:flex-row md:items-end gap-0 md:gap-1.5">
+                    <span className="text-xs text-gray-400 mb-0 md:mb-1.5 font-medium leading-none">IDR</span>
+                    <p className="text-lg md:text-3xl font-serif text-white truncate">{stats.revenue.toLocaleString('id-ID')}</p>
+                  </div>
                 </div>
               </AdminCardContent>
             </AdminCard>
@@ -440,7 +448,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* 4. Analytics Charts Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
           
           {/* Revenue Trend (Spans 2 columns on extra large screens) */}
           <motion.div variants={itemVariants} className="xl:col-span-2">
@@ -676,8 +684,8 @@ export default function AdminDashboardPage() {
             <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--color-navy-900)]">Quick Links</h3>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Link href="/admin/bookings" className="group relative overflow-hidden bg-white border border-gray-200 p-5 rounded-2xl hover:border-[var(--color-gold-400)] hover:shadow-lg transition-all duration-300">
+          <div className="flex overflow-x-auto pb-6 pt-2 snap-x snap-mandatory hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 gap-4">
+            <Link href="/admin/bookings" className="min-w-[85vw] md:min-w-0 snap-center group relative overflow-hidden bg-white border border-gray-200 p-5 rounded-sm hover:border-[var(--color-gold-400)] hover:shadow-lg transition-all duration-300 shrink-0">
               <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[var(--color-surface-50)] opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -695,7 +703,7 @@ export default function AdminDashboardPage() {
               </div>
             </Link>
 
-            <Link href="/admin/users/guests" className="group relative overflow-hidden bg-white border border-gray-200 p-5 rounded-2xl hover:border-[var(--color-gold-400)] hover:shadow-lg transition-all duration-300">
+            <Link href="/admin/users/guests" className="min-w-[85vw] md:min-w-0 snap-center group relative overflow-hidden bg-white border border-gray-200 p-5 rounded-sm hover:border-[var(--color-gold-400)] hover:shadow-lg transition-all duration-300 shrink-0">
               <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[var(--color-surface-50)] opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -713,7 +721,7 @@ export default function AdminDashboardPage() {
               </div>
             </Link>
 
-            <Link href="/admin/vouchers" className="group relative overflow-hidden bg-white border border-gray-200 p-5 rounded-2xl hover:border-[var(--color-gold-400)] hover:shadow-lg transition-all duration-300">
+            <Link href="/admin/vouchers" className="min-w-[85vw] md:min-w-0 snap-center group relative overflow-hidden bg-white border border-gray-200 p-5 rounded-sm hover:border-[var(--color-gold-400)] hover:shadow-lg transition-all duration-300 shrink-0">
               <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[var(--color-surface-50)] opacity-0 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex items-center gap-4">

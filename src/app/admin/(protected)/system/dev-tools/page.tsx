@@ -67,7 +67,20 @@ export default function DevToolsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-20">
-      <div className="flex items-center gap-4 mb-8">
+      {/* Mobile Page Header */}
+      <div className="md:hidden mb-6 mt-2">
+        <div className="flex items-center gap-2 mb-2">
+           <Wrench className="w-5 h-5 text-[var(--color-gold-500)]" />
+           <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">System</span>
+        </div>
+        <h1 className="text-3xl font-serif text-[var(--color-navy-900)] mb-1">Dev Tools</h1>
+        <p className="text-xs text-gray-500">
+          Advanced utilities & database ops.
+        </p>
+      </div>
+
+      {/* Desktop Page Header */}
+      <div className="hidden md:flex items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-serif text-[var(--color-navy-900)] flex items-center gap-3">
             <Wrench className="w-6 h-6 text-[var(--color-gold-500)]" />

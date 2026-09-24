@@ -4,7 +4,7 @@ import type { Booking } from './booking'; // Nanti akan diimport saat booking.ts
 /**
  * Role yang tersedia di dalam sistem PGI Booking Engine.
  */
-export type Role = 'superadmin' | 'admin' | 'member' | 'agent';
+export type Role = 'superadmin' | 'admin' | 'staff' | 'member' | 'agent';
 
 /**
  * Tipe data untuk konfigurasi preferensi atau notifikasi user

@@ -181,7 +181,7 @@ export default function NewSchedulePage() {
           </AdminCardContent>
         </AdminCard>
 
-        <div className="mt-6 flex justify-end">
+        <div className="fixed bottom-0 pb-[calc(1rem+env(safe-area-inset-bottom))] left-0 right-0 p-4 bg-white border-t border-gray-200 z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:shadow-none md:relative md:bottom-auto md:bg-transparent md:border-none md:p-0 md:mt-6 flex justify-end">
           <AdminButton 
             type="submit" 
             variant="primary" 

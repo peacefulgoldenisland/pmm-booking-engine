@@ -250,18 +250,20 @@ export default function NewCabinPage() {
               </AdminCardContent>
             </AdminCard>
 
-            <AdminButton 
-              type="submit" 
-              variant="primary" 
-              className="w-full shadow-luxury !py-4"
-              disabled={isSubmitting || isUploading}
-            >
-              {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <><Save className="w-4 h-4 mr-2" /> Save Cabin</>
-              )}
-            </AdminButton>
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:shadow-none md:relative md:bottom-auto md:bg-transparent md:border-none md:p-0 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+              <AdminButton 
+                type="submit" 
+                variant="primary" 
+                className="w-full shadow-luxury !py-4"
+                disabled={isSubmitting || isUploading}
+              >
+                {isSubmitting ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+                ) : (
+                  <><Save className="w-4 h-4 mr-2" /> Save Cabin</>
+                )}
+              </AdminButton>
+            </div>
           </div>
 
         </div>
